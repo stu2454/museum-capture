@@ -1,4 +1,5 @@
-# Cloudflare Pages response headers.
+# Response headers for the static assets, read by Cloudflare Workers.
+# Vite copies this file from public/ into dist/, which wrangler.jsonc points at.
 
 # The service worker must never be served from cache, or a deploy can never
 # reach a device that already has the old one.

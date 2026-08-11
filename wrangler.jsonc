@@ -1,0 +1,22 @@
+// Cloudflare Workers static assets.
+//
+// This file exists to stop `wrangler deploy` trying to auto-configure itself.
+// Without it, wrangler detects Vite, reaches for its Vite plugin integration
+// and fails: that plugin needs Vite 6+, and this project is on Vite 5.
+// With explicit config, wrangler just uploads dist/ and serves it.
+//
+// There is no `main` — nothing here runs server-side. It is a static site.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "museum-capture",
+  "compatibility_date": "2026-08-11",
+  "assets": {
+    // Vite's build output. public/_headers is copied in here by the build,
+    // and Workers applies it to the assets it serves.
+    "directory": "./dist"
+  }
+  // `not_found_handling` is deliberately left at its default ("none").
+  // The app has no router, so there are no deep URLs to fall back for, and
+  // the relative `base: "./"` in vite.config.ts means a fallback served at a
+  // deep path would resolve its asset URLs against the wrong directory.
+}
