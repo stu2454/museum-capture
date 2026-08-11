@@ -1,0 +1,16 @@
+# Cloudflare Pages response headers.
+
+# The service worker must never be served from cache, or a deploy can never
+# reach a device that already has the old one.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# The shell names the hashed asset files, so a stale copy points at assets
+# that no longer exist.
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Vite puts a content hash in every asset filename, so these are safe to keep
+# forever - a changed file gets a different name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
