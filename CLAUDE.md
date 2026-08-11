@@ -46,9 +46,14 @@ Nine **capture groups**, defined in the schema, not the paper's 35-field order. 
 is filing order; capture order is the order a person naturally handles an object.
 
 ```
-Photograph  →  Identify  →  Describe  →  Measure  →  Condition
-            →  Origin  →  Story  →  Where it lives  →  Review  →  Save
+Record number  →  Photograph  →  Identify  →  Describe  →  Measure
+               →  Condition  →  Origin  →  Story  →  Where it lives  →  Review
 ```
+
+The number comes first because volunteers work from objects that already carry a Dorrigo
+register number on a tag. Knowing which record you're on before you shoot stops photographs
+being filed against the wrong object, and lets the duplicate check fire before anyone has
+done ten minutes of work.
 
 Groups 8 (Acquisition) and 9 (Sign-off) are marked `restricted: true` and sit outside the
 volunteer flow entirely.
@@ -185,6 +190,21 @@ src/components/
 - **Sync, accounts, server.** Records live on the device and export as JSON.
 - **Audio and table field types.** `FieldInput` has no branch for them yet; nothing in the
   volunteer flow uses them.
+
+## Mobile behaviour that is easy to break
+
+- **Two file inputs, not one.** iOS Safari ignores `capture` when `multiple` is also set. A
+  single combined input silently degrades to the library picker on iPhone and iPad. Keep the
+  camera input (`capture`, no `multiple`) and the library input (`multiple`, no `capture`)
+  separate.
+- **EXIF orientation.** Phones store rotation as metadata. `createImageBitmap` is called with
+  `imageOrientation: "from-image"`; the `<img>` fallback applies it natively. Drop either and
+  artefacts come out sideways.
+- **HEIC.** iPhones shoot HEIC. Safari decodes it and the canvas re-encodes to JPEG, which is
+  what we want. If decoding fails the original file is kept rather than the photo being lost.
+- **Secure context.** `npm run dev:https` for device testing. Add to Home Screen, the service
+  worker and (later) the microphone all need HTTPS. The camera file input does not.
+- **apple-touch-icon must be PNG.** iOS ignores SVG for home-screen icons.
 
 ## Design direction
 

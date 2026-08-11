@@ -1,10 +1,14 @@
 /**
- * Photograph step. This comes first because it is the one thing the paper
- * worksheet could never do, and because a volunteer holding the object should
- * shoot it before they put it down.
+ * Photograph step.
+ *
+ * Two separate inputs, not one. iOS Safari ignores the `capture` attribute when
+ * `multiple` is also set, so a single combined input silently degrades to the
+ * photo library on iPhone and iPad - exactly the wrong default for someone
+ * standing in front of the object. One input for the camera (capture, no
+ * multiple), one for the library (multiple, no capture).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { newId, photos } from "../db";
 import { prepareImage } from "../media";
 import type { PhotoMeta } from "../types";
@@ -17,6 +21,9 @@ interface Props {
 export function PhotoStep({ items, onChange }: Props) {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,18 +51,27 @@ export function PhotoStep({ items, onChange }: Props) {
   async function accept(files: FileList | null) {
     if (!files?.length) return;
     setBusy(true);
+    setProblem(null);
     const added: PhotoMeta[] = [];
+
     for (const file of Array.from(files)) {
-      const id = newId("img");
-      await photos.put(id, await prepareImage(file));
-      added.push({
-        id,
-        caption: "",
-        primary: items.length === 0 && added.length === 0,
-        addedAt: new Date().toISOString(),
-      });
+      try {
+        const id = newId("img");
+        await photos.put(id, await prepareImage(file));
+        added.push({
+          id,
+          caption: "",
+          primary: items.length === 0 && added.length === 0,
+          addedAt: new Date().toISOString(),
+        });
+      } catch {
+        setProblem(
+          `Couldn't read ${file.name}. Take the photo again, or check there is space left on the device.`
+        );
+      }
     }
-    onChange([...items, ...added]);
+
+    if (added.length) onChange([...items, ...added]);
     setBusy(false);
   }
 
@@ -70,24 +86,54 @@ export function PhotoStep({ items, onChange }: Props) {
     <div>
       <h2 className="question">Photograph the object</h2>
       <p className="question-note">
-        An overall view first. Then close-ups of any maker's marks, labels, signatures or damage.
-        Tap a photo to make it the main one.
+        An overall view first. Then close-ups of any maker&apos;s marks, labels, signatures or
+        damage. Tap a photo to make it the main one.
       </p>
 
-      <label className="btn btn-wide" style={{ display: "block", textAlign: "center" }}>
-        {busy ? "Adding…" : items.length ? "Add another photo" : "Take a photo"}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          multiple
-          hidden
-          onChange={(e) => {
-            void accept(e.target.files);
-            e.target.value = "";
-          }}
-        />
-      </label>
+      <div className="button-pair">
+        <button type="button" className="btn" disabled={busy} onClick={() => cameraRef.current?.click()}>
+          {busy ? "Adding..." : "Take a photo"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-quiet"
+          disabled={busy}
+          onClick={() => libraryRef.current?.click()}
+        >
+          Choose from library
+        </button>
+      </div>
+
+      {/* Camera: `capture` present, `multiple` absent. Both matter on iOS. */}
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          void accept(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      {/* Library: `multiple` present, `capture` absent. */}
+      <input
+        ref={libraryRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          void accept(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      {problem && (
+        <div className="notice notice-problem" role="alert">
+          {problem}
+        </div>
+      )}
 
       {items.length > 0 && (
         <div className="photo-grid">
@@ -107,7 +153,7 @@ export function PhotoStep({ items, onChange }: Props) {
                 aria-label="Remove photo"
                 onClick={() => void remove(item.id)}
               >
-                ×
+                &times;
               </button>
             </div>
           ))}

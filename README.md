@@ -13,8 +13,20 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. To test on a phone on the same wifi, run `npm run dev -- --host`
-and use the network address it prints.
+Open http://localhost:5173.
+
+### Testing on a phone or iPad
+
+```bash
+npm run dev:https
+```
+
+Use the **Network** address it prints, on a device on the same wifi. Safari will warn about the
+self-signed certificate — accept it once per device.
+
+Use `dev:https`, not `dev`, for device testing. iOS needs a secure context for Add to Home
+Screen, for the offline cache, and later for the microphone. The camera itself works either
+way, but you'll hit the others quickly.
 
 Recommended VS Code extensions: ESLint, Prettier, and the Claude Code extension.
 
@@ -22,11 +34,14 @@ Recommended VS Code extensions: ESLint, Prettier, and the Claude Code extension.
 
 1. Enter your name once — it stays on the device.
 2. **Start a record.**
-3. **Photograph the object.** Overall view, then marks, labels and damage.
-4. Work through eight short screens: what is it, describe it, how big, condition,
+3. **Enter the record number** from the object's tag or the register. If that number is already
+   on the device, you'll be told before you do any more work.
+4. **Photograph the object.** *Take a photo* opens the camera; *Choose from library* picks
+   existing shots. Overall view first, then marks, labels and damage.
+5. Work through seven short screens: what is it, describe it, how big, condition,
    who made it, its story, where it lives.
-5. **Check the record** — it reads back looking like the paper form.
-6. **Save for review.** A second person confirms it later.
+6. **Check the record** — it reads back looking like the paper form.
+7. **Save for review.** A second person confirms it later.
 
 Everything saves as you go. You can close the app mid-record and pick it up later.
 
@@ -56,16 +71,18 @@ renaming one means migrating data, so get them right early.
 
 Listed under `open_questions` in the schema:
 
-1. Dimensions — mm or cm as the house standard?
-2. The unlabelled line after the "Unknown" acquisition tickbox — elaboration, or "Other"?
-3. Who assigns registration numbers — the app, or a person beforehand?
+1. Registration numbers — is there a Dorrigo format the app should check against? Currently
+   accepted as free text with no validation, which is safe but won't catch a typo.
+2. Dimensions — mm or cm as the house standard?
+3. The unlabelled line after the "Unknown" acquisition tickbox — elaboration, or "Other"?
 4. Do cataloguing volunteers ever touch the donor block?
 5. Confirm every eHive field mapping before an export is built.
 
 ## Storage
 
 Records and photos live in the browser's IndexedDB on that device. Photos are downscaled to
-2000px on the way in. **Records are not backed up anywhere** — export regularly until sync
-exists.
+2000px on the way in, EXIF rotation is applied so nothing ends up sideways, and iPhone HEIC
+files are converted to JPEG. **Records are not backed up anywhere** — export regularly until
+sync exists.
 
 Clearing site data in the browser deletes everything. Say so to anyone using it.

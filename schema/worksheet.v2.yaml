@@ -4,55 +4,60 @@ source_form: eHive Cataloguing Guidelines - July 2023, Appendix 1, pp.10-11
 target_system: eHive (Vernon Systems)
 derived_from: worksheet.yaml (schema_version 1)
 capture_groups:
+- id: number
+  title: Which object is this?
+  order: 1
+  voice_prompt: Read out the record number written on the object's tag, or from the register.
+  restricted: false
 - id: identify
   title: What is it?
-  order: 1
+  order: 2
   voice_prompt: Hold the object and tell me what it is. What would you call it, and what type of thing is it?
   restricted: false
 - id: describe
   title: Describe it
-  order: 2
+  order: 3
   voice_prompt: Describe what you're looking at — shape, colour, parts, decoration. What is it made of? Is there
     any writing, printing, stamps or labels on it? Read those out exactly.
   restricted: false
 - id: measure
   title: How big is it?
-  order: 3
+  order: 4
   voice_prompt: Measure the object and read out the height, width and length. Say the units. If it's heavy enough
     to matter, give me the weight too.
   restricted: false
 - id: condition
   title: What condition is it in?
-  order: 4
+  order: 5
   voice_prompt: What condition is it in? Any damage, wear, repairs, missing parts, rust or staining? Is it complete,
     or are there pieces missing?
   restricted: false
 - id: origin
   title: Who made it, and when?
-  order: 5
+  order: 6
   voice_prompt: Do you know who made it, where it was made, and roughly when? An approximate date is fine — say
     'about 1890' or 'nineteen twenties' if that's all you know.
   restricted: false
 - id: story
   title: What's its story?
-  order: 6
+  order: 7
   voice_prompt: What do you know about its history — who owned it, how it was used, why it matters? And why does
     it belong in this collection?
   restricted: false
 - id: collection_management
   title: Where does it live?
-  order: 7
+  order: 8
   voice_prompt: Where is the object stored or displayed? Does it need any special handling, light, temperature or
     support? Has it been in any exhibitions?
   restricted: false
 - id: acquisition
   title: How did we get it?
-  order: 8
+  order: 9
   voice_prompt: null
   restricted: true
 - id: signoff
   title: Sign off
-  order: 9
+  order: 10
   voice_prompt: null
   restricted: true
 sections:
@@ -112,21 +117,22 @@ fields:
   source: printed
   type: text
   required: null
-  hint: null
+  hint: As written on the object's existing tag, or in the Dorrigo register.
   options: null
   units: null
   repeatable: false
   sensitivity: public
-  capture_group: signoff
+  capture_group: number
   capture_order: 1
-  voice_prompt: null
+  voice_prompt: What's the record number for this object?
   autofill: null
   mapping:
     ehive: UNVERIFIED
     note: confirm against eHive import spreadsheet
   subfields: null
   example: null
-  notes: null
+  notes: Existing Dorrigo register numbers are entered by hand. No format is enforced - see registration_number_format
+    in open_questions.
 - id: object_name
   label: 'Object name:'
   display_label: Object name
@@ -1373,6 +1379,8 @@ fields:
   example: null
   notes: 'Per-field flag: spoken, inferred by the model, or typed by hand. Drives what review highlights.'
 open_questions:
+- 'Registration number format: is there a pattern for Dorrigo numbers that the app should check against (e.g. YYYY.NNN)?
+  Currently accepted as free text with no validation.'
 - 'Dimensions: which unit is the museum''s house standard - mm or cm?'
 - 'The ruled line after the ''Unknown'' acquisition tickbox: elaboration, or an ''Other'' option?'
 - Who assigns the registration number - the app, or a committee member beforehand?

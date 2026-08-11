@@ -562,3 +562,18 @@ body {
     transform: none;
   }
 }
+
+/* Camera / library pair. Side by side on a phone is fine — both are short. */
+.button-pair {
+  display: flex;
+  gap: 10px;
+}
+
+.button-pair .btn {
+  flex: 1;
+}
+
+.notice-problem {
+  border-left-color: var(--alert);
+  color: var(--ink);
+}
