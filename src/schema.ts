@@ -7,7 +7,7 @@
 
 import yaml from "js-yaml";
 import rawSchema from "../schema/worksheet.v2.yaml?raw";
-import type { CaptureGroup, SchemaField, WorksheetSchema } from "./types";
+import type { CaptureGroup, FieldValue, SchemaField, WorksheetSchema } from "./types";
 
 export const schema = yaml.load(rawSchema) as WorksheetSchema;
 
@@ -35,7 +35,31 @@ export function volunteerFields(): SchemaField[] {
   return captureGroups.flatMap((g) => fieldsInGroup(g.id)).filter((f) => f.sensitivity !== "restricted");
 }
 
-export const restrictedFieldCount = schema.fields.filter((f) => f.sensitivity === "restricted").length;
+/**
+ * Ids of every restricted field — donor name, address, email, phone, tax number.
+ *
+ * Anything that leaves the device filters through this: the JSON export and the
+ * sync payload. One definition rather than a copy per exit path, because the
+ * failure mode is silent — a new exit path that forgets to strip looks like it
+ * works, and the leak is only visible to whoever receives the file.
+ */
+export const restrictedFieldIds: ReadonlySet<string> = new Set(
+  schema.fields.filter((f) => f.sensitivity === "restricted").map((f) => f.id)
+);
+
+/** Values with every restricted field removed. Use on any path off the device. */
+export function withoutRestricted(
+  values: Record<string, FieldValue>
+): Record<string, FieldValue> {
+  const kept: Record<string, FieldValue> = {};
+  for (const [fieldId, held] of Object.entries(values)) {
+    if (restrictedFieldIds.has(fieldId)) continue;
+    kept[fieldId] = held;
+  }
+  return kept;
+}
+
+export const restrictedFieldCount = restrictedFieldIds.size;
 
 /** Sections in paper order, used by the review sheet to echo the printed form. */
 export function printedSections() {

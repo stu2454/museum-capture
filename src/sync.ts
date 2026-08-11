@@ -11,6 +11,7 @@
  */
 
 import { records, photos } from "./db";
+import { withoutRestricted } from "./schema";
 import type { ArtefactRecord } from "./types";
 
 const DEVICE_KEY = "deviceId";
@@ -88,7 +89,7 @@ export async function syncNow(): Promise<SyncOutcome> {
       for (const incoming of result.records as WireRecord[]) {
         const local = await records.get(incoming.id);
         if (!local || incoming.updated_at > local.updatedAt) {
-          await records.put(fromWire(incoming, result.server_time));
+          await records.put(fromWire(incoming, result.server_time, local));
           outcome.pulled += 1;
         }
       }
@@ -156,7 +157,11 @@ function toWire(record: ArtefactRecord): WireRecord {
     object_name: (record.values.object_name?.value as string) ?? null,
     status: record.status,
     schema_version: record.schemaVersion,
-    values_json: JSON.stringify(record.values),
+    // Restricted fields never leave the device. Nothing captures them today, so
+    // this filters an empty set — which is exactly the point. The database is
+    // documented as holding no donor details; this is what makes that true in
+    // code rather than true by luck.
+    values_json: JSON.stringify(withoutRestricted(record.values)),
     captured_by: record.capturedBy,
     captured_at: record.capturedAt,
     updated_at: record.updatedAt,
@@ -164,14 +169,19 @@ function toWire(record: ArtefactRecord): WireRecord {
   };
 }
 
-function fromWire(wire: WireRecord, syncedAt: string): ArtefactRecord {
+function fromWire(wire: WireRecord, syncedAt: string, local?: ArtefactRecord): ArtefactRecord {
   return {
     id: wire.id,
     schemaVersion: wire.schema_version,
     registrationNumber: wire.registration_number,
     status: wire.status as ArtefactRecord["status"],
     values: JSON.parse(wire.values_json),
-    photos: [], // photo metadata arrives with its own pull; don't clobber local blobs
+    // Photographs are not part of the sync payload yet, so the server has
+    // nothing to say about them. Keep whatever this device already holds: an
+    // empty list here would leave the blobs sitting in IndexedDB with nothing
+    // pointing at them, which to a volunteer reads as their photographs having
+    // vanished. A record arriving for the first time correctly has none.
+    photos: local?.photos ?? [],
     capturedBy: wire.captured_by ?? "",
     capturedAt: wire.captured_at ?? "",
     updatedAt: wire.updated_at,

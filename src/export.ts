@@ -8,7 +8,7 @@
  * own import spreadsheet, then build it.
  */
 
-import { schema } from "./schema";
+import { restrictedFieldIds, schema } from "./schema";
 import type { ArtefactRecord } from "./types";
 
 export interface ExportBundle {
@@ -22,10 +22,6 @@ export interface ExportBundle {
 }
 
 export function toBundle(list: ArtefactRecord[]): ExportBundle {
-  const restricted = new Set(
-    schema.fields.filter((f) => f.sensitivity === "restricted").map((f) => f.id)
-  );
-
   return {
     exportedAt: new Date().toISOString(),
     schemaVersion: schema.schema_version,
@@ -35,7 +31,7 @@ export function toBundle(list: ArtefactRecord[]): ExportBundle {
     records: list.map((record) => {
       const values: Record<string, unknown> = {};
       for (const [fieldId, held] of Object.entries(record.values)) {
-        if (restricted.has(fieldId)) continue;
+        if (restrictedFieldIds.has(fieldId)) continue;
         if (held.value === "" || held.value == null) continue;
         values[fieldId] = held.value;
       }
