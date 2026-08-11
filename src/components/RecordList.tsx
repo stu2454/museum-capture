@@ -5,9 +5,11 @@
 
 import { useState } from "react";
 import type { ArtefactRecord } from "../types";
+import { StorageNotice } from "./StorageNotice";
 
 interface Props {
   list: ArtefactRecord[];
+  unsynced?: number;
   onOpen: (id: string) => void;
   onStart: () => void;
   onExport: () => void;
@@ -41,7 +43,7 @@ function Volunteer() {
   );
 }
 
-export function RecordList({ list, onOpen, onStart, onExport }: Props) {
+export function RecordList({ list, unsynced = 0, onOpen, onStart, onExport }: Props) {
   return (
     <div className="app">
       <header className="masthead">
@@ -50,6 +52,19 @@ export function RecordList({ list, onOpen, onStart, onExport }: Props) {
       </header>
 
       <Volunteer />
+
+      <StorageNotice />
+
+      {/* Quiet, never an error. A failed sync is not a failed cataloguing
+          session, and someone holding a fragile object should not be reading a
+          network message. */}
+      {list.length > 0 && (
+        <p className="eyebrow" style={{ margin: "0 0 14px" }}>
+          {unsynced > 0
+            ? `${unsynced} ${unsynced === 1 ? "record" : "records"} not yet backed up`
+            : "All records backed up"}
+        </p>
+      )}
 
       {list.length === 0 ? (
         <div className="empty">

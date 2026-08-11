@@ -5,6 +5,7 @@ import { newId, records } from "./db";
 import { toBundle } from "./export";
 import { downloadFile } from "./media";
 import { schema } from "./schema";
+import { startAutoSync } from "./sync";
 import type { ArtefactRecord } from "./types";
 
 export default function App() {
@@ -17,6 +18,11 @@ export default function App() {
   }, []);
 
   useEffect(refresh, [refresh]);
+
+  // Sync runs in the background: on load, when the connection returns, and every
+  // few minutes. It is never a precondition for cataloguing — IndexedDB stays the
+  // working copy and the app is fully usable with no signal.
+  useEffect(() => startAutoSync(() => refresh()), [refresh]);
 
   useEffect(() => {
     if (!openId) {
@@ -59,5 +65,15 @@ export default function App() {
     );
   }
 
-  return <RecordList list={list} onOpen={setOpenId} onStart={start} onExport={exportAll} />;
+  const unsynced = list.filter((r) => !r.syncedAt || r.updatedAt > r.syncedAt).length;
+
+  return (
+    <RecordList
+      list={list}
+      unsynced={unsynced}
+      onOpen={setOpenId}
+      onStart={start}
+      onExport={exportAll}
+    />
+  );
 }

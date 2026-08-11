@@ -1,22 +1,49 @@
-// Cloudflare Workers static assets.
+// Cloudflare Workers.
 //
-// This file exists to stop `wrangler deploy` trying to auto-configure itself.
-// Without it, wrangler detects Vite, reaches for its Vite plugin integration
-// and fails: that plugin needs Vite 6+, and this project is on Vite 5.
-// With explicit config, wrangler just uploads dist/ and serves it.
+// This was static-assets-only until sync was added. Now there is a Worker as
+// well, and the routing rule is: a request matching a file in dist/ is served
+// as an asset; everything else invokes the Worker. Since /api/* never matches a
+// built file, it lands in worker/index.ts and the app's own paths behave exactly
+// as they did before.
 //
-// There is no `main` — nothing here runs server-side. It is a static site.
+// Explicit config is still needed to stop wrangler auto-detecting Vite and
+// reaching for its Vite plugin integration, which requires Vite 6+ (we're on 5).
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "museum-capture",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-08-11",
+
   "assets": {
-    // Vite's build output. public/_headers is copied in here by the build,
-    // and Workers applies it to the assets it serves.
-    "directory": "./dist"
+    // Vite's build output. public/_headers is copied in here by the build.
+    "directory": "./dist",
+    // The binding lets Worker code serve assets for non-API paths.
+    "binding": "ASSETS"
+  },
+
+  // Working store: records sync here so they aren't stranded on one phone.
+  // Create with: npx wrangler d1 create artefact-catalogue
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "artefact-catalogue",
+      "database_id": "PASTE_ID_FROM_WRANGLER_D1_CREATE",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Photographs, and the weekly export snapshots.
+  // Create with: npx wrangler r2 bucket create artefact-photos
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "artefact-photos"
+    }
+  ],
+
+  // Weekly export. D1's point-in-time recovery is 7 days on the free plan, so
+  // this snapshot is what actually makes the catalogue durable. 01:00 Monday AEST.
+  "triggers": {
+    "crons": ["0 15 * * SUN"]
   }
-  // `not_found_handling` is deliberately left at its default ("none").
-  // The app has no router, so there are no deep URLs to fall back for, and
-  // the relative `base: "./"` in vite.config.ts means a fallback served at a
-  // deep path would resolve its asset URLs against the wrong directory.
 }

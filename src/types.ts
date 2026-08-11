@@ -95,6 +95,8 @@ export interface PhotoMeta {
   caption: string;
   primary: boolean;
   addedAt: string;
+  /** Absent means the image is still only on this device. */
+  uploadedAt?: string;
 }
 
 export type RecordStatus = "draft" | "review" | "confirmed" | "exported";
@@ -109,4 +111,7 @@ export interface ArtefactRecord {
   capturedBy: string;
   capturedAt: string;
   updatedAt: string;
+  /** Server clock, set on successful sync. Absent means never synced. */
+  syncedAt?: string;
+  revision?: number;
 }
