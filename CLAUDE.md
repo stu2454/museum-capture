@@ -206,6 +206,34 @@ src/components/
   worker and (later) the microphone all need HTTPS. The camera file input does not.
 - **apple-touch-icon must be PNG.** iOS ignores SVG for home-screen icons.
 
+## The service worker, and why it is split two ways
+
+`public/sw.js` is the only thing standing between a deploy and a volunteer's phone. Get it
+wrong and a fix never arrives: the app keeps serving its cached self, and the only remedy in
+the field is clearing site data — which also destroys every record not yet exported.
+
+So the strategy is deliberately split:
+
+- **The page is network-first**, falling back to cache when there is no signal. This is what
+  makes a deploy reach a device that has already opened the app.
+- **`/assets/*` is cache-first.** Vite content-hashes those filenames, so a changed file
+  always arrives under a new name and a cached one can never be stale. They are the big
+  files, and serving them from disk is what makes the app open instantly.
+- **Everything else** (icons, manifest) is stale-while-revalidate.
+- **`sw.js` itself is never intercepted.** The browser needs a straight answer from the
+  network to notice an update.
+
+Do not make the page cache-first "for speed". That is the bug this replaced.
+
+If the caching behaviour changes, bump `CACHE`. `activate` deletes every cache that isn't the
+current name, and that sweep is how a device with a broken cache recovers.
+
+Verified in a real browser, not by reasoning: a device carrying the old cache-first worker
+recovers after **two** opens (the first installs the new worker, the second serves fresh
+content), and thereafter a redeploy lands on the **first** reload. Offline still works
+throughout. Re-test with a headless browser if you touch this file — the handover is
+asynchronous, and fixed timeouts will lie to you.
+
 ## Design direction
 
 Registration ink, archival board, and the brass tie-on tag. The accession tag header is the
