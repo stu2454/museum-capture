@@ -1,0 +1,27 @@
+# Render blueprint. Static site — there is no backend, by design.
+# Render reads this on first deploy and on every push to the branch below.
+services:
+  - type: web
+    name: museum-capture
+    runtime: static
+    branch: main
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+
+    headers:
+      # The service worker must never be served from cache, or a deploy can
+      # never reach a device that already has the old one.
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      # Same for the shell: it names the hashed asset files, so a stale copy
+      # points at assets that no longer exist.
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+
+    routes:
+      # Single-page app: anything that isn't a real file is handled by the app.
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -1,0 +1,564 @@
+/*
+  Visual direction: the materials of museum registration — registration ink,
+  archival grey board, and the brass-manila tie-on tag that hangs off every
+  accessioned object. The tag is the signature element; everything else stays
+  quiet so it reads.
+
+  Constraints that shaped this: volunteers are frequently in their seventies,
+  working in poor light, on a phone, holding something fragile in the other
+  hand. So: 18px base, 52px minimum touch targets, high contrast, no hover-only
+  affordances, no fonts fetched over a network that may not be there.
+*/
+
+:root {
+  --ink: #16283c;
+  --ink-soft: #46586c;
+  --board: #e8ecef;
+  --paper: #ffffff;
+  --rule: #c3cbd3;
+  --tag: #c9a227;
+  --tag-deep: #9a7a1c;
+  --sage: #3f6b57;
+  --alert: #a33b32;
+
+  --display: Georgia, "Iowan Old Style", "Times New Roman", ui-serif, serif;
+  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --data: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --tap: 52px;
+  --radius: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--board);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--tag-deep);
+  outline-offset: 2px;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px 96px;
+}
+
+/* ---------------------------------------------------------- accession tag */
+/* The signature: a tie-on tag with a punched hole, carrying the registration
+   number. Every catalogued object in a museum has one; this is its screen twin. */
+
+.tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px 0 20px;
+  padding: 14px 20px 14px 52px;
+  background: var(--tag);
+  color: var(--ink);
+  border-radius: var(--radius);
+  clip-path: polygon(0 50%, 22px 0, 100% 0, 100% 100%, 22px 100%);
+  box-shadow: 0 1px 0 rgba(22, 40, 60, 0.25);
+}
+
+.tag-hole {
+  position: absolute;
+  left: 30px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--board);
+  box-shadow: inset 0 1px 2px rgba(22, 40, 60, 0.45);
+}
+
+.tag-number {
+  font-family: var(--data);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.tag-number.is-unassigned {
+  font-style: italic;
+  font-weight: 500;
+  opacity: 0.72;
+  letter-spacing: 0;
+}
+
+.tag-name {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  margin-left: auto;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- masthead */
+
+.masthead {
+  padding: 22px 0 4px;
+}
+
+.masthead h1 {
+  font-family: var(--display);
+  font-size: 1.65rem;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.eyebrow {
+  font-family: var(--data);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+
+/* ------------------------------------------------------------------ cards */
+
+.card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------ steps */
+
+.step-track {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 20px;
+}
+
+.step-mark {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--rule);
+}
+
+.step-mark.is-done {
+  background: var(--sage);
+}
+
+.step-mark.is-current {
+  background: var(--ink);
+}
+
+.question {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.25;
+  margin: 0 0 6px;
+}
+
+.question-note {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin: 0 0 20px;
+}
+
+/* ------------------------------------------------------------------ fields */
+
+.field {
+  margin-bottom: 22px;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.98rem;
+  margin-bottom: 2px;
+}
+
+.field-hint {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.field-control,
+.field-area {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  font-family: var(--body);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-bottom: 2px solid var(--ink-soft);
+  border-radius: var(--radius);
+}
+
+.field-area {
+  min-height: 108px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.field-control:focus,
+.field-area:focus {
+  border-bottom-color: var(--tag-deep);
+}
+
+.field-inline {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.field-inline .field-control {
+  min-width: 0;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  padding: 6px 14px;
+  margin-bottom: 6px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.choice.is-chosen {
+  border-color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+.choice input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ink);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
+  background: var(--board);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.chip button {
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ photos */
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.photo {
+  position: relative;
+  aspect-ratio: 1;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--board);
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-primary-flag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--tag);
+  color: var(--ink);
+  font-family: var(--data);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 3px 7px;
+  border-radius: 3px;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(22, 40, 60, 0.82);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+.btn {
+  min-height: var(--tap);
+  padding: 14px 22px;
+  font-family: var(--body);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--alert);
+  color: var(--alert);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-wide {
+  width: 100%;
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px 0 16px;
+  background: linear-gradient(to top, var(--board) 78%, rgba(232, 236, 239, 0));
+}
+
+.actions .btn {
+  flex: 1;
+}
+
+/* ------------------------------------------------- review sheet (echo of the paper) */
+/* Volunteers know the printed worksheet. The review screen deliberately looks
+   like it, so checking the record feels like reading back a filled-in form. */
+
+.sheet {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  margin-bottom: 14px;
+}
+
+.sheet h3 {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 0 0 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.sheet-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sheet-line dt {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.sheet-line dd {
+  margin: 0;
+  flex: 1;
+  min-width: 55%;
+  font-weight: 500;
+}
+
+.sheet-line dd.is-blank {
+  color: var(--ink-soft);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.sheet dl {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ notices */
+
+.notice {
+  border-left: 3px solid var(--ink-soft);
+  background: var(--paper);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  font-size: 0.92rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.notice-restricted {
+  border-left-color: var(--alert);
+}
+
+.notice-open {
+  border-left-color: var(--tag-deep);
+}
+
+.notice h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.notice ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.notice li {
+  margin-bottom: 4px;
+}
+
+.status {
+  display: inline-block;
+  font-family: var(--data);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+.status.is-confirmed {
+  border-color: var(--sage);
+  color: var(--sage);
+}
+
+.empty {
+  text-align: center;
+  padding: 44px 20px;
+}
+
+.empty p {
+  color: var(--ink-soft);
+  margin: 0 0 22px;
+}
+
+.record-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  font-family: var(--body);
+  font-size: 1rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.record-link strong {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.12rem;
+}
+
+.record-ref {
+  font-family: var(--data);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .question,
+  .field {
+    animation: rise 0.22s ease-out both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

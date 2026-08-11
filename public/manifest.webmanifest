@@ -1,0 +1,14 @@
+{
+  "name": "Artefact Catalogue",
+  "short_name": "Catalogue",
+  "description": "Record museum artefacts from the collection store",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E8ECEF",
+  "theme_color": "#16283C",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

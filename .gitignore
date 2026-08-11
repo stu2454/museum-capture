@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+tsconfig.tsbuildinfo
+
+# Reference and sample photographs of objects. Kept out of the repo because
+# they are large, the app doesn't read them, and anything committed here is
+# permanent — a photo of a filled-in worksheet would carry donor details.
+images/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Never commit real catalogue exports — they can contain collection and donor information.
+*.catalogue.json
+catalogue-*.json
