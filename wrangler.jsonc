@@ -18,7 +18,7 @@
     // Vite's build output. public/_headers is copied in here by the build.
     "directory": "./dist",
     // The binding lets Worker code serve assets for non-API paths.
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
 
   // Working store: records sync here so they aren't stranded on one phone.
@@ -27,9 +27,9 @@
     {
       "binding": "DB",
       "database_name": "artefact-catalogue",
-      "database_id": "PASTE_ID_FROM_WRANGLER_D1_CREATE",
-      "migrations_dir": "migrations"
-    }
+      "database_id": "2473e8e9-a25d-418e-99e8-01f466313145",
+      "migrations_dir": "migrations",
+    },
   ],
 
   // Photographs, and the weekly export snapshots.
@@ -37,13 +37,13 @@
   "r2_buckets": [
     {
       "binding": "PHOTOS",
-      "bucket_name": "artefact-photos"
-    }
+      "bucket_name": "artefact-photos",
+    },
   ],
 
   // Weekly export. D1's point-in-time recovery is 7 days on the free plan, so
   // this snapshot is what actually makes the catalogue durable. 01:00 Monday AEST.
   "triggers": {
-    "crons": ["0 15 * * SUN"]
-  }
+    "crons": ["0 15 * * SUN"],
+  },
 }
