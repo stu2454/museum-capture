@@ -1,20 +1,23 @@
 /**
  * Photo intake.
  *
- * Phone cameras produce 4-12 MB files; a morning's cataloguing would fill a
- * tablet. Downscale on the way in, before anything touches storage.
+ * A modern iPhone shoots 12–48 megapixels. Decoding one of those at full size
+ * and then drawing it to a canvas costs hundreds of megabytes and several
+ * seconds of blocked main thread — the app appears frozen, which is what
+ * "Adding…" greyed out for a long time actually was.
  *
- * Two device-specific things this handles:
+ * The fix is to never hold the image at full size. `createImageBitmap` accepts
+ * resize options, so the browser decodes straight to the size we want using its
+ * own optimised path. Where those options aren't supported we fall back to an
+ * <img> element, which Safari decodes natively and which applies EXIF rotation
+ * for free.
+ *
+ * Two device-specific things this also handles:
  *
  * 1. EXIF orientation. Phones record "which way up" as metadata rather than
- *    rotating the pixels. Draw such a file to a canvas naively and the artefact
- *    ends up on its side in the record. `imageOrientation: "from-image"` applies
- *    the rotation; the <img> fallback below gets it right for free.
- *
- * 2. HEIC. iPhones shoot HEIC by default. Safari decodes it natively and the
- *    canvas re-encodes to JPEG, which is the outcome we want anyway - a JPEG is
- *    portable and eHive will take it. On a browser that can't decode HEIC we
- *    keep the original file rather than losing the photo.
+ *    rotating the pixels, so a naive canvas draw lands the artefact on its side.
+ * 2. HEIC. iPhones shoot HEIC by default. Safari decodes it and the canvas
+ *    re-encodes to JPEG — portable, and what eHive will accept.
  */
 
 const MAX_EDGE = 2000;
@@ -22,24 +25,28 @@ const QUALITY = 0.85;
 
 export async function prepareImage(file: File): Promise<Blob> {
   const source = await decode(file);
-  if (!source) return file; // couldn't decode - keep the original rather than lose it
-
-  const longest = Math.max(source.width, source.height);
-  const scale = longest > MAX_EDGE ? MAX_EDGE / longest : 1;
-  const width = Math.round(source.width * scale);
-  const height = Math.round(source.height * scale);
+  if (!source) return file; // couldn't decode — keep the original rather than lose the photo
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = source.width;
+  canvas.height = source.height;
   const context = canvas.getContext("2d");
-  if (!context) return file;
-  context.drawImage(source.image, 0, 0, width, height);
+  if (!context) {
+    source.release();
+    return file;
+  }
+  context.drawImage(source.image, 0, 0, source.width, source.height);
   source.release();
 
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/jpeg", QUALITY)
   );
+
+  // Free the canvas immediately. iOS is aggressive about reclaiming tabs that
+  // hold a lot of image memory, and a reclaimed tab loses unsaved work.
+  canvas.width = 0;
+  canvas.height = 0;
+
   return blob ?? file;
 }
 
@@ -50,18 +57,38 @@ interface Decoded {
   release: () => void;
 }
 
+function fit(width: number, height: number): { width: number; height: number } {
+  const longest = Math.max(width, height);
+  if (longest <= MAX_EDGE) return { width, height };
+  const scale = MAX_EDGE / longest;
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
+}
+
 async function decode(file: File): Promise<Decoded | null> {
+  // Ask the browser to decode directly to the target size. This is the whole
+  // performance fix: a 48MP photo never exists in memory at full resolution.
   try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const probe = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const target = fit(probe.width, probe.height);
+
+    if (target.width === probe.width) {
+      return { image: probe, width: probe.width, height: probe.height, release: () => probe.close() };
+    }
+
+    const resized = await createImageBitmap(file, {
+      imageOrientation: "from-image",
+      resizeWidth: target.width,
+      resizeHeight: target.height,
+      resizeQuality: "high",
+    });
+    probe.close();
     return {
-      image: bitmap,
-      width: bitmap.width,
-      height: bitmap.height,
-      release: () => bitmap.close(),
+      image: resized,
+      width: resized.width,
+      height: resized.height,
+      release: () => resized.close(),
     };
   } catch {
-    // Older Safari, or a format createImageBitmap won't take. An <img> element
-    // applies EXIF orientation itself, so this path stays correct.
     return decodeViaImgElement(file);
   }
 }
@@ -70,19 +97,26 @@ function decodeViaImgElement(file: File): Promise<Decoded | null> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const image = new Image();
-    image.onload = () =>
+    image.onload = () => {
+      const target = fit(image.naturalWidth, image.naturalHeight);
       resolve({
         image,
-        width: image.naturalWidth,
-        height: image.naturalHeight,
+        width: target.width,
+        height: target.height,
         release: () => URL.revokeObjectURL(url),
       });
+    };
     image.onerror = () => {
       URL.revokeObjectURL(url);
       resolve(null);
     };
     image.src = url;
   });
+}
+
+/** Let the browser paint between heavy files, so progress is actually visible. */
+export function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 export function downloadFile(name: string, contents: string, type = "application/json") {

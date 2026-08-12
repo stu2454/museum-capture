@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { newId, photos } from "../db";
-import { prepareImage } from "../media";
+import { prepareImage, yieldToBrowser } from "../media";
 import type { PhotoMeta } from "../types";
 
 interface Props {
@@ -21,32 +21,54 @@ interface Props {
 export function PhotoStep({ items, onChange }: Props) {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
 
+  // Object URLs are cached by photo id and only created once. The previous
+  // version rebuilt every thumbnail whenever a single photo was added, so
+  // adding the tenth photo did ten times the work of adding the first.
+  const urlCache = useRef<Map<string, string>>(new Map());
+
   useEffect(() => {
     let cancelled = false;
-    const made: string[] = [];
+    const cache = urlCache.current;
+    const missing = items.filter((item) => !cache.has(item.id));
 
-    Promise.all(
-      items.map(async (item) => {
-        const blob = await photos.get(item.id);
-        if (!blob) return null;
-        const url = URL.createObjectURL(blob);
-        made.push(url);
-        return [item.id, url] as const;
-      })
-    ).then((pairs) => {
-      if (cancelled) return;
-      setUrls(Object.fromEntries(pairs.filter(Boolean) as (readonly [string, string])[]));
-    });
+    if (missing.length === 0) {
+      // Release URLs for photos that have been removed.
+      for (const [id, url] of cache) {
+        if (!items.some((item) => item.id === id)) {
+          URL.revokeObjectURL(url);
+          cache.delete(id);
+        }
+      }
+      return;
+    }
+
+    void (async () => {
+      for (const item of missing) {
+        const blob = await photos.get(item.id).catch(() => undefined);
+        if (cancelled || !blob) continue;
+        cache.set(item.id, URL.createObjectURL(blob));
+        setUrls(Object.fromEntries(cache));
+      }
+    })();
 
     return () => {
       cancelled = true;
-      made.forEach(URL.revokeObjectURL);
     };
   }, [items]);
+
+  // Release every URL when the step unmounts.
+  useEffect(() => {
+    const cache = urlCache.current;
+    return () => {
+      for (const url of cache.values()) URL.revokeObjectURL(url);
+      cache.clear();
+    };
+  }, []);
 
   async function accept(files: FileList | null) {
     if (!files?.length) return;
@@ -54,7 +76,10 @@ export function PhotoStep({ items, onChange }: Props) {
     setProblem(null);
     const added: PhotoMeta[] = [];
 
-    for (const file of Array.from(files)) {
+    const list = Array.from(files);
+    setProgress({ done: 0, total: list.length });
+
+    for (const [index, file] of list.entries()) {
       try {
         const id = newId("img");
         await photos.put(id, await prepareImage(file));
@@ -64,6 +89,11 @@ export function PhotoStep({ items, onChange }: Props) {
           primary: items.length === 0 && added.length === 0,
           addedAt: new Date().toISOString(),
         });
+        // Show each photo as it lands rather than making the volunteer wait for
+        // the whole batch. Yielding lets the browser actually paint the update.
+        onChange([...items, ...added]);
+        setProgress({ done: index + 1, total: list.length });
+        await yieldToBrowser();
       } catch {
         setProblem(
           `Couldn't read ${file.name}. Take the photo again, or check there is space left on the device.`
@@ -71,7 +101,7 @@ export function PhotoStep({ items, onChange }: Props) {
       }
     }
 
-    if (added.length) onChange([...items, ...added]);
+    setProgress(null);
     setBusy(false);
   }
 
@@ -92,7 +122,11 @@ export function PhotoStep({ items, onChange }: Props) {
 
       <div className="button-pair">
         <button type="button" className="btn" disabled={busy} onClick={() => cameraRef.current?.click()}>
-          {busy ? "Adding..." : "Take a photo"}
+          {busy && progress
+            ? progress.total > 1
+              ? `Adding ${progress.done + 1} of ${progress.total}...`
+              : "Adding..."
+            : "Take a photo"}
         </button>
         <button
           type="button"
@@ -128,6 +162,13 @@ export function PhotoStep({ items, onChange }: Props) {
           e.target.value = "";
         }}
       />
+
+      {busy && progress && progress.total > 1 && (
+        <p className="muted small" style={{ marginTop: 10 }}>
+          Adding {progress.done} of {progress.total}. Large photos take a few seconds each — you
+          can leave this screen open.
+        </p>
+      )}
 
       {problem && (
         <div className="notice notice-problem" role="alert">
