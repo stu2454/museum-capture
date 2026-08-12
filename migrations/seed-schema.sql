@@ -1388,4 +1388,4 @@ open_questions:
 - Who assigns the registration number - the app, or a committee member beforehand?
 - Should cataloguing volunteers see the donor block at all, or does a committee member enter it separately?
 - Confirm every mapping.ehive value against the actual eHive import spreadsheet before any export is built.
-', 44, 'eHive Cataloguing Guidelines - July 2023, Appendix 1, pp.10-11', 'Loaded 2026-08-11 from schema/worksheet.v2.yaml');
+', 44, 'eHive Cataloguing Guidelines - July 2023, Appendix 1, pp.10-11', 'Loaded 2026-08-12 from schema/worksheet.v2.yaml');

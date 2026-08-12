@@ -6,10 +6,12 @@
 import { useState } from "react";
 import type { ArtefactRecord } from "../types";
 import { StorageNotice } from "./StorageNotice";
+import { TROUBLE_THRESHOLD_HOURS } from "../sync";
 
 interface Props {
   list: ArtefactRecord[];
   unsynced?: number;
+  failingSince?: string;
   onOpen: (id: string) => void;
   onStart: () => void;
   onExport: () => void;
@@ -43,7 +45,11 @@ function Volunteer() {
   );
 }
 
-export function RecordList({ list, unsynced = 0, onOpen, onStart, onExport }: Props) {
+function hoursSince(iso: string): number {
+  return (Date.now() - new Date(iso).getTime()) / 3_600_000;
+}
+
+export function RecordList({ list, unsynced = 0, failingSince, onOpen, onStart, onExport }: Props) {
   return (
     <div className="app">
       <header className="masthead">
@@ -54,6 +60,20 @@ export function RecordList({ list, unsynced = 0, onOpen, onStart, onExport }: Pr
       <Volunteer />
 
       <StorageNotice />
+
+      {/* A persistent fault does get shown. Not to alarm anyone — the records
+          are safe on the device either way — but because the alternative is what
+          happened once already: sync failing silently for hours while the
+          database stayed empty and nobody knew. */}
+      {failingSince && hoursSince(failingSince) >= TROUBLE_THRESHOLD_HOURS && (
+        <div className="notice notice-problem">
+          <h4>Records aren&apos;t reaching the museum&apos;s server</h4>
+          <p style={{ margin: 0 }}>
+            Your work is saved safely on this device and nothing has been lost. Please mention
+            this to whoever looks after the app, and keep cataloguing as normal.
+          </p>
+        </div>
+      )}
 
       {/* Quiet, never an error. A failed sync is not a failed cataloguing
           session, and someone holding a fragile object should not be reading a

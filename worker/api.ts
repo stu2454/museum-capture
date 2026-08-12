@@ -140,7 +140,21 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
       );
     }
 
-    await env.DB.batch(statements);
+    try {
+      await env.DB.batch(statements);
+    } catch (error) {
+      // Record the failure where a human can find it. Previously this threw, the
+      // client swallowed it, and the only symptom was an empty database.
+      const message = error instanceof Error ? error.message : String(error);
+      await env.DB.prepare(
+        `INSERT INTO sync_errors (device_id, volunteer, record_id, stage, message)
+         VALUES (?1, ?2, ?3, 'upsert', ?4)`
+      )
+        .bind(body.device_id, volunteer, incoming[0]?.id ?? null, message)
+        .run()
+        .catch(() => undefined); // never let logging mask the original error
+      throw error;
+    }
 
     // Report back which pushes actually took effect, so the client can show a
     // volunteer that their edit lost rather than silently dropping it.

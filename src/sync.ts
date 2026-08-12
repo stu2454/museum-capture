@@ -16,6 +16,8 @@ import type { ArtefactRecord } from "./types";
 
 const DEVICE_KEY = "deviceId";
 const SINCE_KEY = "lastSyncedAt";
+const TROUBLE_KEY = "syncFailingSince";
+const LAST_OK_KEY = "syncLastOk";
 const BATCH = 20; // matches the server cap, which is set by D1's free-plan query limit
 
 export interface SyncOutcome {
@@ -25,6 +27,15 @@ export interface SyncOutcome {
   photosUploaded: number;
   offline: boolean;
   error?: string;
+  /** Set when sync has been failing continuously. Drives the warning banner. */
+  failingSince?: string;
+}
+
+/** How long a fault must persist before the volunteer is told. */
+export const TROUBLE_THRESHOLD_HOURS = 6;
+
+export function lastSuccessfulSync(): string | null {
+  return localStorage.getItem(LAST_OK_KEY);
 }
 
 function deviceId(): string {
@@ -100,10 +111,20 @@ export async function syncNow(): Promise<SyncOutcome> {
 
     outcome.photosUploaded = await uploadPhotos(all);
   } catch (error) {
-    // Swallowed on purpose. A failed sync is not a failed cataloguing session;
-    // the records are safe locally and the next attempt will pick them up.
+    // A single failure is not worth showing anyone — no signal in a store room is
+    // normal and the records are safe locally. But a fault that persists for
+    // hours must not stay invisible: that is exactly how an empty database goes
+    // unnoticed. Record when trouble started so the UI can escalate.
     outcome.error = error instanceof Error ? error.message : "Sync failed";
+    if (!localStorage.getItem(TROUBLE_KEY)) {
+      localStorage.setItem(TROUBLE_KEY, new Date().toISOString());
+    }
+    outcome.failingSince = localStorage.getItem(TROUBLE_KEY) ?? undefined;
+    return outcome;
   }
+
+  localStorage.removeItem(TROUBLE_KEY);
+  localStorage.setItem(LAST_OK_KEY, new Date().toISOString());
 
   return outcome;
 }

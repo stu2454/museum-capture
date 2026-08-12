@@ -11,6 +11,7 @@
  */
 
 import { handleApi, type Env as ApiEnv } from "./api";
+import { handleExplorer } from "./explorer";
 
 export interface Env extends ApiEnv {
   ASSETS: Fetcher;
@@ -20,8 +21,16 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith("/api/")) {
+    // Sync endpoints used by the capture app on volunteers' phones.
+    if (url.pathname.startsWith("/api/sync") || url.pathname.startsWith("/api/photos")) {
       return handleApi(request, env);
+    }
+
+    // Everything else under /api is the explorer, which requires an identified
+    // and authorised user. Kept separate because the capture app talks to a
+    // device, and the explorer talks to a person.
+    if (url.pathname.startsWith("/api/")) {
+      return handleExplorer(request, env);
     }
 
     return env.ASSETS.fetch(request);

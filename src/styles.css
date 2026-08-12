@@ -577,3 +577,57 @@ body {
   border-left-color: var(--alert);
   color: var(--ink);
 }
+
+/* ---------------------------------------------------- explorer additions */
+
+.photo-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  background: var(--board);
+  border: 1px dashed var(--rule);
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.notice-ok {
+  border-left-color: var(--sage);
+}
+
+/* Not position:fixed — a fixed overlay inside a constrained viewport collapses.
+   A tall in-flow block behaves predictably on a phone. */
+.lightbox {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  margin: 14px 0;
+  background: var(--ink);
+  border-radius: var(--radius);
+  cursor: zoom-out;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.lightbox p {
+  margin: 0;
+  color: #cbd3da;
+}
+
+.record-link img {
+  display: block;
+}

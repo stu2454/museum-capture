@@ -5,12 +5,23 @@ import { newId, records } from "./db";
 import { toBundle } from "./export";
 import { downloadFile } from "./media";
 import { schema } from "./schema";
-import { startAutoSync } from "./sync";
+import { Explorer } from "./explorer/Explorer";
+import { startAutoSync, type SyncOutcome } from "./sync";
 import type { ArtefactRecord } from "./types";
 
 export default function App() {
+  // Two apps, one deployment. The capture app is for volunteers holding an
+  // object; the explorer is for anyone looking things up. Keeping them on
+  // separate paths means the capture flow stays free of search UI, and the
+  // explorer never risks someone accidentally editing a record.
+  if (window.location.pathname.startsWith("/explore")) {
+    return <Explorer />;
+  }
+
+
   const [list, setList] = useState<ArtefactRecord[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [sync, setSync] = useState<SyncOutcome | null>(null);
   const [current, setCurrent] = useState<ArtefactRecord | null>(null);
 
   const refresh = useCallback(() => {
@@ -22,7 +33,14 @@ export default function App() {
   // Sync runs in the background: on load, when the connection returns, and every
   // few minutes. It is never a precondition for cataloguing — IndexedDB stays the
   // working copy and the app is fully usable with no signal.
-  useEffect(() => startAutoSync(() => refresh()), [refresh]);
+  useEffect(
+    () =>
+      startAutoSync((outcome) => {
+        setSync(outcome);
+        refresh();
+      }),
+    [refresh]
+  );
 
   useEffect(() => {
     if (!openId) {
@@ -71,6 +89,7 @@ export default function App() {
     <RecordList
       list={list}
       unsynced={unsynced}
+      failingSince={sync?.failingSince}
       onOpen={setOpenId}
       onStart={start}
       onExport={exportAll}

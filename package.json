@@ -13,7 +13,11 @@
     "typecheck:worker": "tsc -p worker/tsconfig.json",
     "db:migrate": "wrangler d1 migrations apply artefact-catalogue --remote",
     "db:migrate:local": "wrangler d1 migrations apply artefact-catalogue --local",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "db:seed": "node scripts/seed-schema.mjs && wrangler d1 execute artefact-catalogue --remote --file=migrations/seed-schema.sql",
+    "db:check": "wrangler d1 execute artefact-catalogue --remote --command \"SELECT version, field_count, state FROM schema_health\"",
+    "db:errors": "wrangler d1 execute artefact-catalogue --remote --command \"SELECT at, device_id, stage, message FROM sync_errors ORDER BY at DESC LIMIT 20\"",
+    "db:records": "wrangler d1 execute artefact-catalogue --remote --command \"SELECT registration_number, object_name, status, captured_by, updated_at FROM current_records ORDER BY updated_at DESC LIMIT 20\""
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
