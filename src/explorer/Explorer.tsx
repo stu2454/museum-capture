@@ -78,7 +78,7 @@ export function Explorer() {
   }
 
   if (view.name === "record") {
-    return <RecordView id={view.id} onBack={() => setView({ name: "list" })} />;
+    return <RecordView id={view.id} me={me} onBack={() => setView({ name: "list" })} />;
   }
 
   if (view.name === "users") {
@@ -170,9 +170,22 @@ export function Explorer() {
         </button>
       )}
 
-      <p className="muted small" style={{ marginTop: 18 }}>
-        Signed in as {me.display_name || me.email}.
-      </p>
+      <div style={{ marginTop: 22, paddingTop: 16, borderTop: "1px solid var(--rule)" }}>
+        <p className="muted small" style={{ margin: "0 0 10px" }}>
+          Signed in as {me.display_name || me.email}.
+        </p>
+        <button
+          type="button"
+          className="btn btn-quiet"
+          onClick={() => {
+            // Cloudflare Access holds the session, so signing out is its job.
+            // Clearing anything locally would leave the person still signed in.
+            window.location.href = "/cdn-cgi/access/logout";
+          }}
+        >
+          Sign out
+        </button>
+      </div>
     </div>
   );
 }

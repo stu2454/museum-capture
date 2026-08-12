@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { api, type Me, type Role, type UserRow } from "./api";
+import { api, type Me, type RemovedRecord, type Role, type UserRow } from "./api";
 
 const ROLE_HELP: Record<Role, string> = {
   viewer: "Can search and read records.",
@@ -18,6 +18,7 @@ const ROLE_HELP: Record<Role, string> = {
 
 export function UserAdmin({ me, onBack }: { me: Me; onBack: () => void }) {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [removed, setRemoved] = useState<RemovedRecord[]>([]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("volunteer");
@@ -26,9 +27,17 @@ export function UserAdmin({ me, onBack }: { me: Me; onBack: () => void }) {
   const [problem, setProblem] = useState<string | null>(null);
 
   const load = () => api.users().then(setUsers).catch(() => undefined);
+  const loadRemoved = () => api.removed().then(setRemoved).catch(() => undefined);
+
   useEffect(() => {
     void load();
+    void loadRemoved();
   }, []);
+
+  async function restore(record: RemovedRecord) {
+    await api.restoreRecord(record.id).catch(() => undefined);
+    await loadRemoved();
+  }
 
   async function add() {
     setBusy(true);
@@ -172,6 +181,45 @@ export function UserAdmin({ me, onBack }: { me: Me; onBack: () => void }) {
           )}
         </div>
       ))}
+
+      <p className="eyebrow" style={{ margin: "30px 0 10px" }}>
+        Removed records — {removed.length}
+      </p>
+
+      {removed.length === 0 ? (
+        <p className="muted small">Nothing has been removed from the collection.</p>
+      ) : (
+        <>
+          <p className="muted small" style={{ marginTop: 0 }}>
+            These no longer appear in the collection. Nothing has been destroyed — their
+            history and photographs are intact and they can be brought back.
+          </p>
+          {removed.map((record) => (
+            <div key={record.id} className="card">
+              <div className="card-row">
+                <strong>{record.object_name || "Untitled object"}</strong>
+                <span className="status">{record.registration_number || "no number"}</span>
+              </div>
+              <p className="small" style={{ margin: "6px 0 0" }}>
+                {record.deletion_reason || "No reason recorded."}
+              </p>
+              <p className="record-ref" style={{ margin: "4px 0 0" }}>
+                Removed by {record.deleted_by || "unknown"} on{" "}
+                {new Date(record.deleted_at).toLocaleDateString("en-AU")} ·{" "}
+                {record.photo_count} {record.photo_count === 1 ? "photo" : "photos"} kept
+              </p>
+              <button
+                type="button"
+                className="btn btn-quiet"
+                style={{ marginTop: 12 }}
+                onClick={() => void restore(record)}
+              >
+                Put it back
+              </button>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

@@ -9,7 +9,8 @@
 
 import { useEffect, useState } from "react";
 import yaml from "js-yaml";
-import { api, photoUrl, type RecordDetail } from "./api";
+import { api, photoUrl, type Me, type RecordDetail } from "./api";
+import { RemovePanel } from "./RemovePanel";
 
 interface FieldDef {
   id: string;
@@ -29,7 +30,16 @@ interface SectionDef {
   page: number;
 }
 
-export function RecordView({ id, onBack }: { id: string; onBack: () => void }) {
+export function RecordView({
+  id,
+  me,
+  onBack,
+}: {
+  id: string;
+  me: Me;
+  onBack: () => void;
+}) {
+  const [removing, setRemoving] = useState(false);
   const [data, setData] = useState<RecordDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [zoomed, setZoomed] = useState<string | null>(null);
@@ -158,6 +168,28 @@ export function RecordView({ id, onBack }: { id: string; onBack: () => void }) {
               ))}
           </dl>
         </section>
+      )}
+
+      {me.role === "admin" && !removing && (
+        <button
+          type="button"
+          className="btn btn-danger btn-wide"
+          style={{ marginTop: 20 }}
+          onClick={() => setRemoving(true)}
+        >
+          Remove this record from the collection
+        </button>
+      )}
+
+      {removing && (
+        <div style={{ marginTop: 20 }}>
+          <RemovePanel
+            recordId={id}
+            label={(data.record.registration_number || data.record.object_name || "").trim()}
+            onRemoved={onBack}
+            onCancel={() => setRemoving(false)}
+          />
+        </div>
       )}
 
       <section className="sheet" style={{ marginTop: 16 }}>

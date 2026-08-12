@@ -72,8 +72,22 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
         "You don't have access to the collection yet."
     );
   }
-  if (!response.ok) throw new Error(`Request failed (${response.status})`);
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { message?: string };
+    throw new Error(body.message ?? `Request failed (${response.status})`);
+  }
   return (await response.json()) as T;
+}
+
+export interface RemovedRecord {
+  id: string;
+  registration_number: string | null;
+  object_name: string | null;
+  deleted_at: string;
+  deleted_by: string | null;
+  deletion_reason: string | null;
+  photo_count: number;
+  revision_count: number;
 }
 
 export const api = {
@@ -93,6 +107,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, display_name, role }),
     }),
+
+  removeRecord: (id: string, reason: string, confirm: string) =>
+    call<{ ok: true }>(`/records/${encodeURIComponent(id)}/remove`, {
+      method: "POST",
+      body: JSON.stringify({ reason, confirm }),
+    }),
+
+  restoreRecord: (id: string) =>
+    call<{ ok: true }>(`/records/${encodeURIComponent(id)}/restore`, { method: "POST" }),
+
+  removed: () => call<{ records: RemovedRecord[] }>("/removed").then((r) => r.records),
 
   removeUser: (email: string) =>
     call<{ ok: true }>("/users", { method: "DELETE", body: JSON.stringify({ email }) }),

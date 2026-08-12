@@ -111,6 +111,22 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
 
   try {
     if (path === "/me") return json({ user });
+
+    if (path === "/removed" && request.method === "GET") {
+      if (user.role !== "admin") return json({ error: "admins_only" }, 403);
+      const rows = await env.DB.prepare(`SELECT * FROM removed_records LIMIT 100`).all();
+      return json({ records: rows.results });
+    }
+
+    if (path.startsWith("/records/") && path.endsWith("/remove") && request.method === "POST") {
+      if (user.role !== "admin") return json({ error: "admins_only" }, 403);
+      return await removeRecord(request, env, path, user);
+    }
+
+    if (path.startsWith("/records/") && path.endsWith("/restore") && request.method === "POST") {
+      if (user.role !== "admin") return json({ error: "admins_only" }, 403);
+      return await restoreRecord(env, path, user);
+    }
     if (path === "/records" && request.method === "GET") return await listRecords(request, env, url);
     if (path.startsWith("/records/") && request.method === "GET") return await getRecord(env, path);
     if (path.startsWith("/photo/") && request.method === "GET") return await getPhoto(env, path);
@@ -241,6 +257,75 @@ async function getPhoto(env: Env, path: string): Promise<Response> {
       "Cache-Control": "private, max-age=86400",
     },
   });
+}
+
+/**
+ * Remove a record from the collection.
+ *
+ * Soft delete only — the row, its revision history and its photographs all stay.
+ * A record that turns out to have been removed by mistake, or removed by someone
+ * who misunderstood, can be brought back with nothing lost.
+ *
+ * A reason is required. Six months later "why is 1994.017 missing" needs an
+ * answer better than someone's memory.
+ */
+async function removeRecord(request: Request, env: Env, path: string, actor: User): Promise<Response> {
+  const id = decodeURIComponent(path.split("/")[2] ?? "");
+  const body = (await request.json()) as { reason?: string; confirm?: string };
+  const reason = (body.reason ?? "").trim();
+
+  if (reason.length < 4) {
+    return json(
+      { error: "reason_required", message: "Please say why this record is being removed." },
+      400
+    );
+  }
+
+  const record = await env.DB.prepare(
+    `SELECT registration_number, object_name FROM records WHERE id = ?1 AND deleted_at IS NULL`
+  )
+    .bind(id)
+    .first<{ registration_number: string | null; object_name: string | null }>();
+
+  if (!record) return json({ error: "not_found" }, 404);
+
+  // The confirmation must match what's on the record. Typing the number is a
+  // deliberate speed bump — it makes removing the wrong record much harder than
+  // a mis-tapped button does.
+  const expected = (record.registration_number || record.object_name || "").trim();
+  if ((body.confirm ?? "").trim() !== expected) {
+    return json(
+      {
+        error: "confirm_mismatch",
+        message: `Type "${expected}" exactly to confirm.`,
+      },
+      400
+    );
+  }
+
+  await env.DB.prepare(
+    `UPDATE records
+     SET deleted_at = datetime('now'), deleted_by = ?2, deletion_reason = ?3
+     WHERE id = ?1`
+  )
+    .bind(id, actor.email, reason)
+    .run();
+
+  await log(env, actor.email, "remove_record", id, `${expected} — ${reason}`);
+  return json({ ok: true });
+}
+
+async function restoreRecord(env: Env, path: string, actor: User): Promise<Response> {
+  const id = decodeURIComponent(path.split("/")[2] ?? "");
+
+  await env.DB.prepare(
+    `UPDATE records SET deleted_at = NULL, deleted_by = NULL, deletion_reason = NULL WHERE id = ?1`
+  )
+    .bind(id)
+    .run();
+
+  await log(env, actor.email, "restore_record", id);
+  return json({ ok: true });
 }
 
 async function listUsers(env: Env): Promise<Response> {
