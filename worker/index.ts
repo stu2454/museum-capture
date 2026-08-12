@@ -33,7 +33,7 @@ export default {
       return handleExplorer(request, env);
     }
 
-    return env.ASSETS.fetch(request);
+    return serveApp(request, env);
   },
 
   /**
@@ -168,4 +168,63 @@ DONOR DETAILS ARE NOT IN THIS EXPORT
 Donor names, addresses, emails, phone numbers and tax incentive numbers are
 personal information and are deliberately excluded. They are held separately.
 `;
+}
+
+/**
+ * Serve the built app.
+ *
+ * This is a single-page app: /explore is a route inside the JavaScript bundle,
+ * not a file on disk. The assets binding only knows about files, so it returns
+ * 404 for any route and the browser shows a blank page.
+ *
+ * So: try the asset first (real files — the bundle, the icons, the manifest),
+ * and when it isn't found and the browser is asking for a page rather than an
+ * asset, serve index.html and let the app route it. Requests for missing files
+ * still 404 properly, which matters — a missing image should not silently return
+ * a page of HTML.
+ */
+async function serveApp(request: Request, env: Env): Promise<Response> {
+  const asset = await env.ASSETS.fetch(request);
+  if (asset.status !== 404) return asset;
+
+  // Only pages fall back to the shell. A missing image must still 404 — silently
+  // returning HTML for a broken asset hides real problems.
+  const url = new URL(request.url);
+  const looksLikeFile = /\.[a-z0-9]+$/i.test(url.pathname);
+  const wantsPage =
+    request.method === "GET" &&
+    !looksLikeFile &&
+    (request.headers.get("Accept") ?? "").includes("text/html");
+
+  if (!wantsPage) return asset;
+
+  // A CLEAN request — do not inherit the browser's headers.
+  //
+  // Passing the original request through carries its conditional headers
+  // (If-None-Match, If-Modified-Since). The assets binding then answers 304 Not
+  // Modified with an empty body, and forcing that to 200 hands the browser a
+  // valid but completely empty document: blank page, no console error, nothing
+  // to debug. That is exactly the bug this replaced.
+  const indexUrl = new URL("/index.html", url.origin);
+  const page = await env.ASSETS.fetch(new Request(indexUrl.toString(), { method: "GET" }));
+
+  if (!page.ok) {
+    // Never serve an empty page. If the shell itself is missing, something is
+    // wrong with the deployment and it should say so out loud.
+    return new Response(
+      "The app could not be loaded. The site may still be deploying — try again in a minute.",
+      { status: 503, headers: { "Content-Type": "text/plain" } }
+    );
+  }
+
+  const html = await page.text();
+
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // The shell must always be revalidated, or a redeploy never reaches anyone.
+      "Cache-Control": "no-cache",
+    },
+  });
 }
