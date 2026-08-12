@@ -138,7 +138,15 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
       if (request.method === "DELETE") return await removeUser(request, env, user);
     }
 
-    return json({ error: "not_found" }, 404);
+    return json(
+      {
+        error: "unknown_endpoint",
+        message:
+          `This app asked for something the server doesn't recognise (${request.method} ${path}). ` +
+          `The server may be running an older version — try again in a minute, or reload the page.`,
+      },
+      404
+    );
   } catch (error) {
     console.error("explorer error", error);
     return json({ error: "server_error" }, 500);
@@ -287,7 +295,15 @@ async function removeRecord(request: Request, env: Env, path: string, actor: Use
     .bind(id)
     .first<{ registration_number: string | null; object_name: string | null }>();
 
-  if (!record) return json({ error: "not_found" }, 404);
+  if (!record) {
+    return json(
+      {
+        error: "record_not_found",
+        message: "That record no longer exists, or it has already been removed. Try reloading.",
+      },
+      404
+    );
+  }
 
   // The confirmation must match what's on the record. Typing the number is a
   // deliberate speed bump — it makes removing the wrong record much harder than
