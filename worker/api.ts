@@ -58,24 +58,40 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   // This check exists because the Access policy is deliberately broad — an admin
   // adds volunteers in the app, not in the Cloudflare dashboard — which means
   // strangers can reach this Worker with a valid session. They get nothing.
-  if (volunteer) {
-    const allowed = await env.DB.prepare(
-      `SELECT 1 FROM users WHERE email = ?1 AND status = 'active'`
-    )
-      .bind(volunteer)
-      .first();
+  //
+  // A MISSING header is refused, not waved through. An earlier version skipped
+  // the check when the header was absent, which was safe only while Access
+  // covered every path. The moment Access is scoped to part of the site, that
+  // becomes an open door to the museum's database — so absence of identity is
+  // now treated as absence of permission.
+  if (!volunteer) {
+    return json(
+      {
+        error: "not_signed_in",
+        message:
+          "Please sign in before your records can be saved to the museum's server. " +
+          "Your work is safe on this device in the meantime.",
+      },
+      401
+    );
+  }
 
-    if (!allowed) {
-      return json(
-        {
-          error: "not_authorised",
-          message:
-            "You're signed in, but you haven't been given access to the collection yet. " +
-            "Ask a museum administrator to add you.",
-        },
-        403
-      );
-    }
+  const allowed = await env.DB.prepare(
+    `SELECT 1 FROM users WHERE email = ?1 AND status = 'active'`
+  )
+    .bind(volunteer)
+    .first();
+
+  if (!allowed) {
+    return json(
+      {
+        error: "not_authorised",
+        message:
+          "You're signed in, but you haven't been given access to the collection yet. " +
+          "Ask a museum administrator to add you.",
+      },
+      403
+    );
   }
 
   try {
