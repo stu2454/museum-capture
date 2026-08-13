@@ -49,9 +49,34 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
   const path = url.pathname.replace(/^\/api/, "");
 
   // Identity comes from Cloudflare Access, which must sit in front of this.
-  // Without Access the header is absent and every write is anonymous — useful in
-  // local dev, unacceptable in production.
-  const volunteer = request.headers.get("Cf-Access-Authenticated-User-Email") ?? "anonymous";
+  const volunteer = (request.headers.get("Cf-Access-Authenticated-User-Email") ?? "").trim().toLowerCase();
+
+  // Being able to receive a one-time PIN is not permission to write to the
+  // museum's collection. The Access policy decides who may authenticate; the
+  // users table decides who may actually do anything. Both are required.
+  //
+  // This check exists because the Access policy is deliberately broad — an admin
+  // adds volunteers in the app, not in the Cloudflare dashboard — which means
+  // strangers can reach this Worker with a valid session. They get nothing.
+  if (volunteer) {
+    const allowed = await env.DB.prepare(
+      `SELECT 1 FROM users WHERE email = ?1 AND status = 'active'`
+    )
+      .bind(volunteer)
+      .first();
+
+    if (!allowed) {
+      return json(
+        {
+          error: "not_authorised",
+          message:
+            "You're signed in, but you haven't been given access to the collection yet. " +
+            "Ask a museum administrator to add you.",
+        },
+        403
+      );
+    }
+  }
 
   try {
     if (path === "/sync" && request.method === "POST") return await sync(request, env, volunteer);
@@ -172,17 +197,27 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
     }
   }
 
-  // Pull everything changed since the client last heard from us.
+  // Pull back only what THIS device captured.
+  //
+  // Previously every device received every record, so each phone slowly
+  // accumulated the whole collection. That is the wrong shape for the capture
+  // app: it is a tool for recording an object in your hand, not for browsing.
+  // The explorer is where the full collection lives, it reads the server
+  // directly, and it is always current.
+  //
+  // Removed records are still returned, with deleted_at set, so a removal made
+  // in the explorer actually reaches the device that holds the record. Without
+  // that, a deleted record lingers on the phone and can be pushed back to life.
   const since = body.since ?? "1970-01-01T00:00:00Z";
   const changed = await env.DB.prepare(
     `SELECT id, registration_number, object_name, status, schema_version, values_json,
             captured_by, captured_at, updated_at, revision, deleted_at
      FROM records
-     WHERE synced_at > ?1
+     WHERE synced_at > ?1 AND device_id = ?2
      ORDER BY synced_at
      LIMIT 100`
   )
-    .bind(since)
+    .bind(since, body.device_id)
     .all();
 
   await env.DB.prepare(

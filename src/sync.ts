@@ -23,6 +23,8 @@ const BATCH = 20; // matches the server cap, which is set by D1's free-plan quer
 export interface SyncOutcome {
   pushed: number;
   pulled: number;
+  /** Records removed on the server and taken off this device. */
+  removed: number;
   superseded: string[];
   photosUploaded: number;
   offline: boolean;
@@ -59,7 +61,14 @@ async function sha256(blob: Blob): Promise<string | null> {
 }
 
 export async function syncNow(): Promise<SyncOutcome> {
-  const outcome: SyncOutcome = { pushed: 0, pulled: 0, superseded: [], photosUploaded: 0, offline: false };
+  const outcome: SyncOutcome = {
+    pushed: 0,
+    pulled: 0,
+    removed: 0,
+    superseded: [],
+    photosUploaded: 0,
+    offline: false,
+  };
 
   if (!navigator.onLine) {
     outcome.offline = true;
@@ -95,10 +104,26 @@ export async function syncNow(): Promise<SyncOutcome> {
       outcome.pushed += (result.applied as string[]).length;
       outcome.superseded.push(...(result.superseded as string[]));
 
-      // Records changed elsewhere. Anything the volunteer has edited more recently
-      // on this device is left alone — the local copy is what they're looking at.
+      // What comes back is only what this device captured — the server scopes the
+      // pull by device id. Two cases to handle.
       for (const incoming of result.records as WireRecord[]) {
         const local = await records.get(incoming.id);
+
+        // 1. Removed on the server. Take it off the device, and take its photo
+        //    blobs with it — otherwise the images sit in IndexedDB forever with
+        //    nothing pointing at them. Without this the record lingers in the
+        //    capture app and can be pushed back to life by an edit.
+        if (incoming.deleted_at) {
+          if (local) {
+            for (const photo of local.photos) await photos.remove(photo.id).catch(() => undefined);
+            await records.remove(local.id);
+            outcome.removed += 1;
+          }
+          continue;
+        }
+
+        // 2. Changed elsewhere. Anything edited more recently on this device is
+        //    left alone — the local copy is what the volunteer is looking at.
         if (!local || incoming.updated_at > local.updatedAt) {
           await records.put(fromWire(incoming, result.server_time, local));
           outcome.pulled += 1;
@@ -160,6 +185,7 @@ async function uploadPhotos(all: ArtefactRecord[]): Promise<number> {
 
 interface WireRecord {
   id: string;
+  deleted_at?: string | null;
   registration_number: string | null;
   object_name: string | null;
   status: string;

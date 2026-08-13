@@ -99,7 +99,11 @@ export function RecordList({ list, unsynced = 0, failingSince, onOpen, onStart, 
             Start a record
           </button>
           <p className="eyebrow" style={{ margin: "26px 0 8px" }}>
-            On this device — {list.length}
+            Recorded on this device — {list.length}
+          </p>
+          <p className="muted small" style={{ margin: "0 0 12px" }}>
+            Only what you catalogued here. The full collection lives in the
+            catalogue, where everyone can search it.
           </p>
           {list.map((record) => (
             <button
