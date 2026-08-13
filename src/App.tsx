@@ -7,6 +7,7 @@ import { downloadFile } from "./media";
 import { schema } from "./schema";
 import { Explorer } from "./explorer/Explorer";
 import { startAutoSync, type SyncOutcome } from "./sync";
+import { Help } from "./components/Help";
 import type { ArtefactRecord } from "./types";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
   const [list, setList] = useState<ArtefactRecord[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncOutcome | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   const [current, setCurrent] = useState<ArtefactRecord | null>(null);
 
   const refresh = useCallback(() => {
@@ -71,6 +73,10 @@ export default function App() {
     downloadFile(`catalogue-${stamp}.json`, JSON.stringify(bundle, null, 2));
   }
 
+  if (showHelp) {
+    return <Help onBack={() => setShowHelp(false)} />;
+  }
+
   if (openId && current) {
     return (
       <CaptureFlow
@@ -89,6 +95,7 @@ export default function App() {
     <RecordList
       list={list}
       unsynced={unsynced}
+      onHelp={() => setShowHelp(true)}
       failingSince={sync?.failingSince}
       onOpen={setOpenId}
       onStart={start}

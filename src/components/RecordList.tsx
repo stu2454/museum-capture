@@ -10,6 +10,7 @@ import { TROUBLE_THRESHOLD_HOURS } from "../sync";
 
 interface Props {
   list: ArtefactRecord[];
+  onHelp: () => void;
   unsynced?: number;
   failingSince?: string;
   onOpen: (id: string) => void;
@@ -49,7 +50,7 @@ function hoursSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 3_600_000;
 }
 
-export function RecordList({ list, unsynced = 0, failingSince, onOpen, onStart, onExport }: Props) {
+export function RecordList({ list, unsynced = 0, failingSince, onHelp, onOpen, onStart, onExport }: Props) {
   return (
     <div className="app">
       <header className="masthead">
@@ -92,6 +93,11 @@ export function RecordList({ list, unsynced = 0, failingSince, onOpen, onStart, 
           <button type="button" className="btn" onClick={onStart}>
             Start a record
           </button>
+          <button type="button" className="help-link" onClick={onHelp} style={{ marginTop: 18 }}>
+            <strong>New to this?</strong>
+            <br />
+            <span className="small muted">How to use this app — a few minutes to read</span>
+          </button>
         </div>
       ) : (
         <>
@@ -124,7 +130,13 @@ export function RecordList({ list, unsynced = 0, failingSince, onOpen, onStart, 
               </span>
             </button>
           ))}
-          <button type="button" className="btn btn-quiet btn-wide" style={{ marginTop: 18 }} onClick={onExport}>
+          <button type="button" className="help-link" onClick={onHelp}>
+            <strong>How to use this app</strong>
+            <br />
+            <span className="small muted">Photographs, what each question means, and what to do
+            if something looks wrong</span>
+          </button>
+          <button type="button" className="btn btn-quiet btn-wide" style={{ marginTop: 12 }} onClick={onExport}>
             Export all records
           </button>
         </>

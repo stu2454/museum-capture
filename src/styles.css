@@ -631,3 +631,93 @@ body {
 .record-link img {
   display: block;
 }
+
+/* ------------------------------------------------------------ in-app help */
+
+/* Scrolling tab bar. Four labels won't fit across a phone, and truncating them
+   would hide which section is which — so it scrolls sideways instead. */
+.tabbar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin: 18px 0 20px;
+  padding-bottom: 2px;
+}
+
+.tabbar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 9px 15px;
+  font-family: var(--body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 21px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab.is-current {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.help-h {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 26px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.help-step {
+  display: flex;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.help-num {
+  flex: 0 0 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--data);
+  font-size: 0.78rem;
+  color: var(--ink);
+  background: var(--tag);
+  border-radius: 50%;
+}
+
+.help-point {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.help-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  min-height: var(--tap);
+  padding: 14px 16px;
+  margin-top: 10px;
+  font-family: var(--body);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--tag);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
