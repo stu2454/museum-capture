@@ -17,12 +17,24 @@
  *   and a cached one can never be stale. These are the big files; serving them
  *   from disk is what makes the app open instantly.
  *
+ * Two things are never cached, both for the same underlying reason — Cloudflare
+ * Access now sits in front of the app, and a signed-out request does not fail.
+ * It answers 200 with a sign-in page:
+ *
+ * - Anything under /api/. A cached record list can show a record that has been
+ *   removed, and a cached sign-in page would be stored where data should be.
+ *
+ * - Any redirected response. This is the one that would be hard to recover from
+ *   in the field: an expired session redirects the page itself to Cloudflare, and
+ *   storing that as the app shell leaves the device opening on a login screen
+ *   with no way back except clearing site data — which destroys unexported work.
+ *
  * Bump CACHE if this file's caching behaviour changes. Everything under the old
  * name is deleted on activate, which is how a device with a broken cache
  * recovers.
  */
 
-const CACHE = "catalogue-shell-v2";
+const CACHE = "catalogue-shell-v3";
 
 /**
  * Each deploy adds a new set of hashed filenames, and the previous set is never
@@ -58,6 +70,9 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.endsWith("/sw.js")) return;
 
+  // The API always goes to the network, or fails honestly. Never from cache.
+  if (url.pathname.startsWith("/api/")) return;
+
   if (request.mode === "navigate") {
     event.respondWith(networkFirst(request));
   } else if (url.pathname.includes("/assets/")) {
@@ -73,7 +88,8 @@ async function networkFirst(request) {
   const cache = await caches.open(CACHE);
   try {
     const response = await fetch(request);
-    if (response.ok) await cache.put(SHELL, response.clone());
+    // A redirected answer is a sign-in page, not the app. Serve it, don't keep it.
+    if (response.ok && !response.redirected) await cache.put(SHELL, response.clone());
     return response;
   } catch {
     const hit = await cache.match(SHELL);
@@ -92,7 +108,7 @@ async function cacheFirst(request) {
   if (hit) return hit;
 
   const response = await fetch(request);
-  if (response.ok) {
+  if (response.ok && !response.redirected) {
     await cache.put(request, response.clone());
     await trimAssets(cache);
   }
@@ -104,7 +120,7 @@ async function staleWhileRevalidate(request) {
   const hit = await cache.match(request);
   const fresh = fetch(request)
     .then((response) => {
-      if (response.ok) void cache.put(request, response.clone());
+      if (response.ok && !response.redirected) void cache.put(request, response.clone());
       return response;
     })
     .catch(() => null);

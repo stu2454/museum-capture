@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# Local D1 and R2 state, created by `wrangler dev` and the --local migrations.
+.wrangler/
 .DS_Store
 *.local
 tsconfig.tsbuildinfo
