@@ -1,0 +1,1451 @@
+<title>Dorrigo Catalogue Handbook</title>
+<meta name="description" content="How to catalogue an object, run the collection catalogue, and look after the app.">
+<style>
+/*
+  Visual direction inherited from the app it documents (src/styles.css):
+  registration ink, archival grey board, and the brass tie-on tag that hangs
+  off every accessioned object. The tag is the one loud element — here it
+  marks each part of the manual, because a manual's parts get tagged the same
+  way an object does. Everything else stays quiet so it reads.
+
+  No network fonts, matching the app: the store room's wifi can't be relied on,
+  and a volunteer may well read this on the same phone.
+*/
+
+:root {
+  --ink: #16283c;
+  --ink-soft: #46586c;
+  --ink-faint: #6b7c8e;
+  --board: #e8ecef;
+  --paper: #ffffff;
+  --rule: #c3cbd3;
+  --rule-soft: #dde3e8;
+  --tag: #c9a227;
+  --tag-deep: #9a7a1c;
+  --tag-ink: #16283c;
+  --sage: #3f6b57;
+  --sage-wash: #eef4f1;
+  --alert: #a33b32;
+  --alert-wash: #f9eeed;
+  --open-wash: #f5f1e2;
+
+  --display: Georgia, "Iowan Old Style", "Times New Roman", ui-serif, serif;
+  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --data: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 4px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #dde5ec;
+    --ink-soft: #a4b3c1;
+    --ink-faint: #7d8d9c;
+    --board: #0e1822;
+    --paper: #16232f;
+    --rule: #2f4152;
+    --rule-soft: #223243;
+    --tag: #d9b23f;
+    --tag-deep: #b4902c;
+    --tag-ink: #12202c;
+    --sage: #7fb59b;
+    --sage-wash: #172a24;
+    --alert: #e08a80;
+    --alert-wash: #2c1c1b;
+    --open-wash: #262212;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ink: #dde5ec;
+  --ink-soft: #a4b3c1;
+  --ink-faint: #7d8d9c;
+  --board: #0e1822;
+  --paper: #16232f;
+  --rule: #2f4152;
+  --rule-soft: #223243;
+  --tag: #d9b23f;
+  --tag-deep: #b4902c;
+  --tag-ink: #12202c;
+  --sage: #7fb59b;
+  --sage-wash: #172a24;
+  --alert: #e08a80;
+  --alert-wash: #2c1c1b;
+  --open-wash: #262212;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--board);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.62;
+  -webkit-text-size-adjust: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--tag-deep);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ------------------------------------------------------------- structure */
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 100px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 1040px) {
+  .wrap {
+    grid-template-columns: 232px minmax(0, 1fr);
+    align-items: start;
+    padding-top: 8px;
+  }
+  .rail { position: sticky; top: 24px; }
+}
+
+.sheet {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: clamp(24px, 5vw, 56px);
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------ index rail */
+
+.rail { font-size: 0.87rem; padding-top: 28px; }
+
+.rail-title {
+  font-family: var(--body);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  margin: 0 0 12px;
+}
+
+.rail ol { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.rail a {
+  display: block;
+  padding: 5px 10px 5px 12px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-left: 2px solid var(--rule-soft);
+  line-height: 1.35;
+}
+
+.rail a:hover { color: var(--ink); border-left-color: var(--tag); background: var(--board); }
+.rail a.is-part { color: var(--ink); font-weight: 600; border-left-color: var(--rule); }
+.rail .sub { padding-left: 24px; font-size: 0.95em; }
+
+/* -------------------------------------------------------------- masthead */
+
+.masthead { margin-bottom: 34px; }
+
+.eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+  margin: 0 0 10px;
+}
+
+h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  line-height: 1.1;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+
+.standfirst {
+  font-size: 1.12rem;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0 0 22px;
+}
+
+.colophon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+.colophon b { color: var(--ink-soft); font-weight: 600; }
+.colophon code { font-family: var(--data); font-size: 0.95em; }
+
+/* ------------------------------------------------- the tag: part markers */
+/* The app's signature element. A tie-on tag with a punched hole, clipped at
+   the left edge exactly as in src/styles.css. Here it carries the part. */
+
+.tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 13px 22px 13px 54px;
+  background: var(--tag);
+  color: var(--tag-ink);
+  border-radius: var(--radius);
+  clip-path: polygon(0 50%, 22px 0, 100% 0, 100% 100%, 22px 100%);
+}
+
+.tag-hole {
+  position: absolute;
+  left: 31px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 1px 2px rgba(22, 40, 60, 0.45);
+}
+
+.tag-number {
+  font-family: var(--data);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tag-name {
+  font-family: var(--display);
+  font-size: 1rem;
+  margin-left: auto;
+  text-align: right;
+}
+
+.part { margin-top: 58px; scroll-margin-top: 20px; }
+.part:first-of-type { margin-top: 44px; }
+
+/* ------------------------------------------------------------ typography */
+
+h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3.4vw, 1.95rem);
+  line-height: 1.18;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+
+h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.28rem;
+  margin: 38px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-soft);
+  text-wrap: balance;
+  scroll-margin-top: 20px;
+}
+
+h4 {
+  font-family: var(--body);
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin: 26px 0 6px;
+}
+
+p, li { max-width: var(--measure); }
+p { margin: 0 0 14px; }
+
+.lede { font-size: 1.05rem; color: var(--ink-soft); margin-bottom: 22px; }
+.muted { color: var(--ink-soft); }
+.small { font-size: 0.9rem; }
+
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 7px; }
+
+a { color: var(--ink); text-decoration-color: var(--tag-deep); text-underline-offset: 3px; }
+
+strong { font-weight: 600; }
+
+code {
+  font-family: var(--data);
+  font-size: 0.88em;
+  background: var(--board);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* A word the volunteer will see on screen, set as the control it names. */
+.ui {
+  display: inline-block;
+  font-family: var(--body);
+  font-size: 0.85em;
+  font-weight: 600;
+  background: var(--board);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+pre {
+  font-family: var(--data);
+  font-size: 0.84rem;
+  line-height: 1.65;
+  background: var(--board);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 0 0 18px;
+}
+
+pre code { background: none; border: 0; padding: 0; font-size: 1em; }
+pre .cm { color: var(--ink-faint); }
+
+/* ----------------------------------------------------------- step blocks */
+
+.steps { counter-reset: step; display: flex; flex-direction: column; gap: 2px; margin-bottom: 18px; }
+
+.step {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  break-inside: avoid;
+}
+
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step-num {
+  counter-increment: step;
+  font-family: var(--data);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--tag-deep);
+  padding-top: 3px;
+}
+
+.step-num::before { content: counter(step, decimal-leading-zero); }
+
+.step-body > :last-child { margin-bottom: 0; }
+.step-body strong.step-title { display: block; font-size: 1.02rem; margin-bottom: 3px; }
+
+/* The screen title as the volunteer sees it, in the app's display face. */
+.screen-name {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* --------------------------------------------------------------- notices */
+
+.notice {
+  border-left: 3px solid var(--rule);
+  background: var(--board);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 18px;
+  margin: 0 0 20px;
+  max-width: var(--measure);
+  break-inside: avoid;
+}
+
+.notice > :last-child { margin-bottom: 0; }
+.notice h4 { margin: 0 0 5px; }
+
+.notice-do { border-left-color: var(--sage); background: var(--sage-wash); }
+.notice-warn { border-left-color: var(--alert); background: var(--alert-wash); }
+.notice-open { border-left-color: var(--tag); background: var(--open-wash); }
+
+/* ---------------------------------------------------------------- tables */
+
+.table-scroll { overflow-x: auto; margin: 0 0 22px; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 460px;
+  font-size: 0.93rem;
+}
+
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 14px 10px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--ink-faint);
+  font-weight: 600;
+  border-bottom-color: var(--rule);
+}
+
+td:first-child { font-weight: 600; padding-right: 22px; }
+td.num { font-family: var(--data); font-variant-numeric: tabular-nums; font-weight: 400; }
+
+/* ------------------------------------------------------------ role chips */
+
+.chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 600;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 2px 7px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.chip-admin { border-color: var(--tag-deep); color: var(--tag-deep); }
+
+/* ------------------------------------------------------------ misc parts */
+
+.qa { border-top: 1px solid var(--rule-soft); padding: 15px 0; break-inside: avoid; max-width: var(--measure); }
+.qa:last-of-type { border-bottom: 1px solid var(--rule-soft); }
+.qa strong { display: block; margin-bottom: 4px; }
+.qa p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+.two-col { display: grid; gap: 0 40px; }
+@media (min-width: 760px) { .two-col { grid-template-columns: 1fr 1fr; } .two-col p, .two-col li { max-width: none; } }
+
+.print-link {
+  font: inherit;
+  font-size: 0.82rem;
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.print-link:hover { border-color: var(--tag-deep); color: var(--ink); }
+
+.end {
+  margin-top: 54px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  font-size: 0.84rem;
+  color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ----------------------------------------------------------------- print */
+
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .wrap { display: block; max-width: none; padding: 0; }
+  .rail, .print-link { display: none; }
+  .sheet { border: 0; padding: 0; background: #fff; }
+  .part { break-before: page; }
+  .part:first-of-type { break-before: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+  .tag { clip-path: none; border: 1.5pt solid #000; background: #fff; color: #000; padding-left: 22px; }
+  .tag-hole { display: none; }
+  .notice { border: 1pt solid #666; background: #fff; }
+  a { text-decoration: none; color: #000; }
+}
+</style>
+
+<div class="wrap">
+
+  <nav class="rail" aria-label="Contents">
+    <p class="rail-title">Contents</p>
+    <ol>
+      <li><a class="is-part" href="#part1">1 · Cataloguing an object</a></li>
+      <li><a class="sub" href="#before-you-start">Before you start</a></li>
+      <li><a class="sub" href="#home-screen">The first screen</a></li>
+      <li><a class="sub" href="#ten-screens">The ten screens</a></li>
+      <li><a class="sub" href="#photographs">Photographs</a></li>
+      <li><a class="sub" href="#checking">Checking and saving</a></li>
+      <li><a class="sub" href="#volunteer-problems">If something looks wrong</a></li>
+      <li><a class="is-part" href="#part2">2 · The collection catalogue</a></li>
+      <li><a class="sub" href="#signing-in">Signing in</a></li>
+      <li><a class="sub" href="#searching">Finding an object</a></li>
+      <li><a class="sub" href="#roles">Roles</a></li>
+      <li><a class="sub" href="#adding-people">Adding and removing people</a></li>
+      <li><a class="sub" href="#removing-records">Removing a record</a></li>
+      <li><a class="is-part" href="#part3">3 · Looking after the app</a></li>
+      <li><a class="sub" href="#where-it-lives">Where it lives</a></li>
+      <li><a class="sub" href="#how-records-travel">How records travel</a></li>
+      <li><a class="sub" href="#backups">Backups</a></li>
+      <li><a class="sub" href="#health">Checking it is healthy</a></li>
+      <li><a class="sub" href="#deploying">Releasing a change</a></li>
+      <li><a class="sub" href="#known-issues">Known issues</a></li>
+      <li><a class="is-part" href="#part4">4 · Still to be decided</a></li>
+      <li><a class="sub" href="#glossary">Glossary</a></li>
+    </ol>
+    <button type="button" class="print-link" onclick="window.print()">Print this manual</button>
+  </nav>
+
+  <main class="sheet">
+
+    <header class="masthead">
+      <p class="eyebrow">Dorrigo Museum</p>
+      <h1>The Catalogue Handbook</h1>
+      <p class="standfirst">
+        How to catalogue an object with the app, how to run the collection catalogue,
+        and how to look after the whole thing. Three parts, three different readers —
+        start at the part that describes your job and ignore the rest.
+      </p>
+      <div class="colophon">
+        <span><b>App</b> <code>museum-capture.stu2038.workers.dev</code></span>
+        <span><b>Worksheet</b> eHive Cataloguing Guidelines, July 2023</span>
+        <span><b>Schema</b> version 2 · 44 fields</span>
+      </div>
+    </header>
+
+    <p class="lede">
+      This app replaces the two-page paper worksheet. It asks the same questions in a
+      different order — the order you actually handle an object in — and it saves every
+      word as you type it. Nothing about it can be broken by using it wrongly.
+    </p>
+
+    <div class="notice notice-do">
+      <h4>Which part do you need?</h4>
+      <p class="small" style="margin-bottom:6px"><strong>Part 1</strong> if you catalogue objects. That is most people, and it is the only part you need.</p>
+      <p class="small" style="margin-bottom:6px"><strong>Part 2</strong> if you look things up in the catalogue, or if you are an administrator who adds people and tidies up mistakes.</p>
+      <p class="small" style="margin:0"><strong>Part 3</strong> if you are the person who keeps the app running. One or two people, and they will know who they are.</p>
+    </div>
+
+
+    <!-- ================================================== PART ONE ==== -->
+    <section class="part" id="part1">
+      <div class="tag">
+        <span class="tag-hole" aria-hidden="true"></span>
+        <span class="tag-number">Part one</span>
+        <span class="tag-name">For volunteers</span>
+      </div>
+
+      <h2>Cataloguing an object</h2>
+      <p class="lede">
+        About ten minutes an object: photograph it, answer eight short screens, read it
+        back, save it. You do not need to be good with computers, and you are not the
+        last line of defence — everything you save is checked by someone else.
+      </p>
+
+      <h3 id="before-you-start">Before you start</h3>
+
+      <p>Three things, done once on each phone or tablet. After that you just open the app and work.</p>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Add the app to your Home Screen</strong>
+            <p>
+              Open <code>museum-capture.stu2038.workers.dev</code> in Safari, tap
+              <span class="ui">Share</span>, then <span class="ui">Add to Home Screen</span>,
+              then <span class="ui">Add</span>. From then on, open the app from that icon.
+            </p>
+            <p class="small muted">
+              This matters more than it sounds. An iPhone or iPad can clear anything saved
+              in a Safari tab after seven days, taking your records with it. An app opened
+              from the Home Screen is not "in Safari" and is not cleared. The app will nag
+              you about this until you do it.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Sign in</strong>
+            <p>
+              The first time you open the app it asks for your email address, then emails you
+              a short code. Type the code in. That is the whole sign-in — there is no password
+              to remember and none to lose, and you will not be asked again for a long while.
+            </p>
+            <p class="small muted">
+              You need a connection for this one step, so do it before you go into the store
+              room. Afterwards the app works completely offline. If the app says you are not on
+              the museum's list yet, an administrator adds you in about a minute — see Part 2.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Check the name at the top is yours</strong>
+            <p>
+              The first screen says <strong>Cataloguing as</strong> and your name. Because you
+              signed in, the app already knows who you are — there is nothing to type.
+            </p>
+            <p class="small muted">
+              On a museum device that other volunteers also use, the name shown is whoever used
+              it last. Tap <span class="ui">Someone else is cataloguing</span> and pick yourself
+              from the list before you start. Records are filed under whoever is named there.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Make the badge yours</strong>
+            <p>
+              Tap <span class="ui">Change your name or colour</span>. Pick one of the ten
+              colours and it appears in the corner of every screen from then on — which is how
+              you tell at a glance that the app is set to you, and not to whoever used the
+              device last.
+            </p>
+            <p class="small muted">
+              You can correct your own name here too. If it was spelled wrongly when you were
+              added, this is how you fix it — and it matters, because that name goes on every
+              record you catalogue. It's the only thing about your account you can change
+              yourself; roles and access stay with the administrators.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h4>What to have with you</h4>
+      <p>
+        The object. Somewhere clean and well lit to stand it. A tape measure. The register,
+        or the object's existing tag, so you have its number. Gloves if the object needs them.
+      </p>
+
+      <h3 id="home-screen">The first screen</h3>
+
+      <p>Everything starts here, and it only ever shows what <em>this</em> device catalogued.</p>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th style="width:34%">What you see</th><th>What it means</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The coloured circle, top right</td>
+              <td>Your initials in your colour. It stays in the corner of every screen, including while you're cataloguing, so you always know whose name the work is going under.</td>
+            </tr>
+            <tr>
+              <td>"Cataloguing as …"</td>
+              <td>Who this device will file records under. Yours, unless someone else used the device last — see above.</td>
+            </tr>
+            <tr>
+              <td><span class="ui">Start a record</span></td>
+              <td>Begins a new object. There is no limit and no need to finish one before starting another.</td>
+            </tr>
+            <tr>
+              <td>The list of records</td>
+              <td>Each line shows the object's name, its number, how many photographs it has, and its status. Tap one to carry on where you left off.</td>
+            </tr>
+            <tr>
+              <td>"All records backed up"</td>
+              <td>Everything on this device has reached the museum's server. This is what you want to see.</td>
+            </tr>
+            <tr>
+              <td>"3 records not yet backed up"</td>
+              <td>Those three are still only on this device. They send themselves when you next have signal. Nothing is wrong.</td>
+            </tr>
+            <tr>
+              <td><span class="ui">Export all records</span></td>
+              <td>Saves a copy of everything on this device as a file. Useful before handing a device on, or if asked for one. It never contains donor details.</td>
+            </tr>
+            <tr>
+              <td><span class="ui">How to use this app</span></td>
+              <td>A short version of this part, inside the app, for when you are in the store room and this manual is in the office.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>What the statuses mean</h4>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:22%">Status</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>draft</td><td>Started, not yet finished. Nobody else is waiting on it.</td></tr>
+            <tr><td>review</td><td>You have saved it. It is waiting for someone to check it.</td></tr>
+            <tr><td>confirmed</td><td>Checked and accepted into the catalogue.</td></tr>
+            <tr><td>exported</td><td>Sent on to eHive. Not in use yet — see Part 4.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="ten-screens">The ten screens</h3>
+
+      <p>
+        The app asks one thing at a time. <span class="ui">Next</span> moves you on,
+        <span class="ui">Back</span> returns, and the row of marks at the top shows how far
+        through you are. Every word is saved the moment you type it — if the phone rings or
+        the battery dies, the record is exactly where you left it.
+      </p>
+
+      <div class="notice notice-do">
+        <h4>The two rules that matter most</h4>
+        <p class="small" style="margin-bottom:6px">
+          <strong>You can leave anything blank.</strong> If you don't know, move on. A blank
+          field is honest. A guess is a problem, because the next person cannot tell it apart
+          from a fact.
+        </p>
+        <p class="small" style="margin:0">
+          <strong>Write what you can see, not what you assume.</strong> "Stamped MADE IN
+          ENGLAND on the base" is evidence. "English, probably Victorian" is a conclusion,
+          and belongs only if you know it.
+        </p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">Which object is this?</span>
+            <p>
+              The number from the object's tag or from the register. Type it exactly as it is
+              written, including full stops and slashes.
+            </p>
+            <p class="small muted">
+              The number comes first on purpose: it means your photographs can never end up
+              filed against the wrong object. If the number is already used by another record
+              on this device, the app says so straight away — check the register, and if it is
+              the same object, open the existing record instead of starting a second one. The
+              app warns you but does not stop you, because the museum's registers are the
+              authority, not the app.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">Photograph the object</span>
+            <p>See <a href="#photographs">Photographs</a> below — it is the part of the record most worth getting right.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">What is it?</span>
+            <p>
+              The everyday name. "Butter churn", not "dairy implement". Use the words someone
+              would say out loud, because those are the words they will search for.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">Describe it</span>
+            <p>
+              What you can see: shape, colour, parts, decoration, what it is made of. Read out
+              any writing, printing, stamps or labels <em>exactly</em> as they appear, odd
+              spelling and all.
+            </p>
+            <p class="small muted">
+              Where a question lets you list several things — materials, for instance — type
+              one and press Enter, then the next. Each becomes its own tag, and the × removes one.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">How big is it?</span>
+            <p>
+              Height, width and length, with the unit chosen from the small box beside them.
+              Add the weight if the object is heavy enough for it to matter.
+            </p>
+            <p class="small muted">
+              Pick millimetres or centimetres and use the same one all day. The museum has not
+              yet settled on a house standard — see Part 4 — so consistency within your own
+              session is the best that can be asked for now.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">What condition is it in?</span>
+            <p>
+              Be specific. "Crack 40mm in the lid, old glue repair at the handle" is worth ten
+              times "poor condition", because it tells the next person what to look at. Say
+              whether the object is complete or whether pieces are missing.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">Who made it, and when?</span>
+            <p>
+              Only if you know. The date box is deliberately not a calendar: type
+              "about 1890", "1920s", "before the war" or "unknown". Those are proper answers.
+            </p>
+            <p class="small muted">
+              A calendar would force you to invent a precision you don't have, and invented
+              precision in a catalogue is a lie that outlives everyone who could correct it.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">What's its story?</span>
+            <p>
+              Previous owners, how it was used, why it matters here. <strong>If you only have
+              time for one screen, make it this one.</strong> Everything else can be worked out
+              later from the object itself. This cannot — it is usually in one person's memory,
+              and it leaves with them.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">Where does it live?</span>
+            <p>
+              Precise enough that someone else could find it without you: "Store room B, shelf 3,
+              left end". Note any special handling, light or support it needs, and any exhibition
+              it has been in.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <span class="screen-name">Check the record</span>
+            <p>
+              The whole record laid out like the paper worksheet. See
+              <a href="#checking">Checking and saving</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice notice-warn">
+        <h4>The app never asks for donor details, and neither should you</h4>
+        <p style="margin:0" class="small">
+          No name, address, phone, email or tax number. Those are personal details about a
+          living person, and they are kept separately by the committee with the deed of gift.
+          Five fields on the paper form are marked this way and none of them appear in your
+          flow. If someone tells you donor details while you are cataloguing, pass them to the
+          committee rather than typing them anywhere in this app.
+        </p>
+      </div>
+
+      <h3 id="photographs">Photographs</h3>
+
+      <p class="lede">
+        The photographs will outlast every other part of the record. Someone in fifty years
+        may never see this object, but they will see your picture of it.
+      </p>
+
+      <h4>Take four</h4>
+      <div class="two-col">
+        <div>
+          <p class="small"><strong>1. The whole object.</strong> Filling the frame, plain background, nothing cropped off.</p>
+          <p class="small"><strong>2. Maker's marks and labels.</strong> Close enough to read every word.</p>
+        </div>
+        <div>
+          <p class="small"><strong>3. Any damage or repair.</strong> Cracks, wear, missing parts, old mends.</p>
+          <p class="small"><strong>4. One with a ruler in shot.</strong> Settles arguments about size for good.</p>
+        </div>
+      </div>
+
+      <h4>Getting a good one</h4>
+      <ul>
+        <li><strong>Square on, from directly above.</strong> An angled photograph distorts the shape and won't match your measurements.</li>
+        <li><strong>Light from the side, not from behind you.</strong> A window to one side shows shape and texture. Watch that you are not casting your own shadow across the object.</li>
+        <li><strong>Never balance something fragile</strong> to get a better angle. A worse photograph is always better than a broken artefact.</li>
+      </ul>
+
+      <div class="notice notice-open">
+        <h4>Two buttons, and they do different things</h4>
+        <p class="small" style="margin-bottom:6px">
+          <span class="ui">Take a photo</span> opens the camera.
+          <span class="ui">Choose from library</span> picks pictures already on the device.
+          They are separate on purpose — on an iPhone a single combined button quietly stops
+          opening the camera at all.
+        </p>
+        <p class="small" style="margin:0">
+          Tap any thumbnail to make it the <span class="ui">Main</span> image — that is the one
+          shown in the catalogue. Tap the × to remove one. Large photographs take a few seconds
+          each and the app tells you how far through it is; you can leave the screen open while
+          it works.
+        </p>
+      </div>
+
+      <p class="small muted">
+        You can carry on without a photograph and add one later, but a record with no image is
+        much harder for anyone else to check.
+      </p>
+
+      <h3 id="checking">Checking and saving</h3>
+
+      <p>
+        The last screen shows the record laid out as the printed worksheet — same sections,
+        same order, same wording. That is deliberate: you know that form, and reading a record
+        back in its shape is how you can tell whether it is right.
+      </p>
+      <p>
+        Read it against <em>the object</em>, not against your memory of what you typed.
+        Anything you left out shows as "not recorded", which is a perfectly good state for it
+        to be in. Then tap <span class="ui">Save for review</span>.
+      </p>
+      <p>
+        The record is now marked for review and someone else will check it. You can reopen and
+        change it at any time — nothing is locked, and every earlier version is kept.
+      </p>
+
+      <h3 id="volunteer-problems">If something looks wrong</h3>
+
+      <div class="qa">
+        <strong>My records have disappeared.</strong>
+        <p>Almost always because the app was opened a different way. The Home Screen icon and a Safari tab keep separate records. Open it from the icon.</p>
+      </div>
+      <div class="qa">
+        <strong>It has said "not yet backed up" for days.</strong>
+        <p>Your work is safe on the device — that is where it lives first, always. But something is stopping it reaching the server. Mention it to whoever looks after the app, and keep cataloguing as normal.</p>
+      </div>
+      <div class="qa">
+        <strong>There is a red notice about records not reaching the server.</strong>
+        <p>The app shows that when it has been failing for six hours or more. It is telling you, not blaming you. Nothing has been lost. Report it and carry on.</p>
+      </div>
+      <div class="qa">
+        <strong>I can't find someone else's record on this device.</strong>
+        <p>You won't. The first screen only ever shows what was catalogued on that device. The whole collection is in the catalogue at <code>/explore</code>, where everyone can search it.</p>
+      </div>
+      <div class="qa">
+        <strong>The registration number is already used.</strong>
+        <p>Another record on this device has the same number. Check the register. If it is the same object, open the existing record instead of making a second one.</p>
+      </div>
+      <div class="qa">
+        <strong>There is no signal in the store room.</strong>
+        <p>Carry on. The app works completely offline and sends everything later. This is the normal case, not a fault.</p>
+      </div>
+      <div class="qa">
+        <strong>I have made a mistake in a record I already saved.</strong>
+        <p>Open it from the first screen and change it. Nothing is locked, and every earlier version is kept.</p>
+      </div>
+      <div class="qa">
+        <strong>Someone else's name is at the top of the screen.</strong>
+        <p>You are on a shared device that they used last. Tap <span class="ui">Someone else is cataloguing</span> and pick yourself before you start, or their name goes on your work.</p>
+      </div>
+      <div class="qa">
+        <strong>It says I'm not on the museum's list.</strong>
+        <p>You have proved who you are, but nobody has given you access yet. Ask an administrator to add your email address — Part 2 tells them how, and it takes a minute. The app won't start a record until then, because it would have no one to attribute it to.</p>
+      </div>
+      <div class="qa">
+        <strong>I don't know the answer to a question.</strong>
+        <p>Leave it blank and move on. That is the correct thing to do, not a failure to do the job.</p>
+      </div>
+
+      <div class="notice notice-do" style="margin-top:24px">
+        <h4>If in doubt, stop and ask</h4>
+        <p class="small" style="margin:0">
+          Nothing about cataloguing is urgent. A record left half-finished while you check
+          something costs nothing. A confident guess written into the catalogue can mislead
+          people for decades.
+        </p>
+      </div>
+    </section>
+
+
+    <!-- ================================================== PART TWO ==== -->
+    <section class="part" id="part2">
+      <div class="tag">
+        <span class="tag-hole" aria-hidden="true"></span>
+        <span class="tag-number">Part two</span>
+        <span class="tag-name">The catalogue &amp; administration</span>
+      </div>
+
+      <h2>The collection catalogue</h2>
+      <p class="lede">
+        At <code>/explore</code>. This is where the whole collection can be searched by anyone
+        with access — and where administrators add people and tidy up mistakes. It is
+        read-only: nobody can edit a record here, which is deliberate.
+      </p>
+
+      <h3 id="signing-in">Signing in</h3>
+
+      <p>
+        There are no passwords in this system and none should ever be added. You type your
+        email address, Cloudflare emails you a short code, you type the code in. That is it.
+      </p>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:38%">If you see</th><th>Then</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>The code never arrives</td>
+              <td>Check the spelling of the address an administrator entered for you, and look in the junk folder. The email comes from Cloudflare, not from the museum.</td>
+            </tr>
+            <tr>
+              <td>"You don't have access yet"</td>
+              <td>You proved who you are, but your email is not on the museum's list. Ask an administrator to add you — it takes about a minute.</td>
+            </tr>
+            <tr>
+              <td>You want to sign out</td>
+              <td><span class="ui">Sign out</span> at the bottom of the catalogue. It hands you back to Cloudflare, which is what actually holds the session.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="notice notice-open">
+        <h4>Being able to receive the code is not the same as having access</h4>
+        <p class="small" style="margin:0">
+          Two separate gates. Cloudflare decides who may prove their identity; the museum's own
+          user list decides who may then see anything. Both have to say yes. That is why a
+          stranger who somehow reaches the address still gets nothing.
+        </p>
+      </div>
+
+      <h3 id="searching">Finding an object</h3>
+
+      <p>
+        One search box: <span class="ui">Search — name, number, maker, anything</span>. Type a
+        few letters and results appear as you go. There are no filters or advanced options,
+        because they are only useful to someone who already knows what they are looking for.
+      </p>
+      <p>
+        Each result shows the object's main photograph, its name, its number and who catalogued
+        it. Tap one for the full record. Tap any photograph to enlarge it, and tap again to close.
+      </p>
+
+      <h4>What a record page shows</h4>
+      <ul>
+        <li>The registration number on a tag, and the object's name.</li>
+        <li>Every photograph, with the main one marked.</li>
+        <li>Every field that was filled in, grouped as on the paper worksheet. Blank fields are simply not shown.</li>
+        <li><strong>Record history</strong>: who catalogued it, its status, how many versions have been kept, and when it last changed.</li>
+      </ul>
+      <p class="small muted">
+        Field labels come from the schema stored with the record, not from today's version. A
+        record catalogued a year ago still reads with the wording it was written against — which
+        is the whole reason the field definitions are kept in the database alongside the records.
+      </p>
+
+      <h3 id="roles">Roles</h3>
+
+      <p>Every person on the list has one of three roles. The wording below is what the app itself shows when you add someone.</p>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:20%">Role</th><th>Can do</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="chip">Viewer</span></td>
+              <td>Search and read records.</td>
+            </tr>
+            <tr>
+              <td><span class="chip">Volunteer</span></td>
+              <td>All of the above, and see who catalogued each object.</td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-admin">Admin</span></td>
+              <td>All of the above, and add and remove people, remove records from the collection, and put removed records back.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="small muted">
+        Give out <span class="chip chip-admin">Admin</span> sparingly — two or three people, so
+        that no single person leaving locks the museum out. The very first person to sign in
+        became an administrator automatically, and only while the list was empty; after that,
+        every administrator is made by another administrator.
+      </p>
+
+      <h3 id="adding-people">Adding and removing people</h3>
+
+      <p>
+        <span class="ui">Manage who has access</span> at the bottom of the catalogue —
+        administrators only.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Enter their email address and name</strong>
+            <p class="small">
+              The address must be the one they will actually receive the code at. A misspelling
+              here is the single commonest reason someone says "no code arrived".
+            </p>
+            <p class="small muted">
+              Get the name as close as you can, but don't agonise: they can correct their own
+              name in the app once they sign in, and choose their own badge colour. That is the
+              only part of their account they can change — roles and access remain yours.
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Choose what they can do</strong>
+            <p class="small">Viewer, volunteer or admin, as above. It can be changed later by adding them again with a different role.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" aria-hidden="true"></span>
+          <div class="step-body">
+            <strong class="step-title">Tap <span class="ui">Add this person</span></strong>
+            <p class="small">
+              They can sign in immediately. There is nothing to send them and no password to
+              issue — tell them the web address and that they will be emailed a code.
+            </p>
+            <p class="small muted">
+              This one step grants both things at once: they can search the catalogue, and they
+              can catalogue objects in the app. Their name also appears in the "who is
+              cataloguing" list on shared museum devices. Somebody who has not been added can
+              do neither, which is the point.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        The list below shows everyone with access, their role, and when they were last here —
+        or "not signed in yet", which is useful when someone says they cannot get in.
+        <span class="ui">Remove access</span> takes someone off the list. You cannot remove
+        yourself, and the app will not let the last administrator be removed.
+      </p>
+
+      <h3 id="removing-records">Removing a record, and putting it back</h3>
+
+      <div class="notice notice-warn">
+        <h4>Removing is not deaccessioning</h4>
+        <p class="small" style="margin:0">
+          This is for duplicates, test entries and mistakes. If the museum is actually disposing
+          of an object, that is a committee decision and it belongs in the museum's own
+          deaccession process — not in a button in an app.
+        </p>
+      </div>
+
+      <p>
+        Open the record and tap <span class="ui">Remove this record from the collection</span>.
+        There are two deliberate speed bumps:
+      </p>
+      <ul>
+        <li><strong>A reason.</strong> "Duplicate of 1994.016" or "test record made during training". Six months later, "why is 1994.017 missing?" needs a better answer than someone's memory.</li>
+        <li><strong>Typing the registration number</strong> to confirm. Removing the wrong record should be harder than a mis-tapped button.</li>
+      </ul>
+      <p>
+        Nothing is destroyed. The record, its history and its photographs all remain — it simply
+        stops appearing in the collection, and it also disappears from the device that
+        catalogued it, so nobody is left looking at a record the museum has retired.
+      </p>
+      <p>
+        Removed records are listed at the bottom of <span class="ui">Manage who has access</span>,
+        each with its reason, who removed it, when, and how many photographs were kept.
+        <span class="ui">Put it back</span> restores one completely.
+      </p>
+    </section>
+
+
+    <!-- ================================================ PART THREE ==== -->
+    <section class="part" id="part3">
+      <div class="tag">
+        <span class="tag-hole" aria-hidden="true"></span>
+        <span class="tag-number">Part three</span>
+        <span class="tag-name">For the caretaker</span>
+      </div>
+
+      <h2>Looking after the app</h2>
+      <p class="lede">
+        For whoever keeps this running. You do not need to be a developer to do most of it, but
+        you will need the project on a computer and a Cloudflare account with access to the
+        museum's resources.
+      </p>
+
+      <h3 id="where-it-lives">Where it lives</h3>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:26%">Piece</th><th>Where</th></tr></thead>
+          <tbody>
+            <tr><td>The app and its API</td><td>A Cloudflare Worker named <code>museum-capture</code></td></tr>
+            <tr><td>Records</td><td>Cloudflare D1 database <code>artefact-catalogue</code></td></tr>
+            <tr><td>Photographs and backups</td><td>Cloudflare R2 bucket <code>artefact-photos</code></td></tr>
+            <tr><td>Sign-in</td><td>Cloudflare Access, email one-time code</td></tr>
+            <tr><td>The questions themselves</td><td><code>schema/worksheet.v2.yaml</code> in the project, and a copy in the database</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="notice notice-warn">
+        <h4>One assumption holds the whole thing up</h4>
+        <p class="small" style="margin:0">
+          Cloudflare Access sits in front of the API and identifies the caller. The Worker
+          trusts the email address in the header <em>because</em> Access put it there. If the
+          Worker is ever exposed without Access in front of it, anyone can set that header
+          themselves and the door is open. Never move or narrow the Access application without
+          understanding that.
+        </p>
+      </div>
+
+      <h3 id="how-records-travel">How records travel</h3>
+
+      <p>
+        A record is written to the device first and always. Sync is a background convenience,
+        never a precondition for cataloguing — a volunteer with no signal must be able to work
+        all morning, and does.
+      </p>
+      <ul>
+        <li>The app tries to sync when it opens, whenever the connection comes back, and every five minutes.</li>
+        <li>Records go up in batches of twenty. Photographs follow, once each.</li>
+        <li>A device pulls back only what <em>it</em> catalogued, not the whole collection — that is what stops every phone slowly filling up with the entire museum.</li>
+        <li>Donor fields are stripped before anything is sent. They never reach the server at all.</li>
+        <li>Nothing overwrites anything: every save appends a new version, and every earlier version is kept.</li>
+      </ul>
+
+      <h4>Two names on every record, and only one of them is proof</h4>
+      <p>
+        A record carries who catalogued it and, separately, which signed-in account sent it.
+        They are not the same claim and the difference is deliberate:
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:26%">Stored as</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="num">captured_by</td>
+              <td>The email of the person who did the work, chosen from the registered list. On a personal phone that is simply the person signed in. On a shared device it is whoever picked their name — a claim, made in good faith, but a claim.</td>
+            </tr>
+            <tr>
+              <td class="num">synced_by</td>
+              <td>The account whose sign-in carried the record to the server. The Worker writes this from the Cloudflare Access header; a device cannot assert it or change it. This is the one that is proof.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        When they agree, attribution is verified and the catalogue shows one name. When they
+        differ — the museum iPad, signed in as itself, used by a named volunteer — the record
+        shows both rather than pretending to a certainty nobody has. Records made before this
+        change keep a typed name and no verified account, which is correct: they never had one,
+        and back-filling a guess would erase the distinction.
+      </p>
+
+      <div class="notice notice-warn">
+        <h4>Access must cover the whole site</h4>
+        <p class="small" style="margin:0">
+          In Cloudflare Zero Trust, the Access application must match the whole hostname, not
+          just <code>/explore</code> and <code>/api</code>. If the capture app at <code>/</code>
+          is left outside the policy, anyone with the address can open it — and the app can no
+          longer tell who they are, so it will refuse to start a record. Check this after any
+          change to the Access configuration.
+        </p>
+      </div>
+
+      <h4>Badge colours</h4>
+      <p class="small muted">
+        Each person's badge colour is stored as a name — "sage", "ochre" — not as a colour
+        value, so the palette can be restyled without rewriting anybody's row. Somebody who has
+        never chosen one still gets a consistent colour derived from their email address, so a
+        shared device shows several different circles rather than a row of identical grey ones.
+        The ten colours live in <code>src/avatars.ts</code>.
+      </p>
+
+      <h3 id="backups">Backups</h3>
+
+      <p>
+        Every Monday at 01:00 (AEST) the Worker writes a complete snapshot to R2 under
+        <code>exports/catalogue-YYYY-MM-DD/</code>:
+      </p>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:32%">File</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="num">records.csv</td><td>Flattened, opens in Excel, will outlast any software</td></tr>
+            <tr><td class="num">records.json</td><td>The full structure</td></tr>
+            <tr><td class="num">revisions.json</td><td>Every earlier version of every record</td></tr>
+            <tr><td class="num">photos.json</td><td>Image keys and checksums</td></tr>
+            <tr><td class="num">schema.yaml</td><td>The field definitions these records were written against</td></tr>
+            <tr><td class="num">MANIFEST.txt</td><td>Checksums for every file</td></tr>
+            <tr><td class="num">README.txt</td><td>Plain English: what this is and how to read it</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="notice notice-warn">
+        <h4>Get a copy off Cloudflare</h4>
+        <p class="small" style="margin:0">
+          Download a snapshot to a committee member's machine monthly, and keep something
+          physical in the museum safe. Two copies on one platform under one account is one
+          lapsed billing away from zero copies. This is the single most important item in
+          Part 3.
+        </p>
+      </div>
+
+      <h3 id="health">Checking it is healthy</h3>
+
+      <p>Run these from the project folder. They read; they change nothing.</p>
+
+      <pre><code><span class="cm"># The last 20 records to arrive — the quickest "is it working?"</span>
+npm run db:records
+
+<span class="cm"># Any sync failures, newest first, with the device that hit them</span>
+npm run db:errors
+
+<span class="cm"># Confirms the field definitions are loaded in the database</span>
+npm run db:check</code></pre>
+
+      <p class="small muted">
+        To see who has actually been cataloguing, and how recently, the database carries a
+        <code>cataloguer_activity</code> view — one row per person, with their record count and
+        the date of their last one. It is the quickest answer to "is anyone using this?".
+      </p>
+
+      <p>
+        If a volunteer reports records not backing up, <code>npm run db:errors</code> is where
+        to look first, and <code>npm run db:records</code> tells you whether anybody's records
+        are arriving or nobody's.
+      </p>
+
+      <h3 id="deploying">Releasing a change</h3>
+
+      <pre><code>npm install
+npm run typecheck     <span class="cm"># app and server; both must pass</span>
+npm run deploy        <span class="cm"># builds, then publishes</span></code></pre>
+
+      <p>
+        Volunteers' phones pick up a new version on their next reload — the app is built so a
+        fix actually reaches a device that has already been used, which is not automatic for
+        an offline-capable app and was got wrong once already.
+      </p>
+      <p>
+        If you change the questions, edit <code>schema/worksheet.v2.yaml</code> and then run
+        <code>npm run db:seed</code> so the database has the matching definitions. Changing
+        questions anywhere else in the code is the wrong move — the whole app is driven from
+        that one file.
+      </p>
+
+      <h3 id="known-issues">Known issues</h3>
+
+      <div class="qa">
+        <strong>Someone is signed in but the app won't let them start a record.</strong>
+        <p>Their email is not on the museum's user list. Add them in <span class="ui">Manage who has access</span> and they can start straight away. Cloudflare letting them prove who they are is a separate gate from the museum letting them in.</p>
+      </div>
+      <div class="qa">
+        <strong>A record opened on a second device does not show photographs taken on the first.</strong>
+        <p>Photograph details are not yet pulled back down. The photographs themselves are safe on the server and appear correctly in the catalogue at <code>/explore</code>.</p>
+      </div>
+      <div class="qa">
+        <strong>There is no export to eHive.</strong>
+        <p>Deliberate, and the most important open item in this manual. See Part 4.</p>
+      </div>
+      <div class="qa">
+        <strong>There is no voice recording.</strong>
+        <p>Also deliberate. The groundwork is in place — each screen already carries the single open question a volunteer would answer aloud — but nothing records or transcribes yet.</p>
+      </div>
+    </section>
+
+
+    <!-- ================================================= PART FOUR ==== -->
+    <section class="part" id="part4">
+      <div class="tag">
+        <span class="tag-hole" aria-hidden="true"></span>
+        <span class="tag-number">Part four</span>
+        <span class="tag-name">Decisions &amp; glossary</span>
+      </div>
+
+      <h2>Still to be decided</h2>
+      <p class="lede">
+        Six questions the museum has not answered yet. They are recorded in the schema rather
+        than guessed at, because cataloguing conventions are institution-specific and expensive
+        to unpick once a few hundred records exist. Until they are settled, this manual cannot
+        be more specific than it is.
+      </p>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:34%">Question</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Millimetres or centimetres?</td>
+              <td>Volunteers are currently told to pick one and stay consistent. A house standard would let the app enforce it and make measurements comparable across the collection.</td>
+            </tr>
+            <tr>
+              <td>Is there a pattern for Dorrigo numbers?</td>
+              <td>Numbers are accepted as free text with no checking. A known pattern (something like <code>YYYY.NNN</code>) would let the app catch typos at the point they are made.</td>
+            </tr>
+            <tr>
+              <td>Who assigns the registration number?</td>
+              <td>The app assumes a number already exists on the object's tag or in the register. If a committee member assigns them beforehand, that is fine; if the app should issue them, that is a different design.</td>
+            </tr>
+            <tr>
+              <td>What is the ruled line after "Unknown" on the acquisition tickbox?</td>
+              <td>Elaboration on "unknown", or an "Other" option? It changes what that field is.</td>
+            </tr>
+            <tr>
+              <td>Do cataloguing volunteers ever touch the donor block?</td>
+              <td>Currently, firmly no. Worth confirming that matches how the museum actually works.</td>
+            </tr>
+            <tr>
+              <td><strong>Do the eHive field mappings match?</strong></td>
+              <td><strong>This one blocks everything downstream.</strong> Every field's mapping to eHive is marked unverified, and no export can be built until they are checked against eHive's own import spreadsheet. A half-correct mapping produces an import that looks like it worked, which is worse than no export at all.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="glossary">Glossary</h3>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th style="width:26%">Term</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Accession</td><td>Formally taking an object into the collection, with the paperwork that goes with it.</td></tr>
+            <tr><td>Registration number</td><td>The unique number identifying an object, usually written on its tag and in the register. In this app it is the first thing you enter.</td></tr>
+            <tr><td>Deaccession</td><td>Formally disposing of an object. A committee decision, entirely separate from removing a record in this app.</td></tr>
+            <tr><td>eHive</td><td>The collection management system the museum already uses, from Vernon Systems. The paper worksheet this app replaces is eHive's own form, and a clean import into eHive is the eventual destination for every record.</td></tr>
+            <tr><td>Spectrum</td><td>The UK collections management standard eHive's object model follows. It is the reason this app does not invent its own data model.</td></tr>
+            <tr><td>Schema</td><td>The single file listing every question, its wording, its options and its grouping. Everything the app asks comes from it.</td></tr>
+            <tr><td>Approximate date</td><td>A date written as it is actually known — "about 1890", "1920s", "unknown" — rather than forced into a calendar.</td></tr>
+            <tr><td>Revision</td><td>An earlier version of a record. Every save keeps one; nothing is overwritten.</td></tr>
+            <tr><td>Restricted field</td><td>One of the five donor fields. Never shown to volunteers, never exported, never sent to the server.</td></tr>
+            <tr><td>Sync</td><td>Records copying themselves from a device to the museum's server in the background.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="end">
+        Dorrigo Museum artefact catalogue · Handbook for the app at
+        <code>museum-capture.stu2038.workers.dev</code> · Written against schema version 2.
+        When the app changes, change this. A manual describing screens that are no longer there
+        is worse than no manual at all.
+      </p>
+    </section>
+
+  </main>
+</div>

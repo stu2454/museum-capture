@@ -10,6 +10,16 @@ It is **schema-driven**. Every field, prompt, option and grouping comes from
 If you find yourself typing `"registration_number"` into a component, stop — the change
 belongs in the schema.
 
+It is now **two apps in one deployment**, served by one Cloudflare Worker:
+
+- **The capture app** (`/`) — for a volunteer holding an object. Offline-first, IndexedDB,
+  syncs in the background.
+- **The explorer** (`/explore`) — for looking records up, and for administering users and
+  removals. Requires an identified, authorised person.
+
+They are kept apart on purpose: the capture flow stays free of search UI, and the explorer
+never risks someone accidentally editing a record.
+
 ## The critical context: this museum uses eHive
 
 The paper worksheet is Appendix 1 of the **eHive Cataloguing Guidelines (July 2023)** —
@@ -27,40 +37,48 @@ This means:
 
 ## Scope
 
-**Build now**
+**Built**
 - Load the schema, render the capture flow, save records locally, export JSON.
 - Photo capture and attachment.
 - Review screen showing every field before a record is confirmed.
+- In-app help for volunteers.
+- Sync to a Cloudflare Worker: D1 for records, R2 for photographs, weekly export snapshot.
+- Sign-in via Cloudflare Access, with an in-app user list and roles. Required for the capture
+  app too — a record is attributed to a registered person, not to a typed name.
+- The explorer: search records, view a record and its photographs, admin removal and restore.
 
 **Not yet**
 - Voice recording and transcription. Structure for it, don't build it.
 - eHive export. Blocked on mapping verification.
-- Accounts, server, sync.
+- Photo metadata pull — a record opened on a second device doesn't yet know which images
+  exist elsewhere.
 
 **Never without asking**
 - Anything that puts donor personal information in the volunteer flow. See below.
 
 ## The volunteer flow
 
-Nine **capture groups**, defined in the schema, not the paper's 35-field order. Paper order
-is filing order; capture order is the order a person naturally handles an object.
+Ten **capture groups** are defined in the schema, in the order a person naturally handles an
+object — not the paper's field order, which is filing order. Eight are volunteer-facing;
+the last two are `restricted: true` and sit outside the flow entirely.
 
 ```
 Record number  →  Photograph  →  Identify  →  Describe  →  Measure
                →  Condition  →  Origin  →  Story  →  Where it lives  →  Review
 ```
 
+(The photograph step is a step in `CaptureFlow`, not a capture group. The eight groups are
+`number`, `identify`, `describe`, `measure`, `condition`, `origin`, `story`,
+`collection_management`; the two restricted ones are `acquisition` and `signoff`.)
+
 The number comes first because volunteers work from objects that already carry a Dorrigo
 register number on a tag. Knowing which record you're on before you shoot stops photographs
 being filed against the wrong object, and lets the duplicate check fire before anyone has
 done ten minutes of work.
 
-Groups 8 (Acquisition) and 9 (Sign-off) are marked `restricted: true` and sit outside the
-volunteer flow entirely.
-
 Design intent for the eventual voice phase: the volunteer answers **one open question per
 group**, speaking freely, and a model splits that answer across the group's fields. Do not
-build 35 individual voice prompts — that's an interrogation, and volunteers will stop after
+build one voice prompt per field — that's an interrogation, and volunteers will stop after
 five. The per-field `voice_prompt` values exist as fallbacks for re-asking a specific gap.
 
 ## Donor information is restricted — this matters
@@ -72,13 +90,17 @@ Rules:
 - Do not show them in the volunteer capture flow.
 - Do not put them in browser storage alongside object data.
 - Do not include them in any export, share link or backup that object records go into.
+- **Do not let them leave the device.** `sync.ts` strips them before a record is sent.
 - They belong with the deed of gift, entered by a committee member, linked to the object
   record by id only.
 
 In a volunteer-run museum, records get emailed around and copied onto USB sticks. Design as
-if that will happen, because it will.
+if that will happen, because it will. Now that records also reach a server, the same applies
+to the database and the weekly export.
 
 ## Schema conventions you need to know
+
+44 fields, in 6 printed sections and 10 capture groups.
 
 | Key | Meaning |
 |---|---|
@@ -98,25 +120,37 @@ Three types were added beyond the original vocabulary: `fuzzy_date`, `image`, `a
 precision in a catalogue is a lie that outlives everyone who could correct it. Free text,
 with optional parsing to a year range for searching — never overwrite what they typed.
 
+The schema is also stored **in the database**, seeded by `npm run db:seed`. A row saying
+`{"materials":["wood","iron"]}` means nothing in twenty years without the field definitions,
+so every weekly export bundles a copy of the YAML it was written against.
+
 ## Decisions the museum still has to make
 
-These are in `open_questions` in the schema. Don't resolve them by picking something sensible —
-ask, and record the answer in the schema.
+These are in `open_questions` in the schema, and as of the last update all six are still
+open. Don't resolve them by picking something sensible — ask, and record the answer in the
+schema.
 
-1. Dimensions unit — mm or cm as house standard?
-2. The unlabelled ruled line after the "Unknown" acquisition tickbox — elaboration, or "Other"?
-3. Who assigns registration numbers — the app, or a person, beforehand?
-4. Do cataloguing volunteers ever touch the donor block?
+1. Registration number format — is there a Dorrigo pattern (e.g. `YYYY.NNN`) the app should
+   check against? Currently free text, no validation.
+2. Dimensions unit — mm or cm as house standard?
+3. The unlabelled ruled line after the "Unknown" acquisition tickbox — elaboration, or "Other"?
+4. Who assigns registration numbers — the app, or a person, beforehand?
+5. Do cataloguing volunteers ever touch the donor block?
+6. Confirm every `mapping.ehive` value against the real eHive import spreadsheet. **This one
+   blocks the entire export path.**
 
-## Suggested stack
+## The stack
 
-Vite + React + TypeScript, PWA. Rationale, so you can argue with it:
+Vite + React + TypeScript, PWA, on Cloudflare Workers. Rationale, so you can argue with it:
 
 - **PWA with offline-first storage.** A country museum's back room is where wifi goes to die.
   A volunteer who loses twenty minutes of work to a dropped connection does not come back
   next Saturday. Records save locally and sync later.
 - **IndexedDB, not localStorage** — photos are too big for localStorage.
-- **No backend for now.** Export JSON, import JSON. Add sync when the flow is proven.
+- **IndexedDB stays the working copy even now there is a server.** Sync is a background
+  convenience, never a precondition for cataloguing.
+- **Cloudflare for the server side.** D1 for records, R2 for photographs and export
+  snapshots, Access for sign-in. One deployment, one bill, no login form to maintain.
 - **Big touch targets, high contrast, adjustable text.** The volunteers are frequently
   retired and often working in poor light while holding something fragile.
 
@@ -138,10 +172,22 @@ Vite + React + TypeScript, PWA. Rationale, so you can argue with it:
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # tsc -b && vite build -> dist/
-npm run typecheck
+npm run dev              # http://localhost:5173
+npm run dev:https        # for device testing — Home Screen and the SW need HTTPS
+npm run build            # tsc -b && vite build -> dist/
+npm run typecheck        # app AND worker; both must pass
+npm run deploy           # build, then wrangler deploy
+
+npm run db:migrate:local # try migrations locally first
+npm run db:migrate       # then for real
+npm run db:seed          # load the schema YAML into the database — don't skip this
+npm run db:check         # schema version and field count as the server sees them
+npm run db:errors        # last 20 sync errors, by device
+npm run db:records       # last 20 records to arrive
 ```
+
+`SYNC-SETUP.md` has the one-time Cloudflare setup: creating D1 and R2, and putting Access in
+front. Read it before deploying to a new environment.
 
 ## Where things live
 
@@ -152,13 +198,35 @@ src/types.ts               TS mirror of the schema. Keep in step with the YAML.
 src/db.ts                  IndexedDB: records + photo blobs.
 src/media.ts               Photo downscaling on intake, file download.
 src/export.ts              JSON export. eHive export deliberately not built.
+src/storage.ts             iOS seven-day storage cap: detection and persistence request.
+src/sync.ts                Offline-tolerant client sync queue. Strips restricted fields.
+src/identity.ts            Who is signed in, who is cataloguing, and the registered roster.
+src/avatars.ts             The badge palette. Names are stored; hex values live here only.
+src/App.tsx                Routes /explore to the explorer; runs the background sync loop.
 src/components/
   CaptureFlow.tsx          Step machine: photos -> capture groups -> review.
   FieldInput.tsx           One branch per schema field type.
   PhotoStep.tsx            Camera intake, primary image selection.
   ReviewSheet.tsx          Record read back in PAPER order, as the printed form.
-  RecordList.tsx           Home screen.
+  RecordList.tsx           Home screen, backup status line, sync warning banner.
   AccessionTag.tsx         The tag header.
+  Help.tsx                 In-app manual. Four tabs. Mirrors the capture groups.
+  StorageNotice.tsx        "Add to Home Screen" prompt on iOS.
+  Cataloguer.tsx           Who is cataloguing. States the signed-in identity; picker
+                           for shared devices; your own name and colour.
+  WhoBadge.tsx             The corner badge, and the Avatar disc the picker reuses.
+src/explorer/
+  Explorer.tsx             Search and list. Admin tabs when the role allows.
+  RecordView.tsx           One record, its photographs, and admin removal.
+  RemovePanel.tsx          Removal with a reason. Restore.
+  UserAdmin.tsx            Add and remove users, set roles.
+  api.ts                   Explorer data access.
+worker/
+  index.ts                 Entry. Routes /api/*, serves assets, runs the weekly export cron.
+  api.ts                   Sync and photo endpoints, for devices.
+  explorer.ts              Explorer and user admin endpoints, for people. Read its header.
+migrations/                D1 schema, in order. Each file's header explains why it exists.
+scripts/seed-schema.mjs    Turns the YAML into the seed SQL for db:seed.
 ```
 
 ## Rules that are easy to break by accident
@@ -170,13 +238,72 @@ src/components/
 2. **Capture order vs paper order.** The flow uses `capture_group`/`capture_order`. The review
    sheet uses `page`/`order`. That's not an inconsistency: doing the work and checking the
    work want different orders.
-3. **Restricted fields never reach a component.** `volunteerFields()` and
-   `printedFieldsInSection()` filter them out at the schema layer, and `toBundle()` strips
-   them again on export. Keep all three.
+3. **Restricted fields never reach a component, and never leave the device.**
+   `volunteerFields()` and `printedFieldsInSection()` filter them out at the schema layer,
+   `toBundle()` strips them again on export, and `sync.ts` strips them before anything is
+   sent to the server. Keep all four.
 4. **Autosave on every change.** `CaptureFlow` writes to IndexedDB in an effect. Don't
    replace it with a save button.
 5. **Never discard what someone typed.** `FieldValue` carries `raw` alongside `value` for
    exactly this. If a value won't parse, keep the text and flag it.
+6. **Sync must never block cataloguing.** No error from `sync.ts` should surface as something
+   a volunteer has to act on. They're holding an object, not debugging a connection. The one
+   thing that does surface is a quiet banner after sync has been failing for hours.
+7. **Nothing is ever really deleted.** Every save appends to `record_revisions`; removal is a
+   soft delete with an actor and a reason, and it can be restored. Don't add a hard delete.
+8. **Two identities on a record, and only one of them is trustworthy.** `captured_by` is an
+   email the device chose from the registered roster — on a shared museum device that is a
+   claim, not proof. `synced_by` is written by the Worker from the Access header on the
+   request that carried the record. Never populate `synced_by` from the request body, and
+   never merge the two into one column: the gap between them is the shared-device case, and
+   collapsing it invents a certainty the museum doesn't have.
+
+## The server side
+
+Read the header comments in `worker/explorer.ts` and `migrations/0003_users_and_access.sql`
+before changing anything here. In short:
+
+- **Authentication is Cloudflare Access, in front of the Worker.** It verifies the person's
+  email by one-time PIN and passes it in `Cf-Access-Authenticated-User-Email`. There are no
+  passwords in this application and none should ever be added.
+- **Authorisation is the `users` table.** Being able to receive a PIN is not permission to
+  enter the collection — the Access policy is deliberately broad so that admins add people
+  in the app rather than in the Cloudflare dashboard. Both checks are required.
+- **A missing identity header is refused, not waved through** (`worker/api.ts`). That was a
+  fix, not an oversight: skipping the check when the header was absent was only safe while
+  Access covered every path.
+- **The whole model rests on one assumption**: Access sits in front. If the Worker is ever
+  exposed without it, anyone can set that header themselves.
+- **Access must cover the whole site, not just `/explore` and `/api`.** The capture app used
+  to be reachable without signing in, which meant anyone with the address could start writing
+  records. It is now gated like everything else, and the app refuses to start a record it
+  cannot attribute to a registered person.
+- **`PATCH /api/me`** is the only self-service write in the system. A person may change their
+  own `display_name` and `avatar_colour` and nothing else — never a role, never a status,
+  never another person's row, which the handler guarantees by binding the caller's own
+  verified email into the `WHERE` clause rather than by checking a field. Self-service that
+  can grant permissions isn't self-service. It exists because an admin's typo in someone's
+  name was otherwise uncorrectable by the person whose name it is, and that name goes on
+  every record they catalogue.
+- **Badge colours are stored as palette names** (`sage`), never hex. The values live in
+  `src/avatars.ts` and the allowlist is duplicated in `worker/explorer.ts` — keep the two in
+  step. Storing a name means the palette can be restyled without touching a single row, and
+  an allowlist of ten known words is a cheaper guarantee than escaping downstream.
+- **`/api/people`** returns the active roster — email and display name only — to any
+  authorised user, because the capture app's picker is useless without it. Roles, sign-in
+  times and who-added-whom stay in `/api/users`, which is admins only.
+- **Roles** are `admin` / `volunteer` / `viewer`. Removal, restore and user admin are
+  admins-only. The first person through the door becomes admin, and only while the users
+  table is empty — a bootstrap, not a back door.
+- **Sync is scoped to the device.** A phone pulls back only what it captured. Every device
+  used to receive every record, which slowly filled each phone with the whole collection.
+- **Batches are capped at 20 records** because D1's free plan allows 50 queries per
+  invocation and each record costs two statements. The client pages through anything larger.
+- **The weekly cron writes a snapshot to R2** (01:00 Monday AEST) — CSV, JSON, revisions,
+  photo checksums, the schema, a manifest and a plain-English README. D1's point-in-time
+  recovery is only 7 days on the free plan, so this is what actually makes the catalogue
+  durable. Still get a copy off Cloudflare periodically; two copies on one platform under
+  one account is one lapsed billing away from zero copies.
 
 ## Deliberately not built
 
@@ -186,8 +313,9 @@ src/components/
   `voice_prompt`, `FieldValue.origin` can already record `"spoken"`, and the schema has
   `voice_recording` and `transcript` fields. The flow to build: record one answer per group,
   transcribe, have a model split it across that group's fields, then show the volunteer what
-  it heard before accepting. Do not build 35 separate voice prompts.
-- **Sync, accounts, server.** Records live on the device and export as JSON.
+  it heard before accepting. Do not build one voice prompt per field.
+- **Photo metadata pull.** A record opened on a second device doesn't know which images exist
+  elsewhere. `fromWire` deliberately leaves local photos alone rather than clobbering them.
 - **Audio and table field types.** `FieldInput` has no branch for them yet; nothing in the
   volunteer flow uses them.
 
@@ -205,6 +333,11 @@ src/components/
 - **Secure context.** `npm run dev:https` for device testing. Add to Home Screen, the service
   worker and (later) the microphone all need HTTPS. The camera file input does not.
 - **apple-touch-icon must be PNG.** iOS ignores SVG for home-screen icons.
+- **The iOS seven-day storage cap.** Safari can clear IndexedDB after seven days of Safari
+  use without a visit — taking every unsynced record with it. A home-screen web app isn't
+  "in Safari" and keeps its own counter, which is why `StorageNotice` nags about installing.
+  See the header of `src/storage.ts`. Sync reduces this risk a great deal; it doesn't remove
+  it, because anything captured between syncs still lives only on the device.
 
 ## The service worker, and why it is split two ways
 
@@ -233,6 +366,18 @@ recovers after **two** opens (the first installs the new worker, the second serv
 content), and thereafter a redeploy lands on the **first** reload. Offline still works
 throughout. Re-test with a headless browser if you touch this file — the handover is
 asynchronous, and fixed timeouts will lie to you.
+
+Two things are never cached, and both exist because a signed-out request does not fail —
+Cloudflare Access answers it `200` with a sign-in page:
+
+- **`/api/*` is never intercepted.** A cached record list can show a record that has been
+  removed, and a cached sign-in page would sit where data should be.
+- **A redirected response is never stored.** This is the one that would be unrecoverable in
+  the field: an expired session redirects the page itself to Cloudflare, and caching that as
+  the app shell leaves the device opening on a login screen with no way back except clearing
+  site data — which destroys unexported work. Both `networkFirst` and `staleWhileRevalidate`
+  check `response.redirected` before they put anything in the cache. Don't remove that check
+  while Access sits in front of the app.
 
 ## Design direction
 
