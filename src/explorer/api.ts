@@ -37,13 +37,24 @@ export interface RecordDetail {
     object_name: string | null;
     status: string;
     values_json: string;
+    /** Who catalogued it: an email since the identity change, a typed name before. */
     captured_by: string | null;
+    /** Their name, resolved from the user list. Null for older typed-name records. */
+    captured_by_name: string | null;
+    /** The signed-in account that sent it. Stamped by the server, not the device. */
+    synced_by: string | null;
     captured_at: string | null;
     updated_at: string;
     revision: number;
   };
   photos: PhotoSummary[];
-  revisions: Array<{ revision: number; status: string; captured_by: string; updated_at: string }>;
+  revisions: Array<{
+    revision: number;
+    status: string;
+    captured_by: string;
+    synced_by: string | null;
+    updated_at: string;
+  }>;
   schema_yaml: string | null;
 }
 

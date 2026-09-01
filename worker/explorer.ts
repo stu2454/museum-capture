@@ -30,7 +30,29 @@ interface User {
   display_name: string | null;
   role: Role;
   status: string;
+  /** A palette name such as "sage", never a colour value. May be unset. */
+  avatar_colour: string | null;
 }
+
+/**
+ * The badge palette, by name. Keep in step with SWATCHES in src/avatars.ts.
+ *
+ * Checked rather than trusted: what arrives here ends up as a class name on a
+ * page, and an allowlist of ten known words is a cheaper guarantee than any
+ * amount of escaping downstream.
+ */
+const COLOURS = new Set([
+  "ink",
+  "indigo",
+  "teal",
+  "sage",
+  "moss",
+  "ochre",
+  "umber",
+  "oxide",
+  "plum",
+  "slate",
+]);
 
 const ACCESS_EMAIL_HEADER = "Cf-Access-Authenticated-User-Email";
 
@@ -46,7 +68,7 @@ async function requireUser(request: Request, env: Env): Promise<User | null> {
   const email = raw.trim().toLowerCase();
 
   const existing = await env.DB.prepare(
-    `SELECT email, display_name, role, status FROM users WHERE email = ?1`
+    `SELECT email, display_name, role, status, avatar_colour FROM users WHERE email = ?1`
   )
     .bind(email)
     .first<User>();
@@ -76,7 +98,7 @@ async function requireUser(request: Request, env: Env): Promise<User | null> {
       .bind(email)
       .run();
     await log(env, email, "add_user", email, "Bootstrap admin");
-    return { email, display_name: email, role: "admin", status: "active" };
+    return { email, display_name: email, role: "admin", status: "active", avatar_colour: null };
   }
 
   await log(env, email, "denied", null, "Not in the user list");
@@ -110,7 +132,28 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
   }
 
   try {
-    if (path === "/me") return json({ user });
+    if (path === "/me") {
+      // The one thing a person may change without an admin: their own name and
+      // colour. Nothing else, and nobody else's.
+      if (request.method === "PATCH") return await updateMe(request, env, user);
+      return json({ user });
+    }
+
+    // The registered roster, for the capture app's "who is cataloguing" picker.
+    //
+    // Readable by any authorised user, not just admins: these are the names and
+    // addresses of people who already work together, and the picker is useless
+    // without them. What stays behind the admin check is everything that isn't
+    // needed to attribute a record — roles, sign-in times, who added whom, and
+    // suspended accounts. Those live in /users.
+    if (path === "/people" && request.method === "GET") {
+      const rows = await env.DB.prepare(
+        `SELECT email, display_name, avatar_colour FROM users
+         WHERE status = 'active'
+         ORDER BY COALESCE(NULLIF(TRIM(display_name), ''), email)`
+      ).all();
+      return json({ people: rows.results });
+    }
 
     if (path === "/removed" && request.method === "GET") {
       if (user.role !== "admin") return json({ error: "admins_only" }, 403);
@@ -207,10 +250,16 @@ async function listRecords(request: Request, env: Env, url: URL): Promise<Respon
 async function getRecord(env: Env, path: string): Promise<Response> {
   const id = decodeURIComponent(path.split("/")[2] ?? "");
 
+  // captured_by holds an email for anything catalogued since the identity change,
+  // and a typed name for everything before it. The join resolves the former to a
+  // person; the latter simply doesn't match a row, which is the honest outcome.
   const record = await env.DB.prepare(
-    `SELECT id, registration_number, object_name, status, schema_version, values_json,
-            captured_by, captured_at, updated_at, revision
-     FROM records WHERE id = ?1 AND deleted_at IS NULL`
+    `SELECT r.id, r.registration_number, r.object_name, r.status, r.schema_version,
+            r.values_json, r.captured_by, r.synced_by, r.captured_at, r.updated_at,
+            r.revision, u.display_name AS captured_by_name
+     FROM records r
+     LEFT JOIN users u ON u.email = r.captured_by
+     WHERE r.id = ?1 AND r.deleted_at IS NULL`
   )
     .bind(id)
     .first();
@@ -225,7 +274,7 @@ async function getRecord(env: Env, path: string): Promise<Response> {
       .bind(id)
       .all(),
     env.DB.prepare(
-      `SELECT revision, status, captured_by, updated_at FROM record_revisions
+      `SELECT revision, status, captured_by, synced_by, updated_at FROM record_revisions
        WHERE record_id = ?1 ORDER BY revision DESC`
     )
       .bind(id)
@@ -342,6 +391,62 @@ async function restoreRecord(env: Env, path: string, actor: User): Promise<Respo
 
   await log(env, actor.email, "restore_record", id);
   return json({ ok: true });
+}
+
+/**
+ * A person editing their own row.
+ *
+ * Scoped to the caller by construction rather than by checking: the WHERE clause
+ * binds their own verified email, so there is no request that could reach someone
+ * else's record. Role and status aren't writable here at all — self-service that
+ * can grant permissions isn't self-service, it's a privilege escalation with a
+ * friendly form on top.
+ */
+async function updateMe(request: Request, env: Env, actor: User): Promise<Response> {
+  const body = (await request.json()) as { display_name?: string; avatar_colour?: string };
+
+  const name =
+    typeof body.display_name === "string" ? body.display_name.trim().slice(0, 60) : undefined;
+  const colour = typeof body.avatar_colour === "string" ? body.avatar_colour.trim() : undefined;
+
+  if (name !== undefined && name === "") {
+    return json(
+      {
+        error: "empty_name",
+        message: "Your name can't be blank — it's what appears on every record you catalogue.",
+      },
+      400
+    );
+  }
+
+  if (colour !== undefined && !COLOURS.has(colour)) {
+    return json({ error: "unknown_colour", message: "That isn't one of the colours." }, 400);
+  }
+
+  // COALESCE so that sending only one field leaves the other alone.
+  await env.DB.prepare(
+    `UPDATE users
+        SET display_name  = COALESCE(?2, display_name),
+            avatar_colour = COALESCE(?3, avatar_colour)
+      WHERE email = ?1`
+  )
+    .bind(actor.email, name ?? null, colour ?? null)
+    .run();
+
+  await log(env, actor.email, "update_profile", actor.email, [
+    name !== undefined ? `name=${name}` : null,
+    colour !== undefined ? `colour=${colour}` : null,
+  ]
+    .filter(Boolean)
+    .join(" "));
+
+  const updated = await env.DB.prepare(
+    `SELECT email, display_name, role, status, avatar_colour FROM users WHERE email = ?1`
+  )
+    .bind(actor.email)
+    .first<User>();
+
+  return json({ user: updated });
 }
 
 async function listUsers(env: Env): Promise<Response> {

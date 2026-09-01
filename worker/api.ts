@@ -134,8 +134,8 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
         env.DB.prepare(
           `INSERT INTO records
              (id, registration_number, object_name, status, schema_version, values_json,
-              captured_by, captured_at, updated_at, device_id, revision)
-           VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)
+              captured_by, captured_at, updated_at, device_id, revision, synced_by)
+           VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)
            ON CONFLICT(id) DO UPDATE SET
              registration_number = excluded.registration_number,
              object_name         = excluded.object_name,
@@ -144,6 +144,7 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
              updated_at          = excluded.updated_at,
              device_id           = excluded.device_id,
              revision            = records.revision + 1,
+             synced_by           = excluded.synced_by,
              synced_at           = datetime('now')
            WHERE excluded.updated_at > records.updated_at`
         ).bind(
@@ -157,7 +158,13 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
           record.captured_at,
           record.updated_at,
           body.device_id,
-          record.revision
+          record.revision,
+          // NOT from the request body. This is the Cloudflare Access identity of
+          // the account that sent the record, which a device cannot assert for
+          // itself. captured_by says who claims to have done the work; this says
+          // whose sign-in carried it. On a shared device they differ, and both
+          // are worth having.
+          volunteer
         )
       );
 
@@ -167,8 +174,9 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
       statements.push(
         env.DB.prepare(
           `INSERT OR IGNORE INTO record_revisions
-             (record_id, revision, values_json, status, captured_by, updated_at, device_id)
-           VALUES (?1,?2,?3,?4,?5,?6,?7)`
+             (record_id, revision, values_json, status, captured_by, updated_at, device_id,
+              synced_by)
+           VALUES (?1,?2,?3,?4,?5,?6,?7,?8)`
         ).bind(
           record.id,
           record.revision,
@@ -176,7 +184,8 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
           record.status,
           record.captured_by,
           record.updated_at,
-          body.device_id
+          body.device_id,
+          volunteer
         )
       );
     }

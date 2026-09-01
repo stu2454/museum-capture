@@ -197,8 +197,18 @@ export function RecordView({
         <dl>
           <div className="sheet-line">
             <dt>Catalogued by</dt>
-            <dd>{data.record.captured_by || "not recorded"}</dd>
+            <dd>{cataloguer(data.record)}</dd>
           </div>
+          {/* Only worth a line when it says something the line above doesn't:
+              a museum device signed in as itself, with a named volunteer using
+              it. When one person signed in and did their own work, repeating
+              their address twice is noise. */}
+          {data.record.synced_by && data.record.synced_by !== data.record.captured_by && (
+            <div className="sheet-line">
+              <dt>Sent from</dt>
+              <dd>{data.record.synced_by}</dd>
+            </div>
+          )}
           <div className="sheet-line">
             <dt>Status</dt>
             <dd>{data.record.status}</dd>
@@ -215,6 +225,20 @@ export function RecordView({
       </section>
     </div>
   );
+}
+
+/**
+ * Who catalogued this, in the most useful form available.
+ *
+ * Records made since the identity change carry an email that resolves to a name.
+ * Older ones carry whatever was typed into a box, which resolves to nothing —
+ * shown as it stands rather than dressed up as something more certain.
+ */
+function cataloguer(record: RecordDetail["record"]): string {
+  const who = (record.captured_by ?? "").trim();
+  if (!who) return "not recorded";
+  const name = (record.captured_by_name ?? "").trim();
+  return name ? `${name} · ${who}` : who;
 }
 
 function present(value: unknown): boolean {

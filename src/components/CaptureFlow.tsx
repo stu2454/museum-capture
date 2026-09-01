@@ -12,13 +12,17 @@ import { useEffect, useMemo, useState } from "react";
 import { fieldsInGroup, captureGroups } from "../schema";
 import { records } from "../db";
 import type { ArtefactRecord, CaptureGroup, FieldValue, PhotoMeta } from "../types";
+import type { Person } from "../identity";
 import { AccessionTag } from "./AccessionTag";
+import { WhoBadge } from "./WhoBadge";
 import { FieldInput } from "./FieldInput";
 import { PhotoStep } from "./PhotoStep";
 import { ReviewSheet } from "./ReviewSheet";
 
 interface Props {
   record: ArtefactRecord;
+  /** Who is using the app, for the corner badge. Null until the app knows. */
+  cataloguer: Person | null;
   onExit: () => void;
 }
 
@@ -42,7 +46,7 @@ function buildSteps(): Step[] {
   return steps;
 }
 
-export function CaptureFlow({ record: initial, onExit }: Props) {
+export function CaptureFlow({ record: initial, cataloguer, onExit }: Props) {
   const [record, setRecord] = useState<ArtefactRecord>(initial);
   const [step, setStep] = useState(0);
   const [clash, setClash] = useState<string | null>(null);
@@ -105,6 +109,10 @@ export function CaptureFlow({ record: initial, onExit }: Props) {
 
   return (
     <div className="app">
+      <div className="who-row">
+        <WhoBadge person={cataloguer} />
+      </div>
+
       <AccessionTag
         registrationNumber={record.registrationNumber}
         objectName={(record.values.object_name?.value as string) ?? ""}

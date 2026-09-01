@@ -3,13 +3,18 @@
  * An empty screen is an invitation to act, so it says what to do next.
  */
 
-import { useState } from "react";
 import type { ArtefactRecord } from "../types";
+import type { Identity, Person } from "../identity";
+import { Cataloguer } from "./Cataloguer";
+import { WhoBadge } from "./WhoBadge";
 import { StorageNotice } from "./StorageNotice";
 import { TROUBLE_THRESHOLD_HOURS } from "../sync";
 
 interface Props {
   list: ArtefactRecord[];
+  identity: Identity;
+  onCataloguer: (person: Person) => void;
+  onProfile: (person: Person) => void;
   onHelp: () => void;
   unsynced?: number;
   failingSince?: string;
@@ -18,47 +23,38 @@ interface Props {
   onExport: () => void;
 }
 
-/**
- * Who is cataloguing today. Kept on the device rather than in an account,
- * because a login screen is a barrier between a volunteer and twenty minutes of
- * useful work. Every record carries the name so a question can find its way back
- * to the person who wrote it.
- */
-function Volunteer() {
-  const [name, setName] = useState(() => localStorage.getItem("volunteerName") ?? "");
-  return (
-    <div className="field" style={{ marginBottom: 18 }}>
-      <label className="field-label" htmlFor="volunteerName">
-        Who's cataloguing today?
-      </label>
-      <input
-        id="volunteerName"
-        className="field-control"
-        type="text"
-        placeholder="Your name"
-        value={name}
-        onChange={(e) => {
-          setName(e.target.value);
-          localStorage.setItem("volunteerName", e.target.value);
-        }}
-      />
-    </div>
-  );
-}
-
 function hoursSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 3_600_000;
 }
 
-export function RecordList({ list, unsynced = 0, failingSince, onHelp, onOpen, onStart, onExport }: Props) {
+export function RecordList({
+  list,
+  identity,
+  onCataloguer,
+  onProfile,
+  unsynced = 0,
+  failingSince,
+  onHelp,
+  onOpen,
+  onStart,
+  onExport,
+}: Props) {
+  // A record has to belong to somebody. Rather than letting one be started and
+  // then failing to attribute it, the button waits until the app knows who is
+  // holding the phone — and the Cataloguer block above says what to do about it.
+  const canStart = identity.state === "ready" && Boolean(identity.cataloguer);
+
   return (
     <div className="app">
-      <header className="masthead">
-        <p className="eyebrow">Collection store</p>
-        <h1>Artefact Catalogue</h1>
+      <header className="masthead has-who">
+        <div>
+          <p className="eyebrow">Collection store</p>
+          <h1>Artefact Catalogue</h1>
+        </div>
+        <WhoBadge person={identity.cataloguer} />
       </header>
 
-      <Volunteer />
+      <Cataloguer identity={identity} onChange={onCataloguer} onUpdate={onProfile} />
 
       <StorageNotice />
 
@@ -90,7 +86,7 @@ export function RecordList({ list, unsynced = 0, failingSince, onHelp, onOpen, o
       {list.length === 0 ? (
         <div className="empty">
           <p>Nothing recorded on this device yet. Pick up an object and start.</p>
-          <button type="button" className="btn" onClick={onStart}>
+          <button type="button" className="btn" onClick={onStart} disabled={!canStart}>
             Start a record
           </button>
           <button type="button" className="help-link" onClick={onHelp} style={{ marginTop: 18 }}>
@@ -101,7 +97,7 @@ export function RecordList({ list, unsynced = 0, failingSince, onHelp, onOpen, o
         </div>
       ) : (
         <>
-          <button type="button" className="btn btn-wide" onClick={onStart}>
+          <button type="button" className="btn btn-wide" onClick={onStart} disabled={!canStart}>
             Start a record
           </button>
           <p className="eyebrow" style={{ margin: "26px 0 8px" }}>

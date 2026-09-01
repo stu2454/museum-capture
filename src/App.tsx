@@ -8,7 +8,17 @@ import { schema } from "./schema";
 import { Explorer } from "./explorer/Explorer";
 import { startAutoSync, type SyncOutcome } from "./sync";
 import { Help } from "./components/Help";
+import { loadIdentity, type Identity, type Person } from "./identity";
 import type { ArtefactRecord } from "./types";
+
+/** Nothing known yet. Replaced on first load, from the network or the cache. */
+const NO_IDENTITY: Identity = {
+  state: "unknown",
+  account: null,
+  people: [],
+  cataloguer: null,
+  fromCache: false,
+};
 
 export default function App() {
   // Two apps, one deployment. The capture app is for volunteers holding an
@@ -23,6 +33,7 @@ export default function App() {
   const [list, setList] = useState<ArtefactRecord[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncOutcome | null>(null);
+  const [identity, setIdentity] = useState<Identity>(NO_IDENTITY);
   const [showHelp, setShowHelp] = useState(false);
   const [current, setCurrent] = useState<ArtefactRecord | null>(null);
 
@@ -31,6 +42,12 @@ export default function App() {
   }, []);
 
   useEffect(refresh, [refresh]);
+
+  // Who is holding the phone. Answered from the last known copy when there's no
+  // signal, so this never becomes a reason someone can't start work.
+  useEffect(() => {
+    void loadIdentity().then(setIdentity);
+  }, []);
 
   // Sync runs in the background: on load, when the connection returns, and every
   // few minutes. It is never a precondition for cataloguing — IndexedDB stays the
@@ -53,6 +70,10 @@ export default function App() {
   }, [openId]);
 
   function start() {
+    // The home screen disables the button without a cataloguer; this is the
+    // belt-and-braces half. An unattributable record is worse than no record.
+    if (!identity.cataloguer) return;
+
     const record: ArtefactRecord = {
       id: newId("rec"),
       schemaVersion: schema.schema_version,
@@ -60,7 +81,10 @@ export default function App() {
       status: "draft",
       values: {},
       photos: [],
-      capturedBy: localStorage.getItem("volunteerName") ?? "",
+      // An email address, not a typed name: it identifies one person, matches
+      // the museum's user list, and gives anyone with a question later someone
+      // they can actually contact.
+      capturedBy: identity.cataloguer.email,
       capturedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -81,6 +105,7 @@ export default function App() {
     return (
       <CaptureFlow
         record={current}
+        cataloguer={identity.cataloguer}
         onExit={() => {
           setOpenId(null);
           refresh();
@@ -94,6 +119,21 @@ export default function App() {
   return (
     <RecordList
       list={list}
+      identity={identity}
+      onCataloguer={(person: Person) =>
+        setIdentity((current) => ({ ...current, cataloguer: person }))
+      }
+      // A changed name or colour has to land in all three places at once, or the
+      // corner badge and the picker disagree with the panel that just saved it.
+      onProfile={(person: Person) =>
+        setIdentity((current) => ({
+          ...current,
+          account: person,
+          cataloguer:
+            current.cataloguer?.email === person.email ? person : current.cataloguer,
+          people: current.people.map((p) => (p.email === person.email ? person : p)),
+        }))
+      }
       unsynced={unsynced}
       onHelp={() => setShowHelp(true)}
       failingSince={sync?.failingSince}

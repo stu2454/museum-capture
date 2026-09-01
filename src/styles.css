@@ -721,3 +721,159 @@ body {
   border-radius: var(--radius);
   cursor: pointer;
 }
+
+/* ----------------------------------------------------- who is cataloguing */
+/* This states a fact rather than asking a question: the sign-in at the front
+   door already established who this is, so asking again would be a form for the
+   sake of a form. The switch below it is deliberately quiet — on a volunteer's
+   own phone it is never needed, and it only appears when more than one person
+   is registered. */
+
+.cataloguer {
+  display: block;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.cataloguer-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cataloguer-who {
+  min-width: 0;
+}
+
+.cataloguer-name {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.cataloguer .record-ref,
+.cataloguer .eyebrow {
+  display: block;
+  margin: 0;
+}
+
+/* Wraps rather than squeezing: on a narrow phone two quiet buttons side by side
+   fall below the 52px target the rest of the app keeps to. */
+.cataloguer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin-top: 4px;
+}
+
+.cataloguer-switch {
+  padding-left: 0;
+  padding-right: 0;
+  border-color: transparent;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* A person in a list: disc, then name over address. */
+.choice-person,
+.you-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.you-preview {
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ------------------------------------------------------------- the palette */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.swatch {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(22, 40, 60, 0.25);
+  cursor: pointer;
+  padding: 0;
+}
+
+/* The ring sits outside the disc so the colour itself is never altered by being
+   selected — a swatch that changes shade when chosen is a swatch you can't trust. */
+.swatch.is-chosen {
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 5px var(--ink);
+}
+
+/* ------------------------------------------------------------ who is here */
+/* A quiet mark in the corner saying who the app is being used as. Outlined and
+   in ink, never brass — the accession tag is the one loud element on any screen
+   it shares, and this must not compete with it.
+
+   The .has-who modifier exists rather than restyling .masthead outright: the
+   help screen and the explorer use the same masthead with no badge, and turning
+   the base class into a flex row would lay their eyebrow and heading side by
+   side. */
+
+.masthead.has-who {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.who-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 14px;
+}
+
+.whoami {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  max-width: 48%;
+  padding-top: 2px;
+}
+
+/* The coloured disc. White initials on every swatch, which is why the palette
+   sits in a narrow luminance band — see the note in src/avatars.ts. */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  font-family: var(--data);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
+  line-height: 1;
+}
+
+.whoami-name {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* On a narrow phone the initials carry it; the name is the first thing to go. */
+@media (max-width: 380px) {
+  .whoami-name {
+    display: none;
+  }
+}

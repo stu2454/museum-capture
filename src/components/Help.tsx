@@ -86,19 +86,28 @@ function Start() {
         </p>
       </div>
 
-      <Step n={1} title="Put your name in">
-        There&apos;s a box on the first screen asking who&apos;s cataloguing today. Type your name
-        once and the app remembers it. Every record carries it, so anyone with a question later
-        knows who to ask. It isn&apos;t a login and there&apos;s no password.
+      <Step n={1} title="Sign in">
+        The first time you open the app it asks for your email and sends you a short code. Type
+        the code in. There&apos;s no password to remember and you won&apos;t be asked again for a
+        long while. You need a connection for this one step, so do it before you go into the
+        store room.
       </Step>
 
-      <Step n={2} title="Sign in once, so your work is saved">
-        Open the catalogue at <strong>/explore</strong> and sign in with your email. You&apos;ll be
-        emailed a short code. You only need to do this once on each device — after that your
-        records send themselves to the museum&apos;s server.
+      <Step n={2} title="Check the name at the top is yours">
+        The first screen says <strong>Cataloguing as</strong> and your name — the app knows who
+        you are because you signed in, so there&apos;s nothing to type. On a museum device that
+        others use too, tap <strong>Someone else is cataloguing</strong> and pick yourself before
+        you start. Records are filed under whoever is named there.
       </Step>
 
-      <Step n={3} title="What to have with you">
+      <Step n={3} title="Make the badge yours">
+        Tap <strong>Change your name or colour</strong> on the first screen. Pick a colour and
+        you&apos;ll see it in the corner of every screen from then on — which is how you tell at
+        a glance that the app is set to you and not to whoever used this device last. You can
+        correct your name here too, if it was typed in wrongly when you were added.
+      </Step>
+
+      <Step n={4} title="What to have with you">
         The object, somewhere clean and well lit to stand it, a tape measure, and the register or
         the object&apos;s existing tag so you have its number. Gloves if the object needs them.
       </Step>
@@ -208,6 +217,8 @@ function Problems() {
     ["The registration number is already used.", "Another record on this device has the same number. Check the register. If it's the same object, open the existing record instead."],
     ["There's no signal in the store room.", "Carry on. The app works completely offline and sends everything later."],
     ["I've made a mistake in a saved record.", "Open it from the first screen and change it. Nothing is locked, and every earlier version is kept."],
+    ["Someone else's name is at the top of the screen.", "You're on a shared device they used last. Tap \"Someone else is cataloguing\" and pick yourself, or your work gets filed under their name."],
+    ["It says I'm not on the museum's list.", "You've proved who you are, but nobody has given you access yet. Ask an administrator to add your email address — it takes them a minute."],
     ["I don't know the answer to a question.", "Leave it blank and move on. That is the correct thing to do."],
   ];
 
