@@ -17,3 +17,7 @@ images/
 # Never commit real catalogue exports — they can contain collection and donor information.
 *.catalogue.json
 catalogue-*.json
+
+# Working files from the eHive image conversion. Regenerate with
+# scripts/attach-ehive-images.mjs; the masters live outside this repo.
+.ehive-jpeg/
