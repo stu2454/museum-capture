@@ -1,0 +1,198 @@
+# eHive object record fields, for reference when extending the export.
+#
+# Extracted 2026-09-02 from the "Fieldnames (do not edit)" worksheet of
+# 'ehive_import_spreadsheet - march 2026.xlsm', downloaded from
+# https://info.ehive.com/importing-data/
+#
+# These are the fields reachable through the spreadsheet's Insert Column button,
+# i.e. everything available BEYOND the 59 columns the standard sheet ships with.
+# Label<TAB>import field name. Re-extract when eHive publish a new workbook.
+#
+# The workbook itself is deliberately not committed: it is Vernon Systems' file,
+# it is several megabytes of macro-enabled binary, and the URL above is stable.
+Acquisition Condition	condition_at_acquisition
+Association Keyword	association_keyword
+Carrier Type	carrier_type
+Catalogued Date	catalogued_date
+Cataloguer	cataloguer
+Classification	classification
+Collection Type	department
+Comments	comments
+Comments Date	comments_date
+Comments Person	comments_person
+Completed Treatment Date	completed_treatment_date
+Completed Treatment Keyword	completed_treatment_keyword
+Completed Treatment Notes	completed_treatment_notes
+Completed Treatment Part Reference	completed_treatment_part_reference
+Completed Treatment Person	completed_treatment_person
+Condition Date	condition_date
+Condition Keyword	condition_keyword
+Condition Notes	condition_notes
+Condition Part Aspect	condition_part_reference_aspect
+Condition Person	condition_person
+Conservation Priority	conservation_priority
+Controlling Institution	controlling_institution
+Current Record Status	current_record_status
+Date Made (text)	date_made
+Datum	datum
+Deaccession Authoriser	deaccession_authoriser
+Deaccession Authoriser Position	deaccession_authoriser_position
+Deaccession Date	deaccession_date
+Deaccession Method	deaccession_method
+Deaccession Proceeds	deaccession_proceeds
+Deaccession Reason	deaccession_reason
+Deaccession Status	deaccession_status
+Display Details	display_details
+Edition	edition
+Exhibition History	exhibition_history
+External Database ID	external_database_id
+Field Collection Date	field_collection_date
+Field Collection Description	field_collection_description
+Field Collection Method	field_collection_method
+Field Collection Notes	field_collection_notes
+Field Collection Place Keyword	field_collection_place_keyword
+Field Collection Reference	field_collection_reference
+Field Collection Time	field_collection_time
+Field Collector	field_collector
+Field Collector Role	field_collector_role
+Film Type	film_type
+Format	format
+Funder	funder
+Funder Amount	funder_amount
+Funder Type	funder_type
+General Flag	general_flag_admin
+General Notes Admin	general_notes_admin
+General Notes Object	general_notes_object
+General Notes Place Mark	general_notes_place_mark
+Geological Age	geological_age
+Geological Age Description	geological_age_description
+Geological Form	geological_form
+Geological Formation	geological_formation
+Geological Formation Description	geological_formation_description
+Habitat Description	habitat_description
+Habitat Keyword	habitat_keyword
+Handling Details	handling_details
+Inward Loan	loan_in
+ISBN or ISSN	isbn_issn
+Item Count Notes	item_count_notes
+Language	language
+Latest Appraisal Valuation	latest_appraisal_valuation
+Latest Conservation Valuation	latest_conservation_valuation
+Latest Insurance Valuation	latest_insurance_valuation
+Latest Outgoing Loan Valuation	latest_outgoing_loan_valuation
+Latest Valuation	latest_valuation
+Latitude	latitude
+Legal Status	legal_status
+Location History	location_history
+Location History Date	location_history_date
+Location History Notes	location_history_notes
+Location Notes	location_notes
+Longitude	longitude
+Lot Valuation	lot_valuation
+Marine Environment	marine_environment
+Measurement Aspect	measurement_aspect
+Measurement Part	measurement_part
+Measurement Unit	measurement_unit
+Measurement Value	measurement_value
+Mounting Framing	mounting_framing
+Object Number (text)	other_number
+Object Object Relationship	object_object_relationship
+Object Object Relationship Notes	object_object_relationship_notes
+Other Maker Contributor	other_maker_contributor
+Other Maker Contributor Role	other_maker_contributor_role
+Other Name Title Notes	other_name_title_notes
+Other Name Title Type	other_name_title_type
+Other Name/Title	other_name_title
+Other Number Type	other_number_type
+Outgoing Loan	loan_out
+Packing Details	packing_details
+Part Description	part_description
+Part Holdings	part_holdings
+Part ID	part_id
+Period	period
+Physical Characteristics	physical_characteristics
+Place Mark	place_mark
+Place Mark Account Relationship	place_mark_account_relationship
+Place Mark Name	place_mark_name
+Place Mark Notes	place_mark_notes
+Place Mark Notes	place_mark_notes
+Place Notes	place_notes
+Portfolio Title	portfolio_title
+Price Foreign	price_foreign
+Primary Maker	primary_creator_maker
+Primary Maker Role	primary_creator_maker_role
+Production Notes	production_notes
+Proposed Treatment Date	proposed_treatment_date
+Proposed Treatment Description	proposed_treatment_description
+Proposed Treatment Keyword	proposed_treatment_keyword
+Proposed Treatment Notes	proposed_treatment_notes
+Proposed Treatment Part Reference	proposed_treatment_part_reference
+Proposed Treatment Person	proposed_treatment_person
+Provenance Date	provenance_date
+Provenance Details (text)	provenance_details
+Provenance Person	provenance_person
+Provenance Place	provenance_place
+Publication Date	publication_date
+Publication Place	publication_place
+Publisher	publisher
+Record Acquisition Lot Relationship	record_acquisition_lot_relationship
+Record Status	record_status
+Related Acquisition Number	related_acquisition_number
+Related Acquisition Number Type	related_acquisition_number_type
+Related Object	related_object
+Related Object Notes	related_object_notes
+Related Object Type	related_object_type
+Research Attribution	research_attribution
+Research Attribution Date	research_attribution_date
+Research Attribution Person	research_attribution_person
+Restriction Type	restriction_type
+Rights Expiry Date	rights_expiry_date
+Rights Notes	rights_notes
+Rights Owner  (pick list)	rights_owner
+Rights Start Date	rights_start_date
+Rights Type	rights_type
+Risk Assessed By	risk_assessed_by
+Risk Assessment	risk_assessment
+Risk Assessment Date	risk_assessment_date
+Risk Assessment Notes	risk_assessment_notes
+Risk Factor	risk_factor
+Series Number	series_number
+Series Title	series_title
+Sex	sex
+Shore Environment	shore_environment
+Significance	significance
+Simple Summary	simple_summary
+Site Description	site_description
+Site Keyword	site_keyword
+Sound Audio	sound_audio
+Specimen Age	specimen_age
+Specimen Category	specimen_category
+Specimen Category Notes Count	specimen_category_notes_count
+Specimen Details	specimen_details
+Spine Label	spine_label
+Storage Details	storage_details
+Storage Preservation Method	storage_preservation_method
+Stratigraphy Description	stratigraphy_description
+Stratigraphy Keyword	stratigraphy_keyword
+Style Iconography	style_iconography
+Subject Association Event	subject_association_event
+Tag (text)	tag
+Taxon Determined By	taxon_determined_by
+Taxon Determined Date	taxon_determined_date
+Taxonomic Classification	taxonomic_classification
+Taxonomic Classification Notes	taxonomic_classification_notes
+Taxonomic Qualifier	taxonomic_qualifier
+Taxonomic Type Indicator	taxonomic_type_indicator
+Technique	technique
+Transferred To	transferred_to
+Type Id Reliability Level	type_id_reliability_level
+Valuation	valuation
+Valuation Date	valuation_date
+Valuation Exchange Rate	valuation_exchange_rate
+Valuation Foreign Currency Type	valuation_foreign_currency_type
+Valuation Foreign Currency Value	valuation_foreign_currency_value
+Valuation Method	valuation_method
+Valuation Notes	valuation_notes
+Valuation Type	valuation_type
+Valuation Valuer	valuation_valuer
+Zoom Level	zoom_level

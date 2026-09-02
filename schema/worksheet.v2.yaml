@@ -127,8 +127,8 @@ fields:
   voice_prompt: What's the record number for this object?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: object_number
+    note: col D. The museum's accession number.
   subfields: null
   example: null
   notes: Existing Dorrigo register numbers are entered by hand. No format is enforced - see registration_number_format
@@ -152,8 +152,8 @@ fields:
   voice_prompt: What is this object called? Use the everyday name for it.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: name
+    note: col E.
   subfields: null
   example: null
   notes: null
@@ -176,8 +176,8 @@ fields:
   voice_prompt: Does it have a formal title? Skip this if not.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: other_name_title
+    note: col AJ. eHive's `name` holds the object name, so a formal title is a secondary title.
   subfields: null
   example: null
   notes: null
@@ -200,8 +200,8 @@ fields:
   voice_prompt: What type of object is it?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: object_type
+    note: col G. PICK LIST - a new term is created for any value not already in the account.
   subfields: null
   example: null
   notes: null
@@ -224,8 +224,8 @@ fields:
   voice_prompt: Describe the object — shape, colour, parts, decoration.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: web_public_description
+    note: 'col F. Public: shown to visitors and returned by the API. Museum''s decision, 2026-09-02.'
   subfields: null
   example: null
   notes: Printed as three ruled lines following the label.
@@ -248,8 +248,8 @@ fields:
   voice_prompt: What is it made of? List each material.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: medium_description
+    note: col R.
   subfields: null
   example: null
   notes: null
@@ -272,8 +272,8 @@ fields:
   voice_prompt: Read out any writing, stamps, labels or maker's marks, exactly as they appear.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: inscription
+    note: col AC.
   subfields: null
   example: null
   notes: Printed as three ruled lines following the label.
@@ -296,8 +296,8 @@ fields:
   voice_prompt: Give the height, width and length, and say the units.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: measurement_description
+    note: col S. Flattened to text. eHive's structured measurement fields repeat per aspect, which a flat sheet can't carry.
   subfields:
   - id: dimensions_height
     label: h
@@ -314,8 +314,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: measurement_description
+      note: Composed into the parent's measurement_description text, not sent separately.
     subfields: null
     example: null
     notes: null
@@ -334,8 +334,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: measurement_description
+      note: Composed into the parent's measurement_description text, not sent separately.
     subfields: null
     example: null
     notes: null
@@ -354,8 +354,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: measurement_description
+      note: Composed into the parent's measurement_description text, not sent separately.
     subfields: null
     example: null
     notes: null
@@ -404,8 +404,8 @@ fields:
   voice_prompt: How heavy is it? Only if the weight matters.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: measurement_description
+    note: col S, appended to dimensions. Same field; the two are combined into one line.
   subfields:
   - id: weight_value
     label: weight
@@ -468,8 +468,8 @@ fields:
   voice_prompt: What condition is it in, and is anything missing or damaged?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: current_condition_description
+    note: col U.
   subfields: null
   example: null
   notes: Printed as three ruled lines following the label.
@@ -492,8 +492,8 @@ fields:
   voice_prompt: Who made it, if known?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: primary_creator_maker
+    note: col J. PICK LIST.
   subfields: null
   example: null
   notes: null
@@ -516,8 +516,8 @@ fields:
   voice_prompt: Was anyone else involved in making it?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: primary_creator_maker
+    note: col L, the second maker column. PICK LIST.
   subfields: null
   example: null
   notes: null
@@ -540,8 +540,8 @@ fields:
   voice_prompt: Where was it made?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: place_made
+    note: col O. PICK LIST, and its terms come from the spreadsheet's Place worksheet.
   subfields: null
   example: null
   notes: null
@@ -564,8 +564,8 @@ fields:
   voice_prompt: When was it made? An approximate date is fine.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: date_made
+    note: col N. A TEXT field in eHive, so 'c. 1890' imports exactly as typed. This is why fuzzy_date is right.
   subfields: null
   example: null
   notes: null
@@ -588,8 +588,8 @@ fields:
   voice_prompt: What's its history — previous owners, how it was used, why it's significant?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: provenance_details
+    note: col AK.
   subfields: null
   example: null
   notes: Printed as three ruled lines following the label.
@@ -612,8 +612,8 @@ fields:
   voice_prompt: Are there any books, files or documents that mention it?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: general_notes_object
+    note: 'insert column. A compromise: eHive has no bibliography field.'
   subfields: null
   example: null
   notes: null
@@ -636,8 +636,8 @@ fields:
   voice_prompt: Where is the object stored or displayed?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: location
+    note: col V. PICK LIST, but volunteers type freely. The likeliest source of duplicate terms.
   subfields: null
   example: null
   notes: Printed as two ruled lines following the label.
@@ -660,8 +660,8 @@ fields:
   voice_prompt: What's today's date, or the date it was moved there?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: location_history_date
+    note: insert column.
   subfields: null
   example: null
   notes: null
@@ -684,8 +684,8 @@ fields:
   voice_prompt: Why does this object belong in our collection?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: significance
+    note: insert column.
   subfields: null
   example: null
   notes: Printed as two ruled lines following the label.
@@ -708,8 +708,8 @@ fields:
   voice_prompt: Does it need any special handling, support or conditions?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: storage_details
+    note: insert column. eHive also has display_details; one question here feeds two fields there. See open_questions.
   subfields: null
   example: null
   notes: Printed as three ruled lines following the label.
@@ -732,8 +732,8 @@ fields:
   voice_prompt: Has it been displayed in any exhibitions?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: exhibition_history
+    note: insert column.
   subfields: null
   example: null
   notes: Printed as two ruled lines following the label.
@@ -756,8 +756,8 @@ fields:
   voice_prompt: What subjects or keywords would help someone find this object?
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: tag
+    note: col BG.
   subfields: null
   example: null
   notes: Printed as two ruled lines following the label.
@@ -780,8 +780,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: accession_date
+    note: col X.
   subfields: null
   example: null
   notes: null
@@ -812,8 +812,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: general_notes_acquisition
+    note: col AD. eHive has no acquisition-method pick list; the chosen term is written as a note.
   subfields: null
   example: null
   notes: 'Form prints a ruled line after ''Unknown'' with no label. QUESTION FOR THE MUSEUM: is that line for elaborating
@@ -838,8 +838,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Restricted. Donor information never leaves the museum's own records.
   subfields: null
   example: null
   notes: null
@@ -862,8 +862,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Restricted. Travels with the deed of gift, linked by object id only.
   subfields: null
   example: null
   notes: null
@@ -886,8 +886,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Restricted.
   subfields: null
   example: null
   notes: null
@@ -910,8 +910,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Restricted.
   subfields: null
   example: null
   notes: null
@@ -934,8 +934,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Restricted.
   subfields: null
   example: null
   notes: null
@@ -958,8 +958,8 @@ fields:
   voice_prompt: null
   autofill: current_user_and_date
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Who filled in the worksheet. The museum's own audit trail, not an eHive field.
   subfields:
   - id: completed_by_name
     label: Completed by
@@ -976,8 +976,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: NOT_EXPORTED
+      note: Museum audit trail, not an eHive field.
     subfields: null
     example: null
     notes: null
@@ -996,8 +996,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: NOT_EXPORTED
+      note: Museum audit trail, not an eHive field.
     subfields: null
     example: null
     notes: null
@@ -1023,8 +1023,8 @@ fields:
   voice_prompt: null
   autofill: current_user_and_date
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: cataloguer
+    note: insert column.
   subfields:
   - id: catalogued_by_name
     label: Catalogued by
@@ -1041,8 +1041,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: cataloguer
+      note: insert column.
     subfields: null
     example: null
     notes: null
@@ -1061,8 +1061,8 @@ fields:
     repeatable: false
     sensitivity: public
     mapping:
-      ehive: UNVERIFIED
-      note: confirm against eHive import spreadsheet
+      ehive: catalogued_date
+      note: insert column.
     subfields: null
     example: null
     notes: null
@@ -1087,8 +1087,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Museum workflow tickbox.
   subfields: null
   example: null
   notes: One of four workflow checkboxes printed in a row.
@@ -1111,8 +1111,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Museum workflow tickbox.
   subfields: null
   example: null
   notes: One of four workflow checkboxes printed in a row.
@@ -1135,8 +1135,8 @@ fields:
   voice_prompt: null
   autofill: set_true_on_photo_upload
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Museum workflow tickbox.
   subfields: null
   example: null
   notes: One of four workflow checkboxes printed in a row.
@@ -1159,8 +1159,8 @@ fields:
   voice_prompt: null
   autofill: set_true_on_successful_export
   mapping:
-    ehive: UNVERIFIED
-    note: confirm against eHive import spreadsheet
+    ehive: NOT_EXPORTED
+    note: Records THAT this object reached eHive. Set by us, never sent.
   subfields: null
   example: null
   notes: One of four workflow checkboxes printed in a row.
@@ -1183,8 +1183,8 @@ fields:
   voice_prompt: Take photographs of the object — an overall view, then any marks, labels or damage.
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: eHive supports images on object records
+    ehive: image
+    note: cols AO/AQ. A FILENAME REFERENCE - the image files travel separately.
   subfields: null
   example: null
   notes: Not on the paper form. This is the whole point of the app; eHive records carry images.
@@ -1207,8 +1207,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: eHive supports images on object records
+    ehive: image
+    note: col AM, Primary Image Reference. Filename, not the file.
   subfields: null
   example: null
   notes: Id of the photograph used as the record's lead image.
@@ -1231,8 +1231,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: eHive supports images on object records
+    ehive: audio
+    note: cols AW/AY when voice capture is built. Filename reference, like images.
   subfields: null
   example: null
   notes: Raw audio kept as evidence. If the transcription mis-hears something, the source survives.
@@ -1255,8 +1255,8 @@ fields:
   voice_prompt: null
   autofill: null
   mapping:
-    ehive: UNVERIFIED
-    note: eHive supports images on object records
+    ehive: NOT_EXPORTED
+    note: Working text behind the answers, not a catalogue field.
   subfields: null
   example: null
   notes: Verbatim transcript before it is split across fields.
@@ -1385,4 +1385,56 @@ open_questions:
 - 'The ruled line after the ''Unknown'' acquisition tickbox: elaboration, or an ''Other'' option?'
 - Who assigns the registration number - the app, or a committee member beforehand?
 - Should cataloguing volunteers see the donor block at all, or does a committee member enter it separately?
-- Confirm every mapping.ehive value against the actual eHive import spreadsheet before any export is built.
+- 'Storage and display: our one question feeds eHive''s storage_details, but eHive
+  also has a separate display_details. Split the question in two, or keep one field
+  and accept that display requirements sit under storage?'
+- 'Pick list terms: object_type, place_made, maker and location are pick lists in
+  eHive. Should the museum author term lists for the app to offer, or keep free text
+  and tidy the duplicates in eHive after each import?'
+
+# ---------------------------------------------------------------- eHive export
+#
+# Verified 2026-09-02 against 'ehive_import_spreadsheet - march 2026.xlsm', the
+# current import spreadsheet published by Vernon Systems at
+# https://info.ehive.com/importing-data/. Every mapping.ehive value above is a
+# real column in that workbook's Object Data sheet, or a real entry in its
+# Fieldnames sheet reachable through the Insert Column button.
+#
+# Re-verify when eHive publish a new spreadsheet. The workbook carries its month
+# in the filename, which is how you can tell.
+ehive_export:
+  verified_against: ehive_import_spreadsheet - march 2026.xlsm
+  verified_on: '2026-09-02'
+  source: https://info.ehive.com/importing-data/
+
+  # How a record actually reaches eHive. There is no write API: eHive's API
+  # returns public fields for reading and publishing, and imports are run by
+  # Vernon Systems staff against a test server first. So the export produces a
+  # file a person sends, and nothing about this can be fully automated.
+  transport: spreadsheet emailed or Dropboxed to Vernon Systems; images sent separately
+
+  # Two columns eHive requires on every row, which the paper worksheet has no
+  # question for. Fixed rather than asked: this is a local historical museum and
+  # every object is a physical object. Museum's decision, 2026-09-02.
+  constants:
+    ehive_object_type: History
+    dublin_core: Physical Object
+
+  # Free text on our side, controlled vocabulary on eHive's. A value that doesn't
+  # exactly match an existing term CREATES a new one, so "butter churn", "Butter
+  # Churn" and "butter-churn" become three terms and nobody notices until the
+  # collection is a mess. The export must report these for review before the file
+  # is sent; it must not block or silently alter what a volunteer typed.
+  pick_list_fields:
+  - object_type
+  - place_manufactured
+  - maker
+  - secondary_maker
+  - location
+
+  # Images are referenced by FILENAME in the spreadsheet and travel separately.
+  # The reference must match the file exactly or the import silently drops it.
+  images:
+    column: image
+    primary_column: Primary Image Reference
+    note: filenames only; the files go with the spreadsheet, not inside it

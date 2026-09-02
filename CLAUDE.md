@@ -31,9 +31,14 @@ This means:
   already exists.
 - The end goal is a record that lands in eHive cleanly — via their import spreadsheet
   initially, via their REST API later.
-- Every `mapping.ehive` value in the schema is currently `UNVERIFIED`. **Do not build any
-  export until those are confirmed** against the real eHive import spreadsheet. Guessing
-  field names produces an import that half-works, which is worse than none.
+- **The mappings are now verified** (2026-09-02) against `ehive_import_spreadsheet - march
+  2026.xlsm`, the current import workbook from https://info.ehive.com/importing-data/. Every
+  `mapping.ehive` value is a real column in its Object Data sheet or a real entry in its
+  Fieldnames sheet. Re-verify when eHive publish a new one — the filename carries its month.
+- **There is no write API.** eHive's API is OAuth 2.0 and returns *public fields only*, for
+  reading and publishing. Imports are run by Vernon Systems staff against a test server, from
+  a spreadsheet sent by email or Dropbox, with images sent separately. So the export produces
+  a file a person sends. Don't design for an automated push; it doesn't exist.
 
 ## Scope
 
@@ -49,7 +54,9 @@ This means:
 
 **Not yet**
 - Voice recording and transcription. Structure for it, don't build it.
-- eHive export. Blocked on mapping verification.
+- eHive export. No longer blocked — the mappings are verified and `ehive_export` in the schema
+  carries the constants, the pick-list warnings and how images travel. The generator itself
+  still has to be written.
 - Photo metadata pull — a record opened on a second device doesn't yet know which images
   exist elsewhere.
 
@@ -111,7 +118,7 @@ to the database and the weekly export.
 | `capture_group` / `capture_order` | Drives the app flow. |
 | `order` / `page` | Where it sat on paper. For traceability only — don't drive UI from it. |
 | `autofill` | App sets this, don't ask the volunteer. |
-| `mapping.ehive` | All `UNVERIFIED`. Blocking for export. |
+| `mapping.ehive` | Verified against the March 2026 import spreadsheet. `NOT_EXPORTED` means considered and deliberately withheld; `null` means the field has no eHive counterpart at all (app internals). |
 
 Three types were added beyond the original vocabulary: `fuzzy_date`, `image`, `audio`.
 
@@ -136,8 +143,10 @@ schema.
 3. The unlabelled ruled line after the "Unknown" acquisition tickbox — elaboration, or "Other"?
 4. Who assigns registration numbers — the app, or a person, beforehand?
 5. Do cataloguing volunteers ever touch the donor block?
-6. Confirm every `mapping.ehive` value against the real eHive import spreadsheet. **This one
-   blocks the entire export path.**
+6. Storage and display — eHive has separate `storage_details` and `display_details`; our one
+   question feeds only the first.
+7. Pick list terms — should the museum author term lists for `object_type`, `place_made`,
+   `maker` and `location`, or keep free text and tidy duplicates in eHive after each import?
 
 ## The stack
 
@@ -307,8 +316,13 @@ before changing anything here. In short:
 
 ## Deliberately not built
 
-- **eHive export.** `ehiveExportReady` is `false`. Every `mapping.ehive` in the schema says
-  `UNVERIFIED`. Verify against eHive's import spreadsheet first.
+- **eHive export.** `ehiveExportReady` is still `false`, but the reason has changed: the
+  mappings are verified and the blocker is now simply that nobody has written the generator.
+  What it has to produce is a spreadsheet matching the Object Data columns, plus a report of
+  the values that would create new eHive pick-list terms. Three things that will bite:
+  `dimensions` and `weight` both flatten into one `measurement_description` string; images are
+  referenced **by filename** and must match the files sent alongside exactly; and every row
+  needs the two constants from `ehive_export.constants`.
 - **Voice capture.** The structure is there — `capture_groups` each carry one open
   `voice_prompt`, `FieldValue.origin` can already record `"spoken"`, and the schema has
   `voice_recording` and `transcript` fields. The flow to build: record one answer per group,
