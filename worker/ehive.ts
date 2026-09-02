@@ -299,7 +299,7 @@ export function buildEhiveBundle(
  * which is the same mistake as a date picker.
  */
 
-/** Types that hold a plain string. A measurement or an image cannot. */
+/** Types that hold a plain string. A measurement or a signature cannot. */
 const TEXT_LIKE = new Set(["text", "longtext", "fuzzy_date", "date", "enum", "number"]);
 
 export interface EhiveSourceRecord {
@@ -318,20 +318,38 @@ export interface ImportedRecord {
   unmapped: string[];
 }
 
+/** Will this text sit in a field of this type without being mangled? */
+function fits(type: string | undefined, value: string): boolean {
+  if (type === "number") return /^\d+(\.\d+)?$/.test(value.trim());
+  if (type === "date") return /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
+  return TEXT_LIKE.has(type ?? "");
+}
+
 export function buildImportedRecords(
   rows: EhiveSourceRecord[],
   schemaYaml: string
 ): { records: ImportedRecord[]; unmapped: Record<string, number> } {
   const schema = yaml.load(schemaYaml) as Schema;
+  type Mapped = SchemaField & { mapping?: { ehive?: string } | null };
 
-  // eHive field name -> our field. First claimant wins, and only if it can hold
-  // the text eHive gives us.
-  const inverse = new Map<string, SchemaField>();
-  for (const field of schema.fields) {
-    const target = (field as SchemaField & { mapping?: { ehive?: string } | null }).mapping?.ehive;
-    if (!target || target === "NOT_EXPORTED") continue;
-    if (!TEXT_LIKE.has(field.type ?? "")) continue;
-    if (!inverse.has(target)) inverse.set(target, field);
+  // eHive field name -> where it goes. A subfield is tried first, because
+  // "cataloguer" belongs inside catalogued_by rather than replacing it; a
+  // subfield that cannot hold the text is skipped, which is what stops a whole
+  // measurement string being shoved into a numeric height.
+  const direct = new Map<string, Mapped>();
+  const sub = new Map<string, Array<{ parent: Mapped; child: Mapped }>>();
+
+  for (const field of schema.fields as Mapped[]) {
+    const target = field.mapping?.ehive;
+    if (target && target !== "NOT_EXPORTED" && !direct.has(target)) direct.set(target, field);
+
+    for (const child of (field.subfields ?? []) as Mapped[]) {
+      const childTarget = child.mapping?.ehive;
+      if (!childTarget || childTarget === "NOT_EXPORTED") continue;
+      const list = sub.get(childTarget) ?? [];
+      list.push({ parent: field, child });
+      sub.set(childTarget, list);
+    }
   }
 
   const unmapped: Record<string, number> = {};
@@ -351,15 +369,25 @@ export function buildImportedRecords(
 
     for (const [ehiveName, value] of Object.entries(fields)) {
       if (!value) continue;
-      const field = inverse.get(ehiveName);
+
+      // 1. A subfield that can actually hold it.
+      const candidate = (sub.get(ehiveName) ?? []).find((c) => fits(c.child.type, value));
+      if (candidate) {
+        const held = (values[candidate.parent.id]?.value as Record<string, string>) ?? {};
+        held[candidate.child.id] = value;
+        values[candidate.parent.id] = { value: held, origin: "imported" };
+        continue;
+      }
+
+      const field = direct.get(ehiveName);
       if (!field) {
         missed.push(ehiveName);
         unmapped[ehiveName] = (unmapped[ehiveName] ?? 0) + 1;
         continue;
       }
 
-      // An enum only accepts one of its own options. Anything else keeps the eHive
-      // wording as raw rather than being forced into the nearest choice.
+      // 2. An enum only accepts one of its own options; anything else keeps the
+      //    eHive wording rather than being forced into the nearest choice.
       if (field.type === "enum" && field.options) {
         const match = field.options.find(
           (o) => o.label.toLowerCase() === value.toLowerCase() || o.value === value
@@ -370,12 +398,18 @@ export function buildImportedRecords(
         continue;
       }
 
-      // A date field only holds a real date. eHive's accession dates include bare
-      // years like "2016", which a date input cannot show and which would appear
-      // blank -- so the text is kept as raw and flagged, the same way a value that
-      // won't parse is kept anywhere else in this app.
-      if (field.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        values[field.id] = { value: "", raw: value, origin: "imported" };
+      // 3. Anything the field's shape cannot hold is KEPT AS RAW, never dropped.
+      //
+      //    This is what measurements need. eHive keeps them as one line of prose -
+      //    "Frame: 300mm H, 65mm W / Plaque: 10mm H, 230mm W", "Including straps
+      //    80mmL", and in one record "330m H" where a millimetre was meant. We hold
+      //    height, width and length separately, and any parser confident enough to
+      //    split those would also confidently get them wrong. So the sentence is
+      //    kept exactly as the museum wrote it and shown as recorded, which is the
+      //    same bargain fuzzy_date makes: better an honest "about 1890" than an
+      //    invented precision nobody can later tell from a fact.
+      if (!fits(field.type, value)) {
+        values[field.id] = { value: null, raw: value, origin: "imported" };
         continue;
       }
 

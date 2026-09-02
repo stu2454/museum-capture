@@ -16,6 +16,7 @@ import { AddPhotos } from "./AddPhotos";
 interface FieldDef {
   id: string;
   display_label: string;
+  mapping?: { ehive?: string } | null;
   section: string;
   order: number;
   type: string;
@@ -83,7 +84,10 @@ export function RecordView({
     );
   }
 
-  const values = JSON.parse(data.record.values_json || "{}") as Record<string, { value: unknown }>;
+  const values = JSON.parse(data.record.values_json || "{}") as Record<
+    string,
+    { value: unknown; raw?: string }
+  >;
   const parsed = data.schema_yaml
     ? (yaml.load(data.schema_yaml) as { fields?: FieldDef[]; sections?: SectionDef[] })
     : null;
@@ -91,6 +95,18 @@ export function RecordView({
   const sections = (parsed?.sections ?? [])
     .filter((s) => s.page > 0)
     .sort((a, b) => a.order - b.order);
+
+  // eHive fields this app has nowhere to put. Everything the schema maps is already
+  // displayed above, and the housekeeping eHive keeps for itself is not worth a line.
+  const claimed = new Set(
+    (parsed?.fields ?? []).map((f) => f.mapping?.ehive).filter(Boolean) as string[]
+  );
+  const HOUSEKEEPING = new Set([
+    "object_number", "name", "dublin_core", "ehive_object_type", "general_flag_admin",
+  ]);
+  const extras = Object.entries(data.ehive_fields ?? {}).filter(
+    ([name, value]) => value && !claimed.has(name) && !HOUSEKEEPING.has(name)
+  );
 
   const fieldsFor = (sectionId: string) =>
     (parsed?.fields ?? [])
@@ -151,7 +167,7 @@ export function RecordView({
       )}
 
       {sections.map((section) => {
-        const fields = fieldsFor(section.id).filter((f) => present(values[f.id]?.value));
+        const fields = fieldsFor(section.id).filter((f) => present(values[f.id]));
         if (fields.length === 0) return null;
         return (
           <section key={section.id} className="sheet" style={{ marginTop: 16 }}>
@@ -160,7 +176,12 @@ export function RecordView({
               {fields.map((field) => (
                 <div key={field.id} className="sheet-line">
                   <dt>{field.display_label}</dt>
-                  <dd>{display(field, values[field.id]?.value)}</dd>
+                  <dd>
+                    {display(field, values[field.id])}
+                    {values[field.id]?.value == null && values[field.id]?.raw && (
+                      <span className="as-recorded">as recorded</span>
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -182,11 +203,15 @@ export function RecordView({
         <section className="sheet" style={{ marginTop: 16 }}>
           <dl>
             {Object.entries(values)
-              .filter(([, v]) => present(v?.value))
+              .filter(([, v]) => present(v))
               .map(([key, v]) => (
                 <div key={key} className="sheet-line">
                   <dt>{key}</dt>
-                  <dd>{String(Array.isArray(v.value) ? v.value.join(", ") : v.value)}</dd>
+                  <dd>
+                    {v.value == null || v.value === ""
+                      ? v.raw
+                      : String(Array.isArray(v.value) ? v.value.join(", ") : v.value)}
+                  </dd>
                 </div>
               ))}
           </dl>
@@ -221,6 +246,24 @@ export function RecordView({
             onCancel={() => setRemoving(false)}
           />
         </div>
+      )}
+
+      {extras.length > 0 && (
+        <section className="sheet" style={{ marginTop: 16 }}>
+          <h3>Also held in eHive</h3>
+          <p className="small muted" style={{ margin: "0 0 10px" }}>
+            eHive keeps these against this object and this app has no field for them, so they
+            are shown as eHive wrote them rather than being left out.
+          </p>
+          <dl>
+            {extras.map(([name, value]) => (
+              <div key={name} className="sheet-line">
+                <dt>{name.replace(/_/g, " ")}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
 
       <section className="sheet" style={{ marginTop: 16 }}>
@@ -272,14 +315,31 @@ function cataloguer(record: RecordDetail["record"]): string {
   return name ? `${name} · ${who}` : who;
 }
 
-function present(value: unknown): boolean {
+/**
+ * Is there anything to show?
+ *
+ * `raw` counts. It holds text the app couldn't fit into the field's shape -
+ * eHive's measurements are one line of prose where we keep height, width and
+ * length apart - and a field that has it is not empty, it is unparsed. Treating
+ * those as blank is how the museum's own measurements went missing from the
+ * imported records.
+ */
+function present(held: { value: unknown; raw?: string } | undefined): boolean {
+  if (!held) return false;
+  if (held.raw && held.raw.trim() !== "") return true;
+  const value = held.value;
   if (value == null || value === "") return false;
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "object") return Object.values(value as object).some((v) => v !== "" && v != null);
   return true;
 }
 
-function display(field: FieldDef, value: unknown): string {
+function display(field: FieldDef, held: { value: unknown; raw?: string } | undefined): string {
+  const value = held?.value;
+
+  // Nothing structured, but something was recorded. Show it exactly as written.
+  if ((value == null || value === "") && held?.raw) return held.raw;
+
   if (Array.isArray(value)) return value.join(", ");
 
   if (field.type === "measurement" && value && typeof value === "object") {

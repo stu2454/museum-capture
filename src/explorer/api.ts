@@ -46,7 +46,10 @@ export interface RecordDetail {
     captured_at: string | null;
     updated_at: string;
     revision: number;
+    ehive_record_id: string | null;
   };
+  /** The verbatim eHive record, for objects imported from there. */
+  ehive_fields: Record<string, string> | null;
   photos: PhotoSummary[];
   revisions: Array<{
     revision: number;

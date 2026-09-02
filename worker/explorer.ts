@@ -279,7 +279,7 @@ async function getRecord(env: Env, path: string): Promise<Response> {
   const record = await env.DB.prepare(
     `SELECT r.id, r.registration_number, r.object_name, r.status, r.schema_version,
             r.values_json, r.captured_by, r.synced_by, r.captured_at, r.updated_at,
-            r.revision, u.display_name AS captured_by_name
+            r.revision, r.ehive_record_id, u.display_name AS captured_by_name
      FROM records r
      LEFT JOIN users u ON u.email = r.captured_by
      WHERE r.id = ?1 AND r.deleted_at IS NULL`
@@ -309,11 +309,24 @@ async function getRecord(env: Env, path: string): Promise<Response> {
       .first<{ yaml: string }>(),
   ]);
 
+  // For a record that came from eHive, the verbatim original. Several eHive fields
+  // have no counterpart here at all - brief_description, credit_line, comments -
+  // and a reader looking at the record should be able to see them rather than
+  // being told elsewhere that they were preserved.
+  const ehiveId = (record as { ehive_record_id?: string | null }).ehive_record_id;
+  const source = ehiveId
+    ? await env.DB.prepare(`SELECT fields_json FROM ehive_records WHERE object_record_id = ?1`)
+        .bind(ehiveId)
+        .first<{ fields_json: string }>()
+        .catch(() => null)
+    : null;
+
   return json({
     record,
     photos: photos.results,
     revisions: revisions.results,
     schema_yaml: schema?.yaml ?? null,
+    ehive_fields: source?.fields_json ? JSON.parse(source.fields_json) : null,
   });
 }
 

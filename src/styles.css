@@ -990,3 +990,15 @@ body {
 .photo-make-primary:hover {
   border-color: var(--ink);
 }
+
+/* A value kept exactly as it was written, because the app could not fit it into
+   the field's shape. Quiet: it marks provenance, it isn't a warning. */
+.as-recorded {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}

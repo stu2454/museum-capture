@@ -265,7 +265,11 @@ docs/ehive-import-fields.tsv  Every field eHive's import workbook can carry, for
 4. **Autosave on every change.** `CaptureFlow` writes to IndexedDB in an effect. Don't
    replace it with a save button.
 5. **Never discard what someone typed.** `FieldValue` carries `raw` alongside `value` for
-   exactly this. If a value won't parse, keep the text and flag it.
+   exactly this. If a value won't parse, keep the text and flag it. **This applies to reading
+   as well as writing**: a field holding only `raw` is not empty, it is unparsed, and anything
+   filtering on `value` alone will hide it. That is how the museum's own measurements went
+   missing from every imported record — eHive keeps them as one line of prose, the import had
+   nowhere structured to put it, and so dropped it entirely instead of keeping the sentence.
 6. **Sync must never block cataloguing.** No error from `sync.ts` should surface as something
    a volunteer has to act on. They're holding an object, not debugging a connection. The one
    thing that does surface is a quiet banner after sync has been failing for hours.
