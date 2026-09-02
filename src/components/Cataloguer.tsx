@@ -60,13 +60,37 @@ export function Cataloguer({ identity, onChange, onUpdate }: Props) {
       <div className="notice notice-problem">
         <h4>Sign in before you start</h4>
         <p style={{ margin: "0 0 8px" }}>
-          This device hasn&apos;t signed in yet, so the app doesn&apos;t know whose work to file
-          these records under.
+          The app needs to know whose work to file these records under. You&apos;ll only be
+          asked once on this device.
         </p>
-        <p className="small" style={{ margin: 0 }}>
-          You&apos;ll need a connection for this one step. Open the app somewhere with signal,
-          enter your email, and type the code you&apos;re sent. After that it works offline.
+        <p className="small" style={{ margin: "0 0 10px" }}>
+          Tapping <strong>Sign in</strong> opens a Cloudflare page headed{" "}
+          <em>Log in to Dorrigo Museum Artefact Record</em>. That is the museum&apos;s sign-in
+          service, not a different app.
         </p>
+        <p className="small" style={{ margin: "0 0 10px" }}>
+          On that page, <strong>skip the &ldquo;Sign in with Cloudflare&rdquo; button</strong> —
+          that one is only for staff who have a Cloudflare account. Go to the{" "}
+          <strong>Email</strong> box below it, type your address, and tap{" "}
+          <strong>Send login code</strong>. Type in the code you&apos;re emailed and you&apos;ll
+          come straight back here.
+        </p>
+        <p className="small" style={{ margin: "0 0 14px" }}>
+          There is no password to create and none to forget. You need a connection for this one
+          step — afterwards the app works offline.
+        </p>
+        <button
+          type="button"
+          className="btn btn-wide"
+          onClick={() => {
+            // The login belongs to Cloudflare Access, not to this app. Going to a
+            // path Access covers is what summons it; the Worker sends us back here
+            // once there's a session.
+            window.location.href = "/api/signin";
+          }}
+        >
+          Sign in
+        </button>
       </div>
     );
   }

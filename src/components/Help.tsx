@@ -87,10 +87,20 @@ function Start() {
       </div>
 
       <Step n={1} title="Sign in">
-        The first time you open the app it asks for your email and sends you a short code. Type
-        the code in. There&apos;s no password to remember and you won&apos;t be asked again for a
-        long while. You need a connection for this one step, so do it before you go into the
-        store room.
+        Tap <strong>Sign in</strong> on the first screen. A Cloudflare page opens, headed{" "}
+        <em>Log in to Dorrigo Museum Artefact Record</em> — that&apos;s the museum&apos;s sign-in
+        service, not a different app.
+        <br />
+        <br />
+        <strong>Ignore the &ldquo;Sign in with Cloudflare&rdquo; button.</strong> It&apos;s for
+        staff with a Cloudflare account and it won&apos;t work for you. Use the{" "}
+        <strong>Email</strong> box underneath, type your address, and tap{" "}
+        <strong>Send login code</strong>. Type in the code you&apos;re emailed and you&apos;re
+        returned to the app.
+        <br />
+        <br />
+        There&apos;s no password to remember and you won&apos;t be asked again for a long while.
+        You need a connection for this one step, so do it before you go into the store room.
       </Step>
 
       <Step n={2} title="Check the name at the top is yours">
@@ -219,6 +229,9 @@ function Problems() {
     ["I've made a mistake in a saved record.", "Open it from the first screen and change it. Nothing is locked, and every earlier version is kept."],
     ["Someone else's name is at the top of the screen.", "You're on a shared device they used last. Tap \"Someone else is cataloguing\" and pick yourself, or your work gets filed under their name."],
     ["It says I'm not on the museum's list.", "You've proved who you are, but nobody has given you access yet. Ask an administrator to add your email address — it takes them a minute."],
+    ["The sign-in page says Cloudflare. Am I in the right place?", "Yes, if it's headed \"Log in to Dorrigo Museum Artefact Record\". Cloudflare is the service the museum uses to check who you are — the same way a bank uses a card reader it didn't make."],
+    ["It's asking me to sign in with Cloudflare and I don't have an account.", "You don't need one. That button is for staff. Use the Email box below it instead, and tap Send login code."],
+    ["No code arrived.", "Check the junk folder first — it comes from Cloudflare, not from the museum. If it still hasn't come, ask an administrator to check the spelling of the address they entered for you."],
     ["I don't know the answer to a question.", "Leave it blank and move on. That is the correct thing to do."],
   ];
 

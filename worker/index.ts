@@ -21,6 +21,22 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    // Sign-in bounce.
+    //
+    // The capture app can't offer a login of its own: the login belongs to
+    // Cloudflare Access, which sits in front of /api. But that is exactly what
+    // makes this work — simply navigating here forces Access to authenticate the
+    // person, and by the time this handler runs they have a session. Send them
+    // back to the app rather than leaving them looking at a bare endpoint.
+    //
+    // Deliberately ahead of every other /api route, and ahead of any check on
+    // whether they're on the museum's user list. Someone who hasn't been added
+    // yet should land back in the app and read a sentence telling them who to
+    // ask — not a 403 rendered as raw JSON.
+    if (url.pathname === "/api/signin") {
+      return Response.redirect(new URL("/", url).toString(), 302);
+    }
+
     // Sync endpoints used by the capture app on volunteers' phones.
     if (url.pathname.startsWith("/api/sync") || url.pathname.startsWith("/api/photos")) {
       return handleApi(request, env);

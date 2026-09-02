@@ -61,8 +61,14 @@ export function RecordList({
       {/* A persistent fault does get shown. Not to alarm anyone — the records
           are safe on the device either way — but because the alternative is what
           happened once already: sync failing silently for hours while the
-          database stayed empty and nobody knew. */}
-      {failingSince && hoursSince(failingSince) >= TROUBLE_THRESHOLD_HOURS && (
+          database stayed empty and nobody knew.
+
+          Suppressed while nobody is signed in, because then it isn't a fault:
+          it's the same cause as the notice directly above it, and two red panels
+          for one problem reads as two problems. */}
+      {identity.state === "ready" &&
+        failingSince &&
+        hoursSince(failingSince) >= TROUBLE_THRESHOLD_HOURS && (
         <div className="notice notice-problem">
           <h4>Records aren&apos;t reaching the museum&apos;s server</h4>
           <p style={{ margin: 0 }}>
