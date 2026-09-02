@@ -142,6 +142,7 @@ const held = [];
 const skipped = [];
 
 const existing = alreadyAttached();
+const retired = [];
 let attached = 0;
 let duplicates = 0;
 
@@ -157,6 +158,22 @@ for (const entry of readdirSync(imagesDir).sort()) {
 
   const record = `ehive_${recordId}`;
   let first = true;
+
+  // A folder means eHive's own originals have arrived for this object, and they
+  // supersede the single image derived from the PDF report on the first pass.
+  // They are the same photographs, better sourced - and a checksum cannot tell,
+  // because one was re-encoded from a PNG lifted out of a report and the other
+  // came straight from eHive. Left alone, the record would show the same view
+  // twice. Retired rather than deleted: deleted_at is how everything else here
+  // stops being visible, and it can be undone.
+  if (statSync(join(imagesDir, entry)).isDirectory()) {
+    retired.push(
+      // is_primary cleared too: a retired row that still claims to be the main
+      // image would give the record two primaries if it were ever restored.
+      `UPDATE photos SET deleted_at = datetime('now'), is_primary = 0 ` +
+        `WHERE record_id = '${record}' AND id = 'img_ehive_${recordId}';`
+    );
+  }
 
   for (const source of files) {
     // Convert, but never enlarge: sips -Z scales up as well as down, which invents
@@ -199,12 +216,19 @@ for (const entry of readdirSync(imagesDir).sort()) {
   }
 }
 
+if (retired.length) {
+  sql.push("");
+  sql.push("-- Retire the images derived from the PDF report, now that eHive's originals are here.");
+  sql.push(...retired);
+}
+
 // Exactly one main image per record, whatever order the files arrived in. Without
 // this a record that already had a primary would end up with two.
 sql.push("");
 sql.push("-- Leave exactly one main image per record.");
 sql.push(
   `UPDATE photos SET is_primary = 0 WHERE record_id IN (SELECT id FROM records WHERE ehive_record_id IS NOT NULL) ` +
+    `AND deleted_at IS NULL ` +
     `AND id <> (SELECT p.id FROM photos p WHERE p.record_id = photos.record_id AND p.deleted_at IS NULL ` +
     `ORDER BY p.is_primary DESC, p.added_at, p.id LIMIT 1);`
 );
@@ -215,6 +239,7 @@ writeFileSync(join(root, "seeds/upload-ehive-photos.sh"), uploads.join("\n") + "
 console.log(`\n  ${attached} photographs prepared, ${duplicates} already attached and skipped`);
 if (held.length) console.log(`  held back (accession numbers unverified): ${held.join(", ")}`);
 if (skipped.length) console.log(`  NO MATCHING RECORD, skipped: ${skipped.join(", ")}`);
+if (retired.length) console.log(`  ${retired.length} PDF-derived image(s) will be retired, superseded by eHive's originals`);
 console.log("\nThen, in order:");
 console.log("  sh seeds/upload-ehive-photos.sh");
 console.log("  npx wrangler d1 execute artefact-catalogue --remote --file=seeds/seed-ehive-photos.sql");
