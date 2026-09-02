@@ -1453,7 +1453,7 @@ ehive_export:
   - col: C
     ehive: object_record_id
     label: ''ehive record id''
-    from: null
+    from: ''=ehive_id''
   - col: D
     ehive: object_number
     label: ''Object Number''

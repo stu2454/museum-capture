@@ -15,10 +15,30 @@ import { withoutRestricted } from "./schema";
 import type { ArtefactRecord } from "./types";
 
 const DEVICE_KEY = "deviceId";
+const NUMBERS_KEY = "knownRegistrationNumbers";
 const SINCE_KEY = "lastSyncedAt";
 const TROUBLE_KEY = "syncFailingSince";
 const LAST_OK_KEY = "syncLastOk";
 const BATCH = 20; // matches the server cap, which is set by D1's free-plan query limit
+
+/**
+ * Every registration number the museum already holds - this device's, other
+ * devices', and eHive's - as of the last sync.
+ *
+ * Cached so the duplicate warning works in a store room with no signal, which is
+ * exactly where someone is standing when they need it. Stale by at most a sync,
+ * and stale here is harmless: the worst case is not warning about a number
+ * catalogued minutes ago on another device, and the museum's registers remain the
+ * authority regardless.
+ */
+export function knownNumbers(): Set<string> {
+  try {
+    const raw = localStorage.getItem(NUMBERS_KEY);
+    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
 
 export interface SyncOutcome {
   pushed: number;
@@ -96,6 +116,16 @@ export async function syncNow(): Promise<SyncOutcome> {
 
       if (!response.ok) throw new Error(`Sync failed: ${response.status}`);
       const result = await response.json();
+
+      // Cached so the duplicate warning still fires with no signal. Wrapped
+      // because a full storage quota must never fail a sync that otherwise worked.
+      if (Array.isArray(result.known_numbers)) {
+        try {
+          localStorage.setItem(NUMBERS_KEY, JSON.stringify(result.known_numbers));
+        } catch {
+          // Nothing to do, and nothing worth telling a volunteer about.
+        }
+      }
 
       for (const id of result.applied as string[]) {
         const record = await records.get(id);

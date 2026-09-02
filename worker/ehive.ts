@@ -51,6 +51,8 @@ export interface ExportRecord {
   registration_number: string | null;
   object_name: string | null;
   values_json: string;
+  /** Set when this object came from eHive. Sends it back as an update, not a copy. */
+  ehive_record_id?: string | null;
   photos: Array<{ id: string; is_primary: number }>;
 }
 
@@ -202,6 +204,10 @@ export function buildEhiveBundle(
       const from = column.from;
       if (!from) return "";
 
+      // The id eHive gave this record, for objects that came from there. Empty for
+      // anything catalogued here, which is what tells eHive to create it.
+      if (from === "=ehive_id") return record.ehive_record_id ?? "";
+
       if (from.startsWith("=constant:")) return spec.constants[from.slice(10)] ?? "";
 
       if (from.startsWith("=photo:")) return filenames[Number(from.slice(7))] ?? "";
@@ -272,4 +278,120 @@ export function buildEhiveBundle(
     record_count: records.length,
     extra_columns: spec.extra_columns.map((c) => c.ehive),
   };
+}
+
+
+/* ------------------------------------------------------------------ import --
+ *
+ * The other direction: eHive's records into ours.
+ *
+ * This is the reverse of the mapping above, and reversing is lossier than going
+ * forwards. Several of our fields feed one eHive field - dimensions and weight
+ * both become measurement_description, maker and secondary_maker both become
+ * primary_creator_maker - and no honest rule splits one string back into two. So
+ * the inverse takes the FIRST of our fields that claims each eHive field, skips
+ * the ones whose shape can't hold text, and leaves the rest alone.
+ *
+ * Nothing is discarded by that. The verbatim eHive record stays in
+ * ehive_records.fields_json, linked by object_record_id, so what the mapping
+ * can't carry is still there to read. The alternative - parsing "420 x 300 mm"
+ * back into height and width - would invent a precision the source doesn't have,
+ * which is the same mistake as a date picker.
+ */
+
+/** Types that hold a plain string. A measurement or an image cannot. */
+const TEXT_LIKE = new Set(["text", "longtext", "fuzzy_date", "date", "enum", "number"]);
+
+export interface EhiveSourceRecord {
+  object_record_id: string;
+  fields_json: string;
+}
+
+export interface ImportedRecord {
+  ehive_record_id: string;
+  registration_number: string | null;
+  object_name: string | null;
+  values_json: string;
+  captured_by: string | null;
+  captured_at: string | null;
+  /** eHive field names we had nowhere to put. Reported, never silently dropped. */
+  unmapped: string[];
+}
+
+export function buildImportedRecords(
+  rows: EhiveSourceRecord[],
+  schemaYaml: string
+): { records: ImportedRecord[]; unmapped: Record<string, number> } {
+  const schema = yaml.load(schemaYaml) as Schema;
+
+  // eHive field name -> our field. First claimant wins, and only if it can hold
+  // the text eHive gives us.
+  const inverse = new Map<string, SchemaField>();
+  for (const field of schema.fields) {
+    const target = (field as SchemaField & { mapping?: { ehive?: string } | null }).mapping?.ehive;
+    if (!target || target === "NOT_EXPORTED") continue;
+    if (!TEXT_LIKE.has(field.type ?? "")) continue;
+    if (!inverse.has(target)) inverse.set(target, field);
+  }
+
+  const unmapped: Record<string, number> = {};
+  const records: ImportedRecord[] = [];
+
+  for (const row of rows) {
+    let fields: Record<string, string> = {};
+    try {
+      fields = JSON.parse(row.fields_json || "{}") as Record<string, string>;
+    } catch {
+      // A record we can't read still gets imported, carrying its id, so it shows
+      // up as something to look at rather than going missing.
+    }
+
+    const values: Record<string, { value: unknown; raw?: string; origin: string }> = {};
+    const missed: string[] = [];
+
+    for (const [ehiveName, value] of Object.entries(fields)) {
+      if (!value) continue;
+      const field = inverse.get(ehiveName);
+      if (!field) {
+        missed.push(ehiveName);
+        unmapped[ehiveName] = (unmapped[ehiveName] ?? 0) + 1;
+        continue;
+      }
+
+      // An enum only accepts one of its own options. Anything else keeps the eHive
+      // wording as raw rather than being forced into the nearest choice.
+      if (field.type === "enum" && field.options) {
+        const match = field.options.find(
+          (o) => o.label.toLowerCase() === value.toLowerCase() || o.value === value
+        );
+        values[field.id] = match
+          ? { value: match.value, origin: "imported" }
+          : { value: "", raw: value, origin: "imported" };
+        continue;
+      }
+
+      // A date field only holds a real date. eHive's accession dates include bare
+      // years like "2016", which a date input cannot show and which would appear
+      // blank -- so the text is kept as raw and flagged, the same way a value that
+      // won't parse is kept anywhere else in this app.
+      if (field.type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        values[field.id] = { value: "", raw: value, origin: "imported" };
+        continue;
+      }
+
+      values[field.id] = { value, origin: "imported" };
+    }
+
+    records.push({
+      ehive_record_id: row.object_record_id,
+      registration_number: fields.object_number ?? null,
+      object_name: fields.name ?? null,
+      values_json: JSON.stringify(values),
+      captured_by: fields.cataloguer ?? null,
+      captured_at: fields.catalogued_date ?? null,
+      unmapped: missed,
+    });
+  }
+
+  return { records, unmapped };
 }

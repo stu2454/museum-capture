@@ -153,6 +153,12 @@ export const api = {
 
   ehiveExport: () => call<EhiveBundle>("/export/ehive"),
 
+  ehiveImport: () =>
+    call<{ imported: number; unmapped_fields: Array<{ field: string; count: number }> }>(
+      "/import/ehive",
+      { method: "POST" }
+    ),
+
   removeUser: (email: string) =>
     call<{ ok: true }>("/users", { method: "DELETE", body: JSON.stringify({ email }) }),
 };

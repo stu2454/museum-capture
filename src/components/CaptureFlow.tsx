@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fieldsInGroup, captureGroups } from "../schema";
 import { records } from "../db";
+import { knownNumbers } from "../sync";
 import type { ArtefactRecord, CaptureGroup, FieldValue, PhotoMeta } from "../types";
 import type { Person } from "../identity";
 import { AccessionTag } from "./AccessionTag";
@@ -77,10 +78,20 @@ export function CaptureFlow({ record: initial, cataloguer, onExit }: Props) {
       const other = all.find(
         (r) => r.id !== record.id && r.registrationNumber?.trim() === number
       );
+      if (other) {
+        setClash(
+          `${number} is already used by another record on this device` +
+            (other.values.object_name?.value ? ` (${other.values.object_name.value}).` : ".")
+        );
+        return;
+      }
+
+      // Numbers the museum already holds anywhere — other devices, and the
+      // records already in eHive. Cached at the last sync so this still answers
+      // in a store room with no signal.
       setClash(
-        other
-          ? `${number} is already used by another record on this device` +
-              (other.values.object_name?.value ? ` (${other.values.object_name.value}).` : ".")
+        knownNumbers().has(number)
+          ? `${number} is already used by an object in the museum's catalogue.`
           : null
       );
     });

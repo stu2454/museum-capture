@@ -23,6 +23,12 @@ import { downloadFile } from "../media";
 export function EhiveExport({ onBack }: { onBack: () => void }) {
   const [bundle, setBundle] = useState<EhiveBundle | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [imported, setImported] = useState<{
+    imported: number;
+    unmapped_fields: Array<{ field: string; count: number }>;
+  } | null>(null);
+  const [importProblem, setImportProblem] = useState<string | null>(null);
 
   useEffect(() => {
     api
@@ -38,6 +44,22 @@ export function EhiveExport({ onBack }: { onBack: () => void }) {
 
   function downloadSpreadsheet() {
     if (bundle) downloadFile(`ehive-import-${stamp}.csv`, bundle.csv, "text/csv");
+  }
+
+  async function runImport() {
+    setImporting(true);
+    setImportProblem(null);
+    try {
+      setImported(await api.ehiveImport());
+      // The export's warnings change once those records are in the collection.
+      setBundle(await api.ehiveExport());
+    } catch (error) {
+      setImportProblem(
+        error instanceof Error ? error.message : "Couldn't import the eHive records."
+      );
+    } finally {
+      setImporting(false);
+    }
   }
 
   function downloadPhotoList() {
@@ -187,6 +209,49 @@ export function EhiveExport({ onBack }: { onBack: () => void }) {
         Donor names, addresses, emails, phone numbers and tax incentive numbers are not in
         either file. They never leave the museum&apos;s own records.
       </p>
+
+      <section className="card" style={{ marginTop: 28 }}>
+        <h3 style={{ marginTop: 0, fontWeight: 500 }}>Bring eHive records into the collection</h3>
+        <p className="small" style={{ marginTop: 0 }}>
+          The museum&apos;s existing eHive records can be added to this collection so everything
+          is searchable in one place. Each keeps its eHive id, so if one is edited here a later
+          export updates the original rather than creating a second copy.
+        </p>
+        <p className="small muted">
+          Safe to run more than once — records are matched on their eHive id, so a second run
+          updates the same ones instead of making duplicates.
+        </p>
+
+        {imported && (
+          <div className="notice notice-ok">
+            <p style={{ margin: 0 }}>
+              {imported.imported} {imported.imported === 1 ? "record" : "records"} brought in.
+              {imported.unmapped_fields.length > 0 && (
+                <>
+                  {" "}
+                  {imported.unmapped_fields.length} eHive{" "}
+                  {imported.unmapped_fields.length === 1 ? "field has" : "fields have"} no
+                  counterpart here and stayed in the reference copy:{" "}
+                  <span className="ehive-extra">
+                    {imported.unmapped_fields.map((f) => f.field).join(", ")}
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
+        {importProblem && <div className="notice notice-problem">{importProblem}</div>}
+
+        <button
+          type="button"
+          className="btn btn-wide"
+          disabled={importing}
+          onClick={() => void runImport()}
+        >
+          {importing ? "Bringing them in…" : "Import eHive records"}
+        </button>
+      </section>
     </div>
   );
 }

@@ -245,6 +245,21 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
     .bind(since, body.device_id)
     .all();
 
+  // Every registration number the museum already holds, ours and eHive's, so a
+  // volunteer is told before they spend ten minutes on an object that is already
+  // catalogued. Numbers only - a few kilobytes - because the phone needs to answer
+  // this offline and has no business holding the whole collection.
+  const known = await env.DB.prepare(
+    `SELECT DISTINCT registration_number AS number FROM records
+      WHERE deleted_at IS NULL AND registration_number IS NOT NULL AND registration_number <> ''
+     UNION
+     SELECT DISTINCT object_number FROM ehive_records
+      WHERE object_number IS NOT NULL AND object_number <> ''`
+  )
+    .all<{ number: string }>()
+    // A device that syncs before the reference table exists still syncs.
+    .catch(() => ({ results: [] as Array<{ number: string }> }));
+
   await env.DB.prepare(
     `INSERT INTO sync_log (device_id, volunteer, action, detail) VALUES (?1,?2,'push',?3)`
   )
@@ -256,6 +271,7 @@ async function sync(request: Request, env: Env, volunteer: string): Promise<Resp
     superseded,
     truncated,
     records: changed.results,
+    known_numbers: known.results.map((r) => r.number),
     server_time: new Date().toISOString(),
   });
 }

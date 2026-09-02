@@ -19,7 +19,7 @@
  */
 
 import yaml from "js-yaml";
-import { buildEhiveBundle, type KnownTerms } from "./ehive";
+import { buildEhiveBundle, buildImportedRecords, type KnownTerms } from "./ehive";
 
 export interface Env {
   DB: D1Database;
@@ -163,6 +163,12 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
     if (path === "/export/ehive" && request.method === "GET") {
       if (user.role !== "admin") return json({ error: "admins_only" }, 403);
       return await ehiveExport(env);
+    }
+
+    // Bring the reference copy into the collection proper.
+    if (path === "/import/ehive" && request.method === "POST") {
+      if (user.role !== "admin") return json({ error: "admins_only" }, 403);
+      return await ehiveImport(env, user);
     }
 
     if (path === "/removed" && request.method === "GET") {
@@ -474,7 +480,7 @@ async function updateMe(request: Request, env: Env, actor: User): Promise<Respon
 async function ehiveExport(env: Env): Promise<Response> {
   const [records, photos, schema] = await Promise.all([
     env.DB.prepare(
-      `SELECT id, registration_number, object_name, values_json, schema_version
+      `SELECT id, registration_number, object_name, values_json, schema_version, ehive_record_id
        FROM records WHERE deleted_at IS NULL
        ORDER BY registration_number IS NULL, registration_number`
     ).all<{
@@ -483,6 +489,7 @@ async function ehiveExport(env: Env): Promise<Response> {
       object_name: string | null;
       values_json: string;
       schema_version: number;
+      ehive_record_id: string | null;
     }>(),
     env.DB.prepare(
       `SELECT id, record_id, is_primary FROM photos
@@ -538,6 +545,90 @@ async function ehiveExport(env: Env): Promise<Response> {
   );
 
   return json({ ...bundle, schema_version: schema.version });
+}
+
+/**
+ * Turn the eHive reference copy into records in the collection.
+ *
+ * Idempotent by eHive's own record id: running it twice updates the same rows
+ * rather than making a second set. That matters because the obvious failure here
+ * is a duplicate collection, and the obvious human behaviour is to click a button
+ * again when unsure whether the first click worked.
+ *
+ * Imported records are marked 'exported', which is the truthful status: they are
+ * already in eHive. That also means the next export sends them back as updates,
+ * carrying their id in column C, rather than as new objects.
+ *
+ * A record catalogued here that has since been given the same eHive id is left
+ * alone - the volunteer's work wins over a re-import of the source it came from.
+ */
+async function ehiveImport(env: Env, actor: User): Promise<Response> {
+  const [source, schema] = await Promise.all([
+    env.DB.prepare(`SELECT object_record_id, fields_json FROM ehive_records`).all<{
+      object_record_id: string;
+      fields_json: string;
+    }>(),
+    env.DB.prepare(`SELECT version, yaml FROM schema_versions ORDER BY version DESC LIMIT 1`)
+      .first<{ version: number; yaml: string }>(),
+  ]);
+
+  if (!source.results.length) {
+    return json(
+      {
+        error: "nothing_to_import",
+        message:
+          "No eHive records have been loaded yet. Import an eHive XML report first with " +
+          "scripts/import-ehive-xml.mjs.",
+      },
+      409
+    );
+  }
+
+  if (!schema?.yaml) {
+    return json({ error: "no_schema", message: "The field definitions aren't loaded." }, 409);
+  }
+
+  const { records, unmapped } = buildImportedRecords(source.results, schema.yaml);
+  const now = new Date().toISOString();
+
+  // D1 allows 50 queries per invocation on the free plan; batching keeps one
+  // statement per record well inside it for a collection of this size.
+  const statements = records.map((r) =>
+    env.DB.prepare(
+      `INSERT INTO records
+         (id, registration_number, object_name, status, schema_version, values_json,
+          captured_by, captured_at, updated_at, device_id, revision, synced_by, ehive_record_id)
+       VALUES (?1,?2,?3,'exported',?4,?5,?6,?7,?8,'ehive-import',1,?9,?10)
+       ON CONFLICT(id) DO UPDATE SET
+         registration_number = excluded.registration_number,
+         object_name         = excluded.object_name,
+         values_json         = excluded.values_json,
+         updated_at          = excluded.updated_at,
+         synced_at           = datetime('now'),
+         revision            = records.revision + 1`
+    ).bind(
+      `ehive_${r.ehive_record_id}`,
+      r.registration_number,
+      r.object_name,
+      schema.version,
+      r.values_json,
+      r.captured_by,
+      r.captured_at,
+      now,
+      actor.email,
+      r.ehive_record_id
+    )
+  );
+
+  await env.DB.batch(statements);
+  await log(env, actor.email, "import_ehive", null, `${records.length} records`);
+
+  return json({
+    imported: records.length,
+    unmapped_fields: Object.entries(unmapped)
+      .map(([field, count]) => ({ field, count }))
+      .sort((a, b) => b.count - a.count),
+  });
 }
 
 async function listUsers(env: Env): Promise<Response> {
