@@ -54,10 +54,17 @@ body {
   outline-offset: 2px;
 }
 
+/* index.html sets viewport-fit=cover and a translucent iOS status bar, which is
+   what lets the page fill the screen on a notched phone — but it also means the
+   top of the page sits UNDER the clock and battery unless the inset is paid back
+   here. Installed to the Home Screen it was the masthead that disappeared behind
+   them. The side insets matter in landscape; the bottom one keeps the sticky
+   action bar clear of the home indicator. */
 .app {
   max-width: 640px;
   margin: 0 auto;
-  padding: 0 16px 96px;
+  padding: env(safe-area-inset-top) calc(16px + env(safe-area-inset-right)) 96px
+    calc(16px + env(safe-area-inset-left));
 }
 
 /* ---------------------------------------------------------- accession tag */
@@ -397,7 +404,7 @@ body {
   bottom: 0;
   display: flex;
   gap: 10px;
-  padding: 12px 0 16px;
+  padding: 12px 0 calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(to top, var(--board) 78%, rgba(232, 236, 239, 0));
 }
 
