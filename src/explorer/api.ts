@@ -74,6 +74,10 @@ export interface PickListWarning {
   ehive: string;
   value: string;
   count: number;
+  /** Already a term in the museum's eHive account. */
+  known: boolean;
+  /** Existing eHive terms this one resembles - usually the intended spelling. */
+  similar: string[];
 }
 
 export interface EhiveBundle {

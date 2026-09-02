@@ -756,8 +756,10 @@ fields:
   voice_prompt: What subjects or keywords would help someone find this object?
   autofill: null
   mapping:
-    ehive: tag
-    note: col BG.
+    ehive: association_keyword
+    note: 'insert column. NOT the spreadsheet''s Tag column: the museum''s own 35 eHive
+      records use association_keyword 30 times and tag not once. Matching their practice
+      keeps new records searchable alongside the old ones.'
   subfields: null
   example: null
   notes: Printed as two ruled lines following the label.
@@ -1617,7 +1619,7 @@ ehive_export:
   - col: BG
     ehive: tag
     label: 'Tag'
-    from: 'subjects_key_words_tags'
+    from: null
 
   # Reached through the workbook's Insert Column button. Appended after the standard
   # columns; whoever prepares the import inserts them and picks these field names.
@@ -1637,6 +1639,9 @@ ehive_export:
   - ehive: general_notes_object
     label: 'General Notes Object'
     from: 'references'
+  - ehive: association_keyword
+    label: 'Association Keyword'
+    from: 'subjects_key_words_tags'
   - ehive: cataloguer
     label: 'Cataloguer'
     from: '=subfield:catalogued_by.catalogued_by_name'

@@ -934,3 +934,23 @@ body {
   font-size: 0.82rem;
   word-break: break-word;
 }
+
+/* A term's state: already in eHive, or about to be created. The distinction is
+   the whole point of importing the museum's existing records. */
+.ehive-term-state {
+  text-align: right;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ehive-known { color: var(--sage); }
+.ehive-new { color: var(--alert); font-weight: 600; }
+
+.ehive-similar {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}

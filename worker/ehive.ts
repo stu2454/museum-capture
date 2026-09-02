@@ -54,12 +54,32 @@ export interface ExportRecord {
   photos: Array<{ id: string; is_primary: number }>;
 }
 
-/** A value a volunteer typed that would create a NEW term in an eHive pick list. */
+/** A value a volunteer typed, checked against the terms eHive already holds. */
 export interface PickListWarning {
   field: string;
   ehive: string;
   value: string;
   count: number;
+  /**
+   * True when this exact term is already in the museum's eHive account. False
+   * means importing it CREATES a new term - which is sometimes right and
+   * sometimes a misspelling, and only a person can tell which.
+   */
+  known: boolean;
+  /** Terms already in eHive that look like this one. Usually the intended spelling. */
+  similar: string[];
+}
+
+/** Existing eHive terms, by our field id. Empty when nothing has been imported. */
+export type KnownTerms = Record<string, string[]>;
+
+/**
+ * Loose match, for suggesting what someone probably meant: case, punctuation and
+ * spacing removed. "Butter Churn", "butter churn" and "butter-churn" all collapse
+ * to the same key, which is exactly the confusion eHive's pick lists punish.
+ */
+function loose(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 export interface EhiveBundle {
@@ -138,7 +158,11 @@ function csvCell(v: string): string {
   return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
-export function buildEhiveBundle(records: ExportRecord[], schemaYaml: string): EhiveBundle {
+export function buildEhiveBundle(
+  records: ExportRecord[],
+  schemaYaml: string,
+  known: KnownTerms = {}
+): EhiveBundle {
   const schema = yaml.load(schemaYaml) as Schema;
   const spec = schema.ehive_export;
   if (!spec) throw new Error("This schema version has no ehive_export block.");
@@ -215,13 +239,31 @@ export function buildEhiveBundle(records: ExportRecord[], schemaYaml: string): E
     lines.push(row.map(csvCell).join(","));
   }
 
+  // Checked against what eHive actually holds, where we know it. Without an import
+  // every value reads as new, which is honest: we genuinely don't know.
   const pick_lists: PickListWarning[] = [];
   for (const [field, bucket] of seen) {
     const column = columns.find((c) => c.from === field);
+    const terms = known[field] ?? [];
+    const byLoose = new Map(terms.map((t) => [loose(t), t]));
+
     for (const [value, count] of [...bucket].sort((a, b) => b[1] - a[1])) {
-      pick_lists.push({ field, ehive: column?.ehive ?? field, value, count });
+      const exact = terms.includes(value);
+      const near = byLoose.get(loose(value));
+      pick_lists.push({
+        field,
+        ehive: column?.ehive ?? field,
+        value,
+        count,
+        known: exact,
+        // A near match only helps when it isn't the value itself.
+        similar: !exact && near ? [near] : [],
+      });
     }
   }
+
+  // Unknown terms first: those are the ones somebody has to look at.
+  pick_lists.sort((a, b) => Number(a.known) - Number(b.known) || b.count - a.count);
 
   return {
     csv: lines.join("\r\n"),

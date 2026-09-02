@@ -235,7 +235,11 @@ worker/
   api.ts                   Sync and photo endpoints, for devices.
   explorer.ts              Explorer and user admin endpoints, for people. Read its header.
 migrations/                D1 schema, in order. Each file's header explains why it exists.
+seeds/                     Data, not schema. Kept OUT of migrations/ because wrangler treats
+                           everything in there as a migration and ordered a seed before the
+                           migration that created its table.
 scripts/seed-schema.mjs    Turns the YAML into the seed SQL for db:seed.
+scripts/import-ehive-xml.mjs  Turns an eHive XML report into seeds/seed-ehive.sql.
 ```
 
 ## Rules that are easy to break by accident
@@ -298,6 +302,13 @@ before changing anything here. In short:
   `src/avatars.ts` and the allowlist is duplicated in `worker/explorer.ts` — keep the two in
   step. Storing a name means the palette can be restyled without touching a single row, and
   an allowlist of ten known words is a cheaper guarantee than escaping downstream.
+- **`ehive_records` is a reference copy, not catalogue.** The museum's existing eHive records,
+  loaded from an XML report they download from their own account. Read-only, never shown as
+  collection records, never editable: eHive stays master of what eHive already holds, which
+  matters because there is no write API to resolve a disagreement with. It exists to answer
+  "does this term already exist?" and, later, "is this object already catalogued?". Each row
+  keeps eHive's `object_record_id`, which written into column C of the import spreadsheet
+  updates that record instead of creating a second one.
 - **`/api/people`** returns the active roster — email and display name only — to any
   authorised user, because the capture app's picker is useless without it. Roles, sign-in
   times and who-added-whom stay in `/api/users`, which is admins only.

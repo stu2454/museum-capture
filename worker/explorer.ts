@@ -18,7 +18,8 @@
  * the single assumption the whole model rests on.
  */
 
-import { buildEhiveBundle } from "./ehive";
+import yaml from "js-yaml";
+import { buildEhiveBundle, type KnownTerms } from "./ehive";
 
 export interface Env {
   DB: D1Database;
@@ -510,9 +511,30 @@ async function ehiveExport(env: Env): Promise<Response> {
     byRecord.set(p.record_id, list);
   }
 
+  // What eHive already holds, so a value can be reported as new rather than merely
+  // unfamiliar. Absent until an XML report has been imported, and that is fine.
+  const terms = await env.DB.prepare(`SELECT field, term FROM ehive_terms`)
+    .all<{ field: string; term: string }>()
+    .catch(() => ({ results: [] as Array<{ field: string; term: string }> }));
+
+  // ehive_terms is keyed by eHive's field name; the builder wants ours.
+  const schemaFields = (yaml.load(schema.yaml) as {
+    fields?: Array<{ id: string; mapping?: { ehive?: string } | null }>;
+  }).fields ?? [];
+
+  const known: KnownTerms = {};
+  for (const row of terms.results) {
+    for (const f of schemaFields) {
+      if (f.mapping?.ehive === row.field) {
+        (known[f.id] ??= []).push(row.term);
+      }
+    }
+  }
+
   const bundle = buildEhiveBundle(
     records.results.map((r) => ({ ...r, photos: byRecord.get(r.id) ?? [] })),
-    schema.yaml
+    schema.yaml,
+    known
   );
 
   return json({ ...bundle, schema_version: schema.version });

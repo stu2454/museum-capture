@@ -34,6 +34,7 @@ export function EhiveExport({ onBack }: { onBack: () => void }) {
   }, []);
 
   const stamp = new Date().toISOString().slice(0, 10);
+  const newTerms = bundle?.pick_lists.filter((w) => !w.known) ?? [];
 
   function downloadSpreadsheet() {
     if (bundle) downloadFile(`ehive-import-${stamp}.csv`, bundle.csv, "text/csv");
@@ -96,25 +97,45 @@ export function EhiveExport({ onBack }: { onBack: () => void }) {
       {bundle.pick_lists.length > 0 && (
         <>
           <p className="eyebrow" style={{ margin: "26px 0 8px" }}>
-            Check these {bundle.pick_lists.length} values first
+            {newTerms.length > 0
+              ? `${newTerms.length} ${newTerms.length === 1 ? "value" : "values"} would create a new eHive term`
+              : "Every value already exists in eHive"}
           </p>
-          <div className="notice notice-problem">
-            <p className="small" style={{ margin: 0 }}>
-              These fields are pick lists in eHive. Any value that doesn&apos;t exactly match a
-              term already in your account <strong>creates a new one</strong> — so two spellings
-              of the same thing become two terms. Look for near-duplicates below and correct
-              them in the records before you send the file.
-            </p>
-          </div>
+
+          {newTerms.length > 0 && (
+            <div className="notice notice-problem">
+              <p className="small" style={{ margin: 0 }}>
+                These fields are pick lists in eHive. A value below that isn&apos;t already one
+                of your terms <strong>creates a new one</strong> on import — right when it is
+                genuinely a new kind of thing, wrong when it is a second spelling of something
+                you already have. Where we can see a close match, it is shown.
+              </p>
+            </div>
+          )}
+
           <div className="table-wrap">
             <table className="ehive-terms">
               <tbody>
                 {bundle.pick_lists.map((w) => (
                   <tr key={`${w.field}:${w.value}`}>
-                    <td>{w.value}</td>
+                    <td>
+                      {w.value}
+                      {w.similar.length > 0 && (
+                        <span className="ehive-similar">
+                          eHive already has <strong>{w.similar[0]}</strong>
+                        </span>
+                      )}
+                    </td>
                     <td className="ehive-term-field">{w.ehive}</td>
                     <td className="ehive-term-count">
                       {w.count} {w.count === 1 ? "record" : "records"}
+                    </td>
+                    <td className="ehive-term-state">
+                      {w.known ? (
+                        <span className="ehive-known">in eHive</span>
+                      ) : (
+                        <span className="ehive-new">new term</span>
+                      )}
                     </td>
                   </tr>
                 ))}
