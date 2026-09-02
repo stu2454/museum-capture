@@ -312,6 +312,17 @@ async function putPhoto(request: Request, env: Env, path: string, volunteer: str
     .bind(photoId, recordId, key, sha256, body.byteLength, isPrimary ? 1 : 0, new Date().toISOString())
     .run();
 
+  // Exactly one primary per record. Without this, a volunteer replacing a poor
+  // photograph would leave two images both claiming to be the main one, and the
+  // catalogue would pick between them on whatever the query happened to order by.
+  if (isPrimary) {
+    await env.DB.prepare(
+      `UPDATE photos SET is_primary = 0 WHERE record_id = ?1 AND id <> ?2`
+    )
+      .bind(recordId, photoId)
+      .run();
+  }
+
   await env.DB.prepare(
     `INSERT INTO sync_log (volunteer, action, record_id, detail) VALUES (?1,'photo_upload',?2,?3)`
   )

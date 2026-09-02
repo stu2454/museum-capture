@@ -153,6 +153,12 @@ export const api = {
 
   ehiveExport: () => call<EhiveBundle>("/export/ehive"),
 
+  setPrimaryPhoto: (recordId: string, photoId: string) =>
+    call<{ ok: true }>(`/records/${encodeURIComponent(recordId)}/primary-photo`, {
+      method: "POST",
+      body: JSON.stringify({ photo_id: photoId }),
+    }),
+
   ehiveImport: () =>
     call<{ imported: number; unmapped_fields: Array<{ field: string; count: number }> }>(
       "/import/ehive",

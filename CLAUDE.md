@@ -231,6 +231,8 @@ src/explorer/
   UserAdmin.tsx            Add and remove users, set roles.
   api.ts                   Explorer data access.
   EhiveExport.tsx          Prepare the eHive file; import eHive's records. Admins only.
+  AddPhotos.tsx            Photograph an object already catalogued. Volunteers and admins.
+  photoQueue.ts            Holds those photographs in IndexedDB until they can be sent.
 worker/
   index.ts                 Entry. Routes /api/*, serves assets, runs the weekly export cron.
   api.ts                   Sync and photo endpoints, for devices.
@@ -269,7 +271,16 @@ docs/ehive-import-fields.tsv  Every field eHive's import workbook can carry, for
    thing that does surface is a quiet banner after sync has been failing for hours.
 7. **Nothing is ever really deleted.** Every save appends to `record_revisions`; removal is a
    soft delete with an actor and a reason, and it can be restored. Don't add a hard delete.
-8. **Two identities on a record, and only one of them is trustworthy.** `captured_by` is an
+8. **A photograph is never uploaded straight from the camera.** Both the capture app and the
+   explorer write the blob to IndexedDB first and send it afterwards. The explorer's version
+   looks like it could skip that — it reads everything else from the server — but the person
+   holding the phone is inside a museum, and a photograph of an object already put back on its
+   shelf cannot be retaken. `src/explorer/photoQueue.ts`.
+9. **Exactly one primary photo per record.** `putPhoto` demotes the others when a photograph
+   arrives marked primary, and `setPrimaryPhoto` does it in one batch. Two images both claiming
+   to be the main one means the catalogue picks between them on whatever a query happens to
+   order by.
+10. **Two identities on a record, and only one of them is trustworthy.** `captured_by` is an
    email the device chose from the registered roster — on a shared museum device that is a
    claim, not proof. `synced_by` is written by the Worker from the Access header on the
    request that carried the record. Never populate `synced_by` from the request body, and
@@ -399,11 +410,6 @@ still has this hazard and should move to `seeds/`.
   it to Vernon Systems, who run it. Nothing automates that and nothing can — see the eHive
   section below. `src/export.ts`'s `ehiveExportReady` flag is now vestigial; the real export
   lives in `worker/ehive.ts`.
-- **Attaching a photograph to a record after it has left the device that made it.** Imported
-  records never reach a phone (sync is device-scoped), and the explorer is read-only, so there
-  is no route in the app to photograph an object catalogued elsewhere. The 35 imported records
-  were solved by a one-off script; the general case is not built. This is the most likely next
-  thing somebody needs.
 - **Voice capture.** The structure is there — `capture_groups` each carry one open
   `voice_prompt`, `FieldValue.origin` can already record `"spoken"`, and the schema has
   `voice_recording` and `transcript` fields. The flow to build: record one answer per group,

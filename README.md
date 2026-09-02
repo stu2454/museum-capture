@@ -68,11 +68,19 @@ run by Vernon Systems staff from a spreadsheet emailed to them.
 The same screen imports eHive's existing records into the collection. See the eHive section of
 CLAUDE.md before changing any of it.
 
+## Improving a photograph
+
+Any volunteer can photograph an object that is already catalogued: find it in `/explore`, open
+it, and **Add photographs**. This is how the objects imported from eHive get better pictures
+than the ones eHive holds, and how any record gets a second look.
+
+Photographs are written to the device first and sent when there is a connection, so it works in
+a corner of the building with no signal. Existing images are never replaced — tap **Make main**
+to choose which one represents the object.
+
 ## What it doesn't do yet
 
 - **Voice recording.** The prompts and structure are in place; the recording flow isn't built.
-- **Adding a photograph to a record after it has left the device that made it.** There is no
-  route for this in the app. It is the most likely next thing somebody needs.
 - **Donor details.** Deliberately absent — see below.
 
 ## Donor details are not in this app

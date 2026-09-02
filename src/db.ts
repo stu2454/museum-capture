@@ -10,9 +10,11 @@
 import type { ArtefactRecord } from "./types";
 
 const DB_NAME = "artefact-catalogue";
-const DB_VERSION = 1;
+// 2 added `pending`: photographs taken in the explorer, waiting to be uploaded.
+const DB_VERSION = 2;
 const RECORDS = "records";
 const PHOTOS = "photos";
+const PENDING = "pending";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -27,6 +29,9 @@ function open(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(PHOTOS)) {
         db.createObjectStore(PHOTOS);
+      }
+      if (!db.objectStoreNames.contains(PENDING)) {
+        db.createObjectStore(PENDING, { keyPath: "id" }).createIndex("recordId", "recordId");
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -62,6 +67,34 @@ export const photos = {
   put: (id: string, blob: Blob) => tx<IDBValidKey>(PHOTOS, "readwrite", (s) => s.put(blob, id)),
   get: (id: string) => tx<Blob | undefined>(PHOTOS, "readonly", (s) => s.get(id)),
   remove: (id: string) => tx<undefined>(PHOTOS, "readwrite", (s) => s.delete(id)),
+};
+
+/**
+ * A photograph taken in the explorer, against a record that lives on the server.
+ *
+ * These need queueing for the same reason everything else here does: the person
+ * taking them is standing in a museum, and a museum is a building with thick
+ * walls. A photograph held here has already been taken - losing it because the
+ * upload failed would be losing work that cannot be retaken once the volunteer
+ * has put the object back and gone home.
+ *
+ * The blob itself goes in the PHOTOS store under the same id; this is only the
+ * bookkeeping.
+ */
+export interface PendingPhoto {
+  id: string;
+  recordId: string;
+  /** Should this become the record's main image once it lands? */
+  primary: boolean;
+  addedAt: string;
+  /** Rises on each failure, so a permanently broken one can be told from a new one. */
+  attempts: number;
+}
+
+export const pending = {
+  put: (item: PendingPhoto) => tx<IDBValidKey>(PENDING, "readwrite", (s) => s.put(item)),
+  remove: (id: string) => tx<undefined>(PENDING, "readwrite", (s) => s.delete(id)),
+  all: () => tx<PendingPhoto[]>(PENDING, "readonly", (s) => s.getAll()),
 };
 
 export function newId(prefix: string): string {

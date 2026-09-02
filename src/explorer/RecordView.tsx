@@ -7,10 +7,11 @@
  * whole reason the schema is kept in the database.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import yaml from "js-yaml";
 import { api, photoUrl, type Me, type RecordDetail } from "./api";
 import { RemovePanel } from "./RemovePanel";
+import { AddPhotos } from "./AddPhotos";
 
 interface FieldDef {
   id: string;
@@ -44,12 +45,22 @@ export function RecordView({
   const [error, setError] = useState<string | null>(null);
   const [zoomed, setZoomed] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .record(id)
       .then(setData)
       .catch(() => setError("Couldn't load that record."));
   }, [id]);
+
+  useEffect(load, [load]);
+
+  // Choosing which picture represents an object is cataloguing, not admin, so any
+  // volunteer may. A viewer is here to read.
+  async function makePrimary(photoId: string) {
+    if (me.role === "viewer") return;
+    await api.setPrimaryPhoto(id, photoId).catch(() => undefined);
+    load();
+  }
 
   if (error) {
     return (
@@ -106,16 +117,28 @@ export function RecordView({
       {data.photos.length > 0 && (
         <div className="photo-grid">
           {data.photos.map((photo) => (
-            <button
-              type="button"
-              key={photo.id}
-              className="photo"
-              onClick={() => setZoomed(photoUrl(photo.id))}
-              style={{ padding: 0, border: "1px solid var(--rule)", cursor: "zoom-in" }}
-            >
-              <img src={photoUrl(photo.id)} alt={photo.caption || "Artefact photograph"} loading="lazy" />
-              {photo.is_primary === 1 && <span className="photo-primary-flag">Main</span>}
-            </button>
+            <div key={photo.id} className="photo" style={{ border: "1px solid var(--rule)" }}>
+              <img
+                src={photoUrl(photo.id)}
+                alt={photo.caption || "Artefact photograph"}
+                loading="lazy"
+                style={{ cursor: "zoom-in" }}
+                onClick={() => setZoomed(photoUrl(photo.id))}
+              />
+              {photo.is_primary === 1 ? (
+                <span className="photo-primary-flag">Main</span>
+              ) : (
+                me.role !== "viewer" && (
+                  <button
+                    type="button"
+                    className="photo-make-primary"
+                    onClick={() => void makePrimary(photo.id)}
+                  >
+                    Make main
+                  </button>
+                )
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -168,6 +191,14 @@ export function RecordView({
               ))}
           </dl>
         </section>
+      )}
+
+      {me.role !== "viewer" && (
+        <AddPhotos
+          recordId={id}
+          hasNoPhotos={data.photos.length === 0}
+          onUploaded={load}
+        />
       )}
 
       {me.role === "admin" && !removing && (

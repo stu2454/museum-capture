@@ -186,6 +186,13 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
       if (user.role !== "admin") return json({ error: "admins_only" }, 403);
       return await restoreRecord(env, path, user);
     }
+    // Promote an existing photograph to the record's main image. Any active user
+    // may: choosing which picture represents an object is cataloguing, not
+    // administration, and it is reversible by doing it again.
+    if (path.startsWith("/records/") && path.endsWith("/primary-photo") && request.method === "POST") {
+      return await setPrimaryPhoto(request, env, path, user);
+    }
+
     if (path === "/records" && request.method === "GET") return await listRecords(request, env, url);
     if (path.startsWith("/records/") && request.method === "GET") return await getRecord(env, path);
     if (path.startsWith("/photo/") && request.method === "GET") return await getPhoto(env, path);
@@ -629,6 +636,34 @@ async function ehiveImport(env: Env, actor: User): Promise<Response> {
       .map(([field, count]) => ({ field, count }))
       .sort((a, b) => b.count - a.count),
   });
+}
+
+async function setPrimaryPhoto(
+  request: Request,
+  env: Env,
+  path: string,
+  actor: User
+): Promise<Response> {
+  const recordId = decodeURIComponent(path.split("/")[2] ?? "");
+  const { photo_id: photoId } = (await request.json()) as { photo_id?: string };
+  if (!photoId) return json({ error: "no_photo" }, 400);
+
+  // Bound to this record, so a photograph cannot be promoted onto an object it
+  // does not belong to.
+  const owned = await env.DB.prepare(
+    `SELECT 1 FROM photos WHERE id = ?1 AND record_id = ?2 AND deleted_at IS NULL`
+  )
+    .bind(photoId, recordId)
+    .first();
+  if (!owned) return json({ error: "not_found" }, 404);
+
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE photos SET is_primary = 0 WHERE record_id = ?1`).bind(recordId),
+    env.DB.prepare(`UPDATE photos SET is_primary = 1 WHERE id = ?1`).bind(photoId),
+  ]);
+
+  await log(env, actor.email, "set_primary_photo", recordId, photoId);
+  return json({ ok: true, photo_id: photoId });
 }
 
 async function listUsers(env: Env): Promise<Response> {

@@ -954,3 +954,39 @@ body {
   color: var(--ink-soft);
   margin-top: 2px;
 }
+
+/* ------------------------------------------------ photographs in the catalogue */
+
+/* Waiting to be sent. Deliberately plain: a volunteer needs to know the picture
+   is safe, not to be alarmed that it hasn't uploaded yet. */
+.photo-pending-flag {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.photo-make-primary {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.photo-make-primary:hover {
+  border-color: var(--ink);
+}
