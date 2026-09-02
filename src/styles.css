@@ -884,3 +884,53 @@ body {
     display: none;
   }
 }
+
+/* -------------------------------------------------------------- eHive export */
+/* The pick list report is a list of things to look at, not a data grid: what
+   matters is spotting two spellings of the same word sitting near each other, so
+   the value is set large and the machinery around it stays quiet. */
+
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.ehive-terms {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ehive-terms td {
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: baseline;
+}
+
+.ehive-term-field {
+  font-family: var(--data);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.ehive-term-count {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ehive-steps {
+  padding-left: 22px;
+  margin: 0 0 22px;
+}
+
+.ehive-steps li {
+  margin-bottom: 10px;
+}
+
+.ehive-extra {
+  font-family: var(--data);
+  font-size: 0.82rem;
+  word-break: break-word;
+}

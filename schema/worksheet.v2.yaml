@@ -1432,6 +1432,218 @@ ehive_export:
   - secondary_maker
   - location
 
+  # The Object Data sheet, column for column, in the workbook's own order. Emitted
+  # in full - including the columns this museum has nothing for - so the CSV can be
+  # pasted straight into the official workbook without anything sliding sideways.
+  #
+  # `from` is the schema field that feeds the column. The directives are:
+  #   =constant:K   a value from ehive_export.constants
+  #   =join:a,b     several of our fields combined into one eHive field
+  #   =photo:N      the Nth photograph's filename, 0 being the primary
+  #   =subfield:F.S a subfield of a composite field
+  columns:
+  - col: B
+    ehive: object_id
+    label: 'Object Id'
+    from: null
+  - col: C
+    ehive: object_record_id
+    label: 'ehive record id'
+    from: null
+  - col: D
+    ehive: object_number
+    label: 'Object Number'
+    from: 'registration_number'
+  - col: E
+    ehive: name
+    label: 'Name'
+    from: 'object_name'
+  - col: F
+    ehive: web_public_description
+    label: 'Web Public Description'
+    from: 'description'
+  - col: G
+    ehive: object_type
+    label: 'Object Type'
+    from: 'object_type'
+  - col: H
+    ehive: ehive_object_type
+    label: 'eHive Record Type'
+    from: '=constant:ehive_object_type'
+  - col: I
+    ehive: dublin_core
+    label: 'Dublin Core'
+    from: '=constant:dublin_core'
+  - col: J
+    ehive: primary_creator_maker
+    label: 'Primary Maker 1'
+    from: 'maker'
+  - col: K
+    ehive: primary_creator_maker_role
+    label: 'Primary Maker 1 Role'
+    from: null
+  - col: L
+    ehive: primary_creator_maker
+    label: 'Primary Maker 2'
+    from: 'secondary_maker'
+  - col: M
+    ehive: primary_creator_maker_role
+    label: 'Primary Maker 2 Role'
+    from: null
+  - col: N
+    ehive: date_made
+    label: 'Date Made'
+    from: 'date_manufactured'
+  - col: O
+    ehive: place_made
+    label: 'Place Made'
+    from: 'place_manufactured'
+  - col: P
+    ehive: named_collection
+    label: 'Collection'
+    from: null
+  - col: Q
+    ehive: credit_line
+    label: 'Credit Line'
+    from: null
+  - col: R
+    ehive: medium_description
+    label: 'Medium Description'
+    from: 'materials'
+  - col: S
+    ehive: measurement_description
+    label: 'Measurement Description'
+    from: '=join:dimensions,weight'
+  - col: T
+    ehive: subject_association_description
+    label: 'Subject Association Description'
+    from: null
+  - col: U
+    ehive: current_condition_description
+    label: 'Current Condition Description'
+    from: 'condition_and_completeness'
+  - col: V
+    ehive: location
+    label: 'Location'
+    from: 'location'
+  - col: W
+    ehive: brief_description
+    label: 'Brief Description'
+    from: null
+  - col: X
+    ehive: accession_date
+    label: 'Accession Date'
+    from: 'date_of_acquisition'
+  - col: Y
+    ehive: department
+    label: 'Collection Type'
+    from: null
+  - col: Z
+    ehive: price_local
+    label: 'Price Local'
+    from: null
+  - col: AA
+    ehive: acq_valuation
+    label: 'Acquisition Valuation'
+    from: null
+  - col: AB
+    ehive: rights_owner
+    label: 'Rights Owner'
+    from: null
+  - col: AC
+    ehive: inscription
+    label: 'Inscription'
+    from: 'marks_and_inscriptions'
+  - col: AD
+    ehive: general_notes_acquisition
+    label: 'Acquisition Notes'
+    from: 'how_was_it_acquired'
+  - col: AE
+    ehive: item_count
+    label: 'Item Count'
+    from: null
+  - col: AF
+    ehive: other_number
+    label: 'Other Number 1'
+    from: null
+  - col: AG
+    ehive: other_number_type
+    label: 'Other Number 1 Type'
+    from: null
+  - col: AH
+    ehive: other_number
+    label: 'Other Number 2'
+    from: null
+  - col: AI
+    ehive: other_number_type
+    label: 'Other Number 2 Type'
+    from: null
+  - col: AJ
+    ehive: other_name_title
+    label: 'Other Name/Title'
+    from: 'title'
+  - col: AK
+    ehive: provenance_details
+    label: 'Provenance Details'
+    from: 'provenance'
+  - col: AL
+    ehive: comments
+    label: 'Comments'
+    from: null
+  - col: AM
+    ehive: image
+    label: 'Primary Image Reference'
+    from: '=photo:0'
+  - col: AN
+    ehive: title
+    label: 'Image Title'
+    from: null
+  - col: AO
+    ehive: image
+    label: 'Image Reference'
+    from: '=photo:1'
+  - col: AP
+    ehive: title
+    label: 'Image Title'
+    from: null
+  - col: AQ
+    ehive: image
+    label: 'Image Reference'
+    from: '=photo:2'
+  - col: AR
+    ehive: title
+    label: 'Image Title'
+    from: null
+  - col: BG
+    ehive: tag
+    label: 'Tag'
+    from: 'subjects_key_words_tags'
+
+  # Reached through the workbook's Insert Column button. Appended after the standard
+  # columns; whoever prepares the import inserts them and picks these field names.
+  extra_columns:
+  - ehive: significance
+    label: 'Significance'
+    from: 'relevance_to_the_collection'
+  - ehive: exhibition_history
+    label: 'Exhibition History'
+    from: 'exhibition_history'
+  - ehive: storage_details
+    label: 'Storage Details'
+    from: 'storage_and_display_requirements'
+  - ehive: location_history_date
+    label: 'Location History Date'
+    from: 'location_date'
+  - ehive: general_notes_object
+    label: 'General Notes Object'
+    from: 'references'
+  - ehive: cataloguer
+    label: 'Cataloguer'
+    from: '=subfield:catalogued_by.catalogued_by_name'
+  - ehive: catalogued_date
+    label: 'Catalogued Date'
+    from: '=subfield:catalogued_by.catalogued_by_date'
+
   # Images are referenced by FILENAME in the spreadsheet and travel separately.
   # The reference must match the file exactly or the import silently drops it.
   images:

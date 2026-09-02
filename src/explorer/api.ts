@@ -68,6 +68,23 @@ export interface UserRow {
   last_seen_at: string | null;
 }
 
+/** A value that would create a NEW term in an eHive pick list if imported as is. */
+export interface PickListWarning {
+  field: string;
+  ehive: string;
+  value: string;
+  count: number;
+}
+
+export interface EhiveBundle {
+  csv: string;
+  photos: Array<{ filename: string; photo_id: string; record: string }>;
+  pick_lists: PickListWarning[];
+  record_count: number;
+  extra_columns: string[];
+  schema_version: number;
+}
+
 export class NotAuthorised extends Error {}
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -129,6 +146,8 @@ export const api = {
     call<{ ok: true }>(`/records/${encodeURIComponent(id)}/restore`, { method: "POST" }),
 
   removed: () => call<{ records: RemovedRecord[] }>("/removed").then((r) => r.records),
+
+  ehiveExport: () => call<EhiveBundle>("/export/ehive"),
 
   removeUser: (email: string) =>
     call<{ ok: true }>("/users", { method: "DELETE", body: JSON.stringify({ email }) }),

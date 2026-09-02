@@ -11,8 +11,13 @@ import { useCallback, useEffect, useState } from "react";
 import { api, NotAuthorised, photoUrl, type Me, type RecordSummary } from "./api";
 import { RecordView } from "./RecordView";
 import { UserAdmin } from "./UserAdmin";
+import { EhiveExport } from "./EhiveExport";
 
-type View = { name: "list" } | { name: "record"; id: string } | { name: "users" };
+type View =
+  | { name: "list" }
+  | { name: "record"; id: string }
+  | { name: "users" }
+  | { name: "ehive" };
 
 export function Explorer() {
   const [me, setMe] = useState<Me | null>(null);
@@ -83,6 +88,10 @@ export function Explorer() {
 
   if (view.name === "users") {
     return <UserAdmin me={me} onBack={() => setView({ name: "list" })} />;
+  }
+
+  if (view.name === "ehive") {
+    return <EhiveExport onBack={() => setView({ name: "list" })} />;
   }
 
   return (
@@ -160,14 +169,24 @@ export function Explorer() {
       ))}
 
       {me.role === "admin" && (
-        <button
-          type="button"
-          className="btn btn-quiet btn-wide"
-          style={{ marginTop: 24 }}
-          onClick={() => setView({ name: "users" })}
-        >
-          Manage who has access
-        </button>
+        <>
+          <button
+            type="button"
+            className="btn btn-quiet btn-wide"
+            style={{ marginTop: 24 }}
+            onClick={() => setView({ name: "users" })}
+          >
+            Manage who has access
+          </button>
+          <button
+            type="button"
+            className="btn btn-quiet btn-wide"
+            style={{ marginTop: 10 }}
+            onClick={() => setView({ name: "ehive" })}
+          >
+            Send records to eHive
+          </button>
+        </>
       )}
 
       <div style={{ marginTop: 22, paddingTop: 16, borderTop: "1px solid var(--rule)" }}>

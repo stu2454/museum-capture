@@ -18,6 +18,8 @@
  * the single assumption the whole model rests on.
  */
 
+import { buildEhiveBundle } from "./ehive";
+
 export interface Env {
   DB: D1Database;
   PHOTOS: R2Bucket;
@@ -153,6 +155,13 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
          ORDER BY COALESCE(NULLIF(TRIM(display_name), ''), email)`
       ).all();
       return json({ people: rows.results });
+    }
+
+    // The eHive import file. Admins only: it is the whole collection in one
+    // download, and preparing an import is a committee job, not a cataloguing one.
+    if (path === "/export/ehive" && request.method === "GET") {
+      if (user.role !== "admin") return json({ error: "admins_only" }, 403);
+      return await ehiveExport(env);
     }
 
     if (path === "/removed" && request.method === "GET") {
@@ -447,6 +456,66 @@ async function updateMe(request: Request, env: Env, actor: User): Promise<Respon
     .first<User>();
 
   return json({ user: updated });
+}
+
+/**
+ * Build the eHive import file for the whole collection.
+ *
+ * Reads the schema stored alongside the records rather than any current version:
+ * a record catalogued last year must export under the mapping it was written
+ * against, which is the same reason the explorer reads labels from there.
+ *
+ * Records are exported whatever their status. Deciding that only confirmed records
+ * should go is the museum's call, and one they haven't been asked yet - so the file
+ * carries everything and the screen says so, rather than quietly omitting work
+ * somebody did.
+ */
+async function ehiveExport(env: Env): Promise<Response> {
+  const [records, photos, schema] = await Promise.all([
+    env.DB.prepare(
+      `SELECT id, registration_number, object_name, values_json, schema_version
+       FROM records WHERE deleted_at IS NULL
+       ORDER BY registration_number IS NULL, registration_number`
+    ).all<{
+      id: string;
+      registration_number: string | null;
+      object_name: string | null;
+      values_json: string;
+      schema_version: number;
+    }>(),
+    env.DB.prepare(
+      `SELECT id, record_id, is_primary FROM photos
+       WHERE deleted_at IS NULL ORDER BY is_primary DESC, added_at`
+    ).all<{ id: string; record_id: string; is_primary: number }>(),
+    env.DB.prepare(`SELECT version, yaml FROM schema_versions ORDER BY version DESC LIMIT 1`)
+      .first<{ version: number; yaml: string }>(),
+  ]);
+
+  if (!schema?.yaml) {
+    return json(
+      {
+        error: "no_schema",
+        message:
+          "The field definitions aren't loaded in the database, so there is nothing to map " +
+          "the records against. Run the schema seed and try again.",
+      },
+      409
+    );
+  }
+
+  const byRecord = new Map<string, Array<{ id: string; is_primary: number }>>();
+  for (const p of photos.results) {
+    const list = byRecord.get(p.record_id) ?? [];
+    list.push({ id: p.id, is_primary: p.is_primary });
+    byRecord.set(p.record_id, list);
+  }
+
+  const bundle = buildEhiveBundle(
+    records.results.map((r) => ({ ...r, photos: byRecord.get(r.id) ?? [] })),
+    schema.yaml
+  );
+
+  return json({ ...bundle, schema_version: schema.version });
 }
 
 async function listUsers(env: Env): Promise<Response> {
