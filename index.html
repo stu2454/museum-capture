@@ -4,7 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#16283C" />
-    <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- crossorigin is required once Cloudflare Access covers the whole site. A
+         manifest is fetched with credentials omitted by default, even same-origin,
+         so without this the request arrives at Access with no session cookie, gets
+         redirected to the login page, and fails to parse - taking the app's name,
+         icons and standalone display with it. Add to Home Screen then produces a
+         nameless Safari bookmark, which is also the thing that protects records
+         from iOS's seven-day storage sweep. -->
+    <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials" />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <!-- iOS ignores SVG apple-touch-icons, so a PNG is required for Add to Home Screen. -->
     <link rel="apple-touch-icon" href="./icon-180.png" />
