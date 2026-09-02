@@ -1,20 +1,33 @@
 # Sync and the durable store — setup
 
-Everything below is already wired into this repo. What remains is creating the
-Cloudflare resources and putting authentication in front.
+**This is a record of how the server side was set up, not a to-do list.** It is all
+built, deployed and running. Read it to understand the shape of things, or to
+rebuild them somewhere else.
 
-## Do this first, before deploying
+## Cloudflare Access
 
-**Cloudflare Access.** Right now the app is public and harmless, because storage
-is device-local — there is nothing on the server to reach. `/api/sync` ends that.
-An open endpoint lets anyone with the URL read the collection, write junk into it,
-or exhaust the free-tier write allowance.
+Access covers the **whole hostname** — an empty Path on the application. The capture
+app at `/` was reachable without signing in until 2026-09-02; it no longer is, and
+the app refuses to start a record it cannot attribute to a registered person.
 
 Zero Trust → Access → Applications → Self-hosted →
-`museum-capture.stu2038.workers.dev` → email one-time PIN → committee addresses.
+`museum-capture.stu2038.workers.dev`, Path empty → email one-time PIN.
 
-The Worker reads `Cf-Access-Authenticated-User-Email` for the `sync_log`. Without
-Access that header is absent and every write is logged as `anonymous`.
+Two things depend on that being whole-host rather than path-scoped:
+
+- **The manifest must send credentials.** `index.html` carries
+  `crossorigin="use-credentials"` on the manifest link. Without it the manifest is
+  fetched with credentials omitted, gets redirected to the login page, and Add to
+  Home Screen silently produces a nameless bookmark — which is precisely the thing
+  that does *not* survive iOS's seven-day storage sweep.
+- **The service worker must never cache a redirect.** An expired session answers
+  200 with a sign-in page; caching that as the app shell would leave a device
+  opening on a login screen with no cure but clearing site data.
+
+Authentication is Access; authorisation is the `users` table. Both must say yes.
+The login page also offers a *Sign in with Cloudflare* button, which no volunteer
+has an account for — the app's own wording tells them to ignore it and use the
+email box.
 
 ## Then
 
@@ -103,4 +116,20 @@ under one account is one lapsed billing away from zero copies.
 - **Photo metadata pull.** A record opened on a second device doesn't yet know
   which images exist elsewhere. `fromWire` deliberately leaves local photos alone
   rather than clobbering them.
-- **eHive export.** Still blocked on verifying field mappings.
+- **Adding a photograph to a record after it has left the device that made it.**
+  Sync is device-scoped, so imported records never reach a phone, and the explorer
+  is read-only. The most likely next gap somebody hits.
+
+## eHive
+
+Built and verified 2026-09-02 — mappings, export, reference copy, import, and the
+museum's existing photographs. The details live in CLAUDE.md's eHive section; the
+one to carry in your head is that **the export reads the schema from D1, not the
+repo**, so `npm run db:seed` after any change to the YAML.
+
+## Seeds are not migrations
+
+`seeds/` holds data; `migrations/` holds schema. Wrangler treats *everything* in
+`migrations/` as a migration and once ordered a seed before the migration that
+created its table. `migrations/seed-schema.sql` still sits in the wrong place and
+should move.

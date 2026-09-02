@@ -51,12 +51,12 @@ This means:
 - Sign-in via Cloudflare Access, with an in-app user list and roles. Required for the capture
   app too — a record is attributed to a registered person, not to a typed name.
 - The explorer: search records, view a record and its photographs, admin removal and restore.
+- eHive: the import spreadsheet, a pick-list report checked against the museum's real terms,
+  a reference copy of what eHive already holds, and importing those records and photographs
+  into the collection.
 
 **Not yet**
 - Voice recording and transcription. Structure for it, don't build it.
-- eHive export. No longer blocked — the mappings are verified and `ehive_export` in the schema
-  carries the constants, the pick-list warnings and how images travel. The generator itself
-  still has to be written.
 - Photo metadata pull — a record opened on a second device doesn't yet know which images
   exist elsewhere.
 
@@ -206,7 +206,7 @@ src/schema.ts              Loads and slices the schema. The only module that rea
 src/types.ts               TS mirror of the schema. Keep in step with the YAML.
 src/db.ts                  IndexedDB: records + photo blobs.
 src/media.ts               Photo downscaling on intake, file download.
-src/export.ts              JSON export. eHive export deliberately not built.
+src/export.ts              JSON export, for a device. The eHive export is worker/ehive.ts.
 src/storage.ts             iOS seven-day storage cap: detection and persistence request.
 src/sync.ts                Offline-tolerant client sync queue. Strips restricted fields.
 src/identity.ts            Who is signed in, who is cataloguing, and the registered roster.
@@ -230,16 +230,21 @@ src/explorer/
   RemovePanel.tsx          Removal with a reason. Restore.
   UserAdmin.tsx            Add and remove users, set roles.
   api.ts                   Explorer data access.
+  EhiveExport.tsx          Prepare the eHive file; import eHive's records. Admins only.
 worker/
   index.ts                 Entry. Routes /api/*, serves assets, runs the weekly export cron.
   api.ts                   Sync and photo endpoints, for devices.
-  explorer.ts              Explorer and user admin endpoints, for people. Read its header.
+  explorer.ts              Explorer, user admin, eHive export and import. Read its header.
+  ehive.ts                 Builds the eHive import file; maps eHive's records back to ours.
 migrations/                D1 schema, in order. Each file's header explains why it exists.
 seeds/                     Data, not schema. Kept OUT of migrations/ because wrangler treats
                            everything in there as a migration and ordered a seed before the
                            migration that created its table.
 scripts/seed-schema.mjs    Turns the YAML into the seed SQL for db:seed.
 scripts/import-ehive-xml.mjs  Turns an eHive XML report into seeds/seed-ehive.sql.
+scripts/attach-ehive-images.mjs  One-off: matches eHive's photographs to records and
+                           uploads them. macOS only (uses sips). Read its header before reuse.
+docs/ehive-import-fields.tsv  Every field eHive's import workbook can carry, for reference.
 ```
 
 ## Rules that are easy to break by accident
@@ -325,15 +330,80 @@ before changing anything here. In short:
   durable. Still get a copy off Cloudflare periodically; two copies on one platform under
   one account is one lapsed billing away from zero copies.
 
+## The eHive round trip
+
+Verified and built on 2026-09-02. The details that took longest to establish, so nobody has
+to establish them twice:
+
+**There is no write API.** eHive's REST API is OAuth 2.0 and returns *public fields for public
+records*. Every one of this museum's 35 records is unpublished, so the API would have returned
+nothing at all — credentials would not have helped. Imports are run by Vernon Systems staff
+against a test server, from a spreadsheet emailed or Dropboxed to them with images alongside.
+The last step is a person. Don't design around an automated push.
+
+**Records come out of eHive as an XML report**, downloaded by an account holder from their own
+account. `scripts/import-ehive-xml.mjs` turns one into `seeds/seed-ehive.sql`, which fills
+`ehive_records` — a read-only reference copy, not catalogue. `POST /api/import/ehive` then
+turns that into real records, idempotent on eHive's `object_record_id`.
+
+**`object_record_id` is what makes the round trip safe.** Written into column C of the import
+spreadsheet it means "update this record". Without it, every export after an import would
+create a duplicate of every imported object.
+
+**Six of our free-text fields are pick lists in eHive**, where a value that doesn't exactly
+match an existing term creates a new one. The export reports every value with `known: true`
+or `false`, checked against `ehive_terms` — the real vocabulary from the museum's own records.
+Flagged, never corrected: changing what a volunteer typed without telling anyone is the one
+thing this app doesn't do.
+
+**Two mandatory columns the paper worksheet has no question for**, held in
+`ehive_export.constants`: Record Type `History` and Dublin Core `Physical Object`. Confirmed
+against the museum's own records — all 35 are `perspective="HISTORY"`.
+
+**Their data corrected one of our mappings.** Subjects were mapped to the spreadsheet's `Tag`
+column; the museum's records use `association_keyword` 30 times and `tag` not once. When a
+mapping is arguable, their existing practice settles it — that is what `docs/ehive-import-fields.tsv`
+and the reference copy are for.
+
+### Traps, all of which have already bitten once
+
+**The export reads the schema from D1, not the repo.** Change `worksheet.v2.yaml` and you must
+run `npm run db:seed`, or the export silently builds against the old mappings and produces
+plausible, wrong output. This cost two debugging rounds in one afternoon.
+
+**Object numbers do not identify records.** eHive holds two different objects numbered `M1723`
+and one record with no number at all. Anything matching on object number alone — photographs
+especially — will silently mis-assign. The photographs were resolved by comparing each file
+against the images embedded in eHive's own PDF report, where every image sits on its record's
+page.
+
+**`sips -Z` enlarges as well as shrinks.** It inflated a 378px photograph to 2000px, inventing
+pixels. Resize only when the source exceeds the maximum, as `src/media.ts` already does.
+
+**Seeds must not live in `migrations/`.** Wrangler treats everything in that directory as a
+migration and ordered a seed *before* the migration creating its table. `migrations/seed-schema.sql`
+still has this hazard and should move to `seeds/`.
+
+### Left undone
+
+- The two blazers (`M1720`, `M1723` Uniform) have no photograph: the museum is checking their
+  accession numbers. Drop them from `HOLD` in `scripts/attach-ehive-images.mjs` and re-run.
+- `M1723` is used by two records in eHive, and one record has no number. Both are eHive data
+  errors, cheap to fix at 35 records and expensive at 500.
+- The export sends every record regardless of status, including the 35 imported ones. Whether
+  it should filter to changed-since-import is a museum decision, not yet asked.
+
 ## Deliberately not built
 
-- **eHive export.** `ehiveExportReady` is still `false`, but the reason has changed: the
-  mappings are verified and the blocker is now simply that nobody has written the generator.
-  What it has to produce is a spreadsheet matching the Object Data columns, plus a report of
-  the values that would create new eHive pick-list terms. Three things that will bite:
-  `dimensions` and `weight` both flatten into one `measurement_description` string; images are
-  referenced **by filename** and must match the files sent alongside exactly; and every row
-  needs the two constants from `ehive_export.constants`.
+- **The eHive round trip's last step is a person.** The export builds the file; a human emails
+  it to Vernon Systems, who run it. Nothing automates that and nothing can — see the eHive
+  section below. `src/export.ts`'s `ehiveExportReady` flag is now vestigial; the real export
+  lives in `worker/ehive.ts`.
+- **Attaching a photograph to a record after it has left the device that made it.** Imported
+  records never reach a phone (sync is device-scoped), and the explorer is read-only, so there
+  is no route in the app to photograph an object catalogued elsewhere. The 35 imported records
+  were solved by a one-off script; the general case is not built. This is the most likely next
+  thing somebody needs.
 - **Voice capture.** The structure is there — `capture_groups` each carry one open
   `voice_prompt`, `FieldValue.origin` can already record `"spoken"`, and the schema has
   `voice_recording` and `transcript` fields. The flow to build: record one answer per group,

@@ -491,6 +491,7 @@ td.num { font-family: var(--data); font-variant-numeric: tabular-nums; font-weig
       <li><a class="is-part" href="#part3">3 · Looking after the app</a></li>
       <li><a class="sub" href="#where-it-lives">Where it lives</a></li>
       <li><a class="sub" href="#how-records-travel">How records travel</a></li>
+      <li><a class="sub" href="#ehive">Sending to eHive</a></li>
       <li><a class="sub" href="#backups">Backups</a></li>
       <li><a class="sub" href="#health">Checking it is healthy</a></li>
       <li><a class="sub" href="#deploying">Releasing a change</a></li>
@@ -696,7 +697,7 @@ td.num { font-family: var(--data); font-variant-numeric: tabular-nums; font-weig
             <tr><td>draft</td><td>Started, not yet finished. Nobody else is waiting on it.</td></tr>
             <tr><td>review</td><td>You have saved it. It is waiting for someone to check it.</td></tr>
             <tr><td>confirmed</td><td>Checked and accepted into the catalogue.</td></tr>
-            <tr><td>exported</td><td>Sent on to eHive. Not in use yet — see Part 4.</td></tr>
+            <tr><td>exported</td><td>Already in eHive. Records imported from eHive carry this from the start.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1302,6 +1303,52 @@ td.num { font-family: var(--data); font-variant-numeric: tabular-nums; font-weig
         The ten colours live in <code>src/avatars.ts</code>.
       </p>
 
+      <h3 id="ehive">Sending records to eHive</h3>
+
+      <p>
+        <span class="ui">Send records to eHive</span> at the bottom of the catalogue, admins
+        only. It builds the data for eHive's own import workbook and tells you what to do with
+        it.
+      </p>
+
+      <div class="notice notice-open">
+        <h4>It makes a file. It doesn't send anything.</h4>
+        <p class="small" style="margin:0">
+          eHive has no way for another system to write into it. Imports are run by Vernon
+          Systems staff, against a test server first, from a spreadsheet you email them with the
+          photographs alongside. The last step of this process is a person, and no amount of
+          software changes that.
+        </p>
+      </div>
+
+      <h4>The warning worth reading</h4>
+      <p>
+        Several fields — object type, place made, maker, location — are <strong>pick lists</strong>
+        in eHive. A value that doesn't exactly match a term already in the museum's account
+        <strong>creates a new one</strong>. So "Jugs" and "jugs" become two terms, and nobody
+        notices until the vocabulary is a mess.
+      </p>
+      <p>
+        The screen lists every value with either <em>in eHive</em> or <em>new term</em>, checked
+        against the terms the museum actually uses, and shows the existing spelling where it can
+        find a close match. Values marked <em>new term</em> are sometimes genuinely new and
+        sometimes a second spelling of something you already have — only a person can tell which,
+        which is why the app flags them rather than silently correcting them.
+      </p>
+
+      <h4>Records that came from eHive</h4>
+      <p>
+        The museum's existing eHive records are in the collection, imported from an XML report.
+        Each keeps eHive's own record id, so if one is corrected here a later export updates the
+        original rather than creating a second copy. They are marked <code>exported</code>,
+        which is simply true.
+      </p>
+      <p class="small muted">
+        Some eHive fields have no counterpart in this app — its measurements are one line of text
+        where we hold height, width and length separately. Nothing was discarded: the original
+        eHive record is kept verbatim and can still be read.
+      </p>
+
       <h3 id="backups">Backups</h3>
 
       <p>
@@ -1388,8 +1435,12 @@ npm run deploy        <span class="cm"># builds, then publishes</span></code></p
         <p>Photograph details are not yet pulled back down. The photographs themselves are safe on the server and appear correctly in the catalogue at <code>/explore</code>.</p>
       </div>
       <div class="qa">
-        <strong>There is no export to eHive.</strong>
-        <p>Deliberate, and the most important open item in this manual. See Part 4.</p>
+        <strong>Two records have no photograph.</strong>
+        <p>The two blazers, <code>M1720</code> and <code>M1723</code>. Their images exist but are held back until the museum confirms their accession numbers against the register — a photograph filed under a wrong number is harder to find and fix than one never filed.</p>
+      </div>
+      <div class="qa">
+        <strong>A photograph can't be added to a record after it leaves the device that made it.</strong>
+        <p>Records imported from eHive never reach a phone, and the catalogue is read-only. The 35 imported records got their images by a one-off script. The general case isn't built yet.</p>
       </div>
       <div class="qa">
         <strong>There is no voice recording.</strong>
@@ -1424,7 +1475,7 @@ npm run deploy        <span class="cm"># builds, then publishes</span></code></p
             </tr>
             <tr>
               <td>Is there a pattern for Dorrigo numbers?</td>
-              <td>Numbers are accepted as free text with no checking. A known pattern (something like <code>YYYY.NNN</code>) would let the app catch typos at the point they are made.</td>
+              <td>The museum's 35 eHive records are all <code>M</code> followed by a number, sometimes with a letter suffix — <code>M12</code>, <code>M654a</code>. If that is the house rule the app could check it and catch typos as they are made. Numbers are accepted as free text until somebody confirms it.</td>
             </tr>
             <tr>
               <td>Who assigns the registration number?</td>
@@ -1439,8 +1490,16 @@ npm run deploy        <span class="cm"># builds, then publishes</span></code></p
               <td>Currently, firmly no. Worth confirming that matches how the museum actually works.</td>
             </tr>
             <tr>
-              <td><strong>Do the eHive field mappings match?</strong></td>
-              <td><strong>This one blocks everything downstream.</strong> Every field's mapping to eHive is marked unverified, and no export can be built until they are checked against eHive's own import spreadsheet. A half-correct mapping produces an import that looks like it worked, which is worse than no export at all.</td>
+              <td>Storage and display</td>
+              <td>eHive keeps these as two separate fields; the worksheet asks one question, which currently feeds only storage. Split the question, or accept that display requirements sit under storage?</td>
+            </tr>
+            <tr>
+              <td>Pick list vocabularies</td>
+              <td>Should the museum write term lists for object type, place made and location for the app to offer, or keep free text and tidy the duplicates in eHive after each import?</td>
+            </tr>
+            <tr>
+              <td>Two errors in eHive itself</td>
+              <td><code>M1723</code> is used by two different objects, and one record has no object number at all. Neither is an app problem, but both are cheap to fix at 35 records and expensive at 500.</td>
             </tr>
           </tbody>
         </table>
