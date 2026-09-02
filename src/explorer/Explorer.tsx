@@ -53,11 +53,17 @@ export function Explorer() {
 
   // Debounced so typing doesn't fire a query per keystroke. 300ms is long enough
   // to batch a word, short enough that results feel immediate.
+  //
+  // Also re-runs on returning to the list, which is not merely a refresh: this
+  // screen is where you land after importing records or removing one, and it
+  // previously kept showing the counts from before you did it. A collection that
+  // says "3 objects" after you have just imported 35 reads as an import that
+  // failed, and the natural response is to run it again.
   useEffect(() => {
-    if (!me) return;
+    if (!me || view.name !== "list") return;
     const timer = setTimeout(() => search(query), 300);
     return () => clearTimeout(timer);
-  }, [query, me, search]);
+  }, [query, me, search, view.name]);
 
   if (denied) {
     return (
