@@ -3,6 +3,16 @@
  *
  *   node scripts/attach-ehive-images.mjs <images-dir> <ehive-report.xml>
  *
+ * Two layouts, both accepted:
+ *
+ *   images/M677.png              one photograph, named for its object
+ *   images/M677/front.jpg        a folder per object, as many photographs as it has
+ *   images/M677/base.jpg
+ *
+ * The folder form is the useful one: eHive holds several views of most objects, and
+ * a catalogue is far better for having them. Within a folder the first file by name
+ * becomes the main image, which you can change afterwards in the app.
+ *
  * Writes seeds/seed-ehive-photos.sql and seeds/upload-ehive-photos.sh. Run the
  * shell script first (it puts the files in R2), then the SQL. THAT ORDER MATTERS:
  * an R2 object with no database row is invisible and harmless, a database row
@@ -51,6 +61,45 @@ const HOLD = new Set(["M1720a", "M1720b"]);
 const MAX_EDGE = 2000; // matches src/media.ts, so imported and captured photos agree
 const QUALITY = 85;
 
+/**
+ * Photographs already attached, by checksum, so running this again after a fuller
+ * download doesn't attach the same picture twice.
+ *
+ * Ids are content-addressed for the same reason: the same file always produces the
+ * same id and the same R2 key, so a re-run overwrites rather than accumulates. The
+ * first pass used one id per record, which cannot survive a record having four
+ * photographs.
+ */
+function alreadyAttached() {
+  try {
+    const out = execFileSync(
+      "npx",
+      ["wrangler", "d1", "execute", "artefact-catalogue", "--remote", "--json",
+       "--command", "SELECT sha256 FROM photos WHERE sha256 IS NOT NULL AND deleted_at IS NULL"],
+      { encoding: "utf8", cwd: root }
+    );
+    const rows = JSON.parse(out.slice(out.indexOf("[")))?.[0]?.results ?? [];
+    return new Set(rows.map((r) => r.sha256));
+  } catch {
+    // No network, or not logged in. Carry on rather than refuse: the SQL upserts by
+    // id, so the worst case is re-uploading bytes that were already there.
+    console.log("  (couldn't read existing photographs — nothing will be skipped)");
+    return new Set();
+  }
+}
+
+/** Every image in a folder, or the single file itself. */
+function imagesIn(dir, entry) {
+  const full = join(dir, entry);
+  if (statSync(full).isDirectory()) {
+    return readdirSync(full)
+      .filter((f) => /\.(png|jpe?g)$/i.test(f))
+      .sort()
+      .map((f) => join(full, f));
+  }
+  return /\.(png|jpe?g)$/i.test(entry) ? [full] : [];
+}
+
 const [imagesDir, xmlPath] = process.argv.slice(2);
 if (!imagesDir || !xmlPath) {
   console.error("Usage: node scripts/attach-ehive-images.mjs <images-dir> <ehive-report.xml>");
@@ -92,48 +141,78 @@ const uploads = ["#!/bin/sh", "# Upload first, then apply seeds/seed-ehive-photo
 const held = [];
 const skipped = [];
 
-for (const file of readdirSync(imagesDir).sort()) {
-  if (!/\.(png|jpe?g)$/i.test(file)) continue;
-  const stem = file.replace(/\.(png|jpe?g)$/i, "");
+const existing = alreadyAttached();
+let attached = 0;
+let duplicates = 0;
+
+for (const entry of readdirSync(imagesDir).sort()) {
+  const stem = entry.replace(/\.(png|jpe?g)$/i, "");
+  const files = imagesIn(imagesDir, entry);
+  if (files.length === 0) continue;
 
   if (HOLD.has(stem)) { held.push(stem); continue; }
 
   const recordId = EXPLICIT[stem] ?? uniqueNumber.get(stem);
   if (!recordId) { skipped.push(stem); continue; }
 
-  // Convert, but never enlarge: sips -Z scales up as well as down, which invents
-  // pixels that were never in the photograph and makes the file bigger.
-  const source = join(imagesDir, file);
-  const dims = execFileSync("sips", ["-g", "pixelWidth", "-g", "pixelHeight", source], { encoding: "utf8" });
-  const longest = Math.max(...[...dims.matchAll(/pixel(?:Width|Height):\s*(\d+)/g)].map((m) => Number(m[1])));
-  const out = join(tmp, `${stem}.jpg`);
-  const args = ["-s", "format", "jpeg", "-s", "formatOptions", String(QUALITY)];
-  if (longest > MAX_EDGE) args.push("-Z", String(MAX_EDGE));
-  execFileSync("sips", [...args, source, "--out", out], { stdio: "ignore" });
-
-  const bytes = readFileSync(out);
-  const sha = createHash("sha256").update(bytes).digest("hex");
   const record = `ehive_${recordId}`;
-  const photoId = `img_ehive_${recordId}`;
-  const key = `photos/${record}/${photoId}.jpg`;
+  let first = true;
 
-  uploads.push(
-    `npx wrangler r2 object put "artefact-photos/${key}" --file="${out}" --content-type=image/jpeg`
-  );
-  sql.push(
-    `INSERT INTO photos (id, record_id, r2_key, sha256, bytes, content_type, is_primary, added_at, source) ` +
-      `VALUES ('${photoId}', '${record}', '${key}', '${sha}', ${bytes.length}, 'image/jpeg', 1, ` +
-      `datetime('now'), 'ehive') ` +
-      `ON CONFLICT(id) DO UPDATE SET r2_key=excluded.r2_key, sha256=excluded.sha256, ` +
-      `bytes=excluded.bytes, source=excluded.source;`
-  );
-  console.log(`  ${stem.padEnd(24)} -> ${record}  ${(bytes.length / 1024).toFixed(0)}K`);
+  for (const source of files) {
+    // Convert, but never enlarge: sips -Z scales up as well as down, which invents
+    // pixels that were never in the photograph and makes the file bigger.
+    const dims = execFileSync("sips", ["-g", "pixelWidth", "-g", "pixelHeight", source], { encoding: "utf8" });
+    const longest = Math.max(...[...dims.matchAll(/pixel(?:Width|Height):\s*(\d+)/g)].map((m) => Number(m[1])));
+    const out = join(tmp, `${record}-${basename(source).replace(/\.[^.]+$/, "")}.jpg`);
+    const args = ["-s", "format", "jpeg", "-s", "formatOptions", String(QUALITY)];
+    if (longest > MAX_EDGE) args.push("-Z", String(MAX_EDGE));
+    execFileSync("sips", [...args, source, "--out", out], { stdio: "ignore" });
+
+    const bytes = readFileSync(out);
+    const sha = createHash("sha256").update(bytes).digest("hex");
+
+    if (existing.has(sha)) {
+      duplicates += 1;
+      if (first) first = false; // it is already attached, and already the main one
+      continue;
+    }
+    existing.add(sha);
+
+    // Content-addressed, so the same photograph always lands in the same place
+    // however many times this is run.
+    const photoId = `img_e_${sha.slice(0, 16)}`;
+    const key = `photos/${record}/${photoId}.jpg`;
+
+    uploads.push(
+      `npx wrangler r2 object put "artefact-photos/${key}" --file="${out}" --content-type=image/jpeg`
+    );
+    sql.push(
+      `INSERT INTO photos (id, record_id, r2_key, sha256, bytes, content_type, is_primary, added_at, source) ` +
+        `VALUES ('${photoId}', '${record}', '${key}', '${sha}', ${bytes.length}, 'image/jpeg', ` +
+        `${first ? 1 : 0}, datetime('now'), 'ehive') ` +
+        `ON CONFLICT(id) DO UPDATE SET r2_key=excluded.r2_key, sha256=excluded.sha256, ` +
+        `bytes=excluded.bytes, source=excluded.source;`
+    );
+    console.log(`  ${basename(source).padEnd(28)} -> ${record}${first ? "  (main)" : ""}`);
+    attached += 1;
+    first = false;
+  }
 }
+
+// Exactly one main image per record, whatever order the files arrived in. Without
+// this a record that already had a primary would end up with two.
+sql.push("");
+sql.push("-- Leave exactly one main image per record.");
+sql.push(
+  `UPDATE photos SET is_primary = 0 WHERE record_id IN (SELECT id FROM records WHERE ehive_record_id IS NOT NULL) ` +
+    `AND id <> (SELECT p.id FROM photos p WHERE p.record_id = photos.record_id AND p.deleted_at IS NULL ` +
+    `ORDER BY p.is_primary DESC, p.added_at, p.id LIMIT 1);`
+);
 
 writeFileSync(join(root, "seeds/seed-ehive-photos.sql"), sql.join("\n") + "\n");
 writeFileSync(join(root, "seeds/upload-ehive-photos.sh"), uploads.join("\n") + "\n", { mode: 0o755 });
 
-console.log(`\n  ${sql.length - 4} photographs prepared`);
+console.log(`\n  ${attached} photographs prepared, ${duplicates} already attached and skipped`);
 if (held.length) console.log(`  held back (accession numbers unverified): ${held.join(", ")}`);
 if (skipped.length) console.log(`  NO MATCHING RECORD, skipped: ${skipped.join(", ")}`);
 console.log("\nThen, in order:");

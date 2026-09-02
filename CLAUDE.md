@@ -403,6 +403,10 @@ still has this hazard and should move to `seeds/`.
 
 - The two blazers (`M1720`, `M1723` Uniform) have no photograph: the museum is checking their
   accession numbers. Drop them from `HOLD` in `scripts/attach-ehive-images.mjs` and re-run.
+- eHive holds several views of most objects. `scripts/attach-ehive-images.mjs` takes a folder
+  per artefact as well as a loose file, skips anything already attached by checksum, and names
+  photographs by content hash so a re-run overwrites rather than accumulates. Ambiguous folder
+  names go in its `EXPLICIT` map — object numbers do not identify records here.
 - `M1723` is used by two records in eHive, and one record has no number. Both are eHive data
   errors, cheap to fix at 35 records and expensive at 500.
 - The export sends every record regardless of status, including the 35 imported ones. Whether
