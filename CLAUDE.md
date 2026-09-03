@@ -259,6 +259,9 @@ scripts/import-ehive-xml.mjs  Turns an eHive XML report into seeds/seed-ehive.sq
 scripts/attach-ehive-images.mjs  One-off: matches eHive's photographs to records and
                            uploads them. macOS only (uses sips). Read its header before reuse.
 docs/ehive-import-fields.tsv  Every field eHive's import workbook can carry, for reference.
+docs/artefact-catalogue-for-volunteers.pptx  Slides for a volunteer briefing. Rebuild with
+                           `python3.11 scripts/build-volunteer-deck.py` rather than editing the
+                           .pptx by hand, or the next change loses the previous one.
 ```
 
 ## Rules that are easy to break by accident
