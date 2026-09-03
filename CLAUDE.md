@@ -394,9 +394,10 @@ and the reference copy are for.
 
 ### The API, and how to authenticate against it
 
-Access granted 2026-09-02 on goodwill by eHive's manager, **including private access** — so
-all 35 records come back, `publicAccess: 0` and all. Keys live in `.dev.vars` locally
-(gitignored) as `EHIVE_CLIENT_ID`, `EHIVE_CLIENT_SECRET`, `EHIVE_TRACKING_ID`.
+Access granted 2026-09-02 on goodwill by eHive's manager. The key is configured for account
+public **and** private data, but in practice only the 35 public records come back — see the
+open items below. Keys live in `.dev.vars` locally (gitignored) as `EHIVE_CLIENT_ID`,
+`EHIVE_CLIENT_SECRET`, `EHIVE_TRACKING_ID`.
 
 **The published documentation does not describe the handshake correctly.** What follows was
 read out of the PHP client's `Transport.php`, and cost most of an afternoon of 401s:
@@ -426,6 +427,9 @@ including credentials. During this work a client secret and then a base64 Basic 
 were printed into a transcript and had to be rotated — the second because the redaction
 filter covered the plaintext values but not the encoded form. Any filter here must cover
 base64 of each secret and of `user:password`, not just the literals.
+
+**Public records only, so far.** 35 of the account's 66. Not a settings problem as far as
+anyone can tell — see the open items.
 
 **Still read-only for records.** The NSTP spec at apidocs.ehive.com confirms it: 23 operations,
 of which the only writes are adding a comment and adding or deleting a tag. Getting records
@@ -462,10 +466,29 @@ still has this hazard and should move to `seeds/`.
   errors, cheap to fix at 35 records and expensive at 500.
 - The export sends every record regardless of status, including the 35 imported ones. Whether
   it should filter to changed-since-import is a museum decision, not yet asked.
-- **A count that doesn't reconcile.** The API and the XML report both say 35 records, all
-  private; the museum reports seeing 31 private records in eHive's own interface. Until that
-  is explained, treat 35 as possibly not the whole collection — everything built so far
-  assumes it is, and the duplicate check would miss anything outside it.
+- **We hold 35 of 66 records.** eHive's dashboard for account 7417 reports 66 object records:
+  35 public, 31 private. The API returns exactly the 35 public ones, and the detailed XML
+  report contained exactly the same 35. **Everything built so far — the reference copy, the
+  duplicate-number check, the pick-list vocabulary, the imported records and their
+  photographs — covers the public half only.** The blind spot matters: a volunteer
+  cataloguing an object that already exists as a private record is not warned.
+
+  Not for want of permission. The API key is configured "Account — public and private data
+  (oAuth only)", and the OAuth flow works. Tried and did not widen the result:
+  `content=all` and `detailLevel=full` (both error), `defaultContent=all`, `publicAccess=0`,
+  `includePrivate=true`, and `/accounts/objectrecords` without an id (404). Awaiting an
+  answer from eHive.
+
+- **`publicAccess: 0` does not mean private.** Every record the API returns carries it, and
+  those are the *public* 35 — their pages render on ehive.com to an anonymous browser. An
+  earlier note here claimed all 35 were unpublished and that the API would have returned
+  nothing without private access. Both were wrong. Whatever the field encodes, don't build on
+  a reading of it until eHive explain it.
+
+- **Registration numbers use two schemes, not one.** The dashboard shows `2026.007`–`2026.011`
+  alongside M-numbers. All 35 records we hold are M-numbers, which is why an `M`+digits
+  validation rule looked plausible — it would have rejected every record catalogued this year.
+  The open question about number format is still open, and now has more evidence in it.
 - Nothing yet harvests through the API. The reference copy is still loaded from a manually
   downloaded XML report, and photographs were downloaded by hand. Both could now be automatic:
   `GET /objectrecords/{id}` enumerates every image for a record.
