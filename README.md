@@ -58,6 +58,15 @@ The app is one deployment with two front doors, both behind Cloudflare Access:
 Everything saves as you go, and it all works offline. You can close the app mid-record and pick
 it up later.
 
+## eHive API access
+
+Read access, including private records, granted on goodwill by eHive in September 2026. Keys
+live in `.dev.vars` (gitignored) and are not yet used by anything — the reference copy is still
+loaded from a manually downloaded XML report. The authentication handshake is not documented
+correctly by eHive and is written up in CLAUDE.md; read that before touching it.
+
+The API is read-only for object records. It cannot create or update them.
+
 ## Sending records to eHive
 
 `/explore` → **Send records to eHive** (admins only). It builds the spreadsheet data, and warns

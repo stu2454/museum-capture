@@ -380,6 +380,45 @@ column; the museum's records use `association_keyword` 30 times and `tag` not on
 mapping is arguable, their existing practice settles it — that is what `docs/ehive-import-fields.tsv`
 and the reference copy are for.
 
+### The API, and how to authenticate against it
+
+Access granted 2026-09-02 on goodwill by eHive's manager, **including private access** — so
+all 35 records come back, `publicAccess: 0` and all. Keys live in `.dev.vars` locally
+(gitignored) as `EHIVE_CLIENT_ID`, `EHIVE_CLIENT_SECRET`, `EHIVE_TRACKING_ID`.
+
+**The published documentation does not describe the handshake correctly.** What follows was
+read out of the PHP client's `Transport.php`, and cost most of an afternoon of 401s:
+
+1. `POST https://ehive.com/api/oauth2/v2/authorize`, no body, with headers
+   `Authorization: OAuth` (the literal string), `Client-Id`, `Client-Secret`,
+   `Grant-Type: client_credentials`. Answers **303** with an `Access-Grant` header.
+2. **`GET`** `https://ehive.com/api/oauth2/v2/token` — a GET, despite being a token exchange —
+   echoing back the four headers the 303 returned. Answers `{"oauthToken": …}`.
+3. Every API call: `Authorization: Basic {oauthToken}`, `Client-Id`,
+   `Grant-Type: authorization_code` — the grant type **changes** between steps — and the
+   **trackingId as a query parameter**, not a header. As a header it returns 403 "missing a
+   tracking ID", which is a maddening way to say "wrong place".
+
+No username or password is involved at any point. If you find them in `.dev.vars`, delete them.
+
+**Endpoints that work, and one that doesn't:**
+
+- `GET /api/v2/accounts/7417/objectrecords?limit=100` — all records, **primary image only**.
+- `GET /api/v2/objectrecords/{objectRecordId}` — one record, **every image**, six sizes up to
+  `image_l` (697×800). Note the path: `/accounts/{id}/objectrecords/{id}` is a 404.
+- Field identifiers match the XML report exactly (`measurement_description`, `credit_line`…),
+  so the existing mapping applies unchanged.
+
+**Redact everything before printing it.** eHive echoes request headers back in error bodies,
+including credentials. During this work a client secret and then a base64 Basic auth header
+were printed into a transcript and had to be rotated — the second because the redaction
+filter covered the plaintext values but not the encoded form. Any filter here must cover
+base64 of each secret and of `user:password`, not just the literals.
+
+**Still read-only for records.** The NSTP spec at apidocs.ehive.com confirms it: 23 operations,
+of which the only writes are adding a comment and adding or deleting a tag. Getting records
+*in* is still the spreadsheet, run by Vernon Systems staff.
+
 ### Traps, all of which have already bitten once
 
 **The export reads the schema from D1, not the repo.** Change `worksheet.v2.yaml` and you must
@@ -411,6 +450,13 @@ still has this hazard and should move to `seeds/`.
   errors, cheap to fix at 35 records and expensive at 500.
 - The export sends every record regardless of status, including the 35 imported ones. Whether
   it should filter to changed-since-import is a museum decision, not yet asked.
+- **A count that doesn't reconcile.** The API and the XML report both say 35 records, all
+  private; the museum reports seeing 31 private records in eHive's own interface. Until that
+  is explained, treat 35 as possibly not the whole collection — everything built so far
+  assumes it is, and the duplicate check would miss anything outside it.
+- Nothing yet harvests through the API. The reference copy is still loaded from a manually
+  downloaded XML report, and photographs were downloaded by hand. Both could now be automatic:
+  `GET /objectrecords/{id}` enumerates every image for a record.
 
 ## Deliberately not built
 

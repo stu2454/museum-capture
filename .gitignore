@@ -14,6 +14,13 @@ images/
 !.vscode/extensions.json
 !.vscode/settings.json
 
+# Credentials. .dev.vars is wrangler's local secrets file; the deployed Worker
+# reads the same names from `wrangler secret put`. Neither belongs in git, and an
+# API key committed once is an API key that has to be rotated.
+.dev.vars
+.dev.vars.*
+*.key
+
 # Never commit real catalogue exports — they can contain collection and donor information.
 *.catalogue.json
 catalogue-*.json
