@@ -9,6 +9,7 @@ import { Explorer } from "./explorer/Explorer";
 import { startAutoSync, type SyncOutcome } from "./sync";
 import { Help } from "./components/Help";
 import { loadIdentity, type Identity, type Person } from "./identity";
+import { opensOnCatalogue } from "./landing";
 import type { ArtefactRecord } from "./types";
 
 /** Nothing known yet. Replaced on first load, from the network or the cache. */
@@ -26,6 +27,15 @@ export default function App() {
   // separate paths means the capture flow stays free of search UI, and the
   // explorer never risks someone accidentally editing a record.
   if (window.location.pathname.startsWith("/explore")) {
+    return <Explorer />;
+  }
+
+  // A bare "/" on something that looks like a desk opens the catalogue instead.
+  // The URL is corrected as well as the view, so the address bar doesn't lie and
+  // the page can be bookmarked or sent to someone. replaceState rather than a
+  // redirect: no second round trip, which matters on museum wifi.
+  if (opensOnCatalogue()) {
+    window.history.replaceState(null, "", "/explore");
     return <Explorer />;
   }
 

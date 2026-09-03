@@ -12,6 +12,7 @@ import { api, NotAuthorised, photoUrl, type Me, type RecordSummary } from "./api
 import { RecordView } from "./RecordView";
 import { UserAdmin } from "./UserAdmin";
 import { EhiveExport } from "./EhiveExport";
+import { goTo } from "../landing";
 
 type View =
   | { name: "list" }
@@ -194,6 +195,15 @@ export function Explorer() {
           </button>
         </>
       )}
+
+      <button
+        type="button"
+        className="btn btn-quiet btn-wide section-link"
+        style={{ marginTop: 10 }}
+        onClick={() => goTo("capture")}
+      >
+        Catalogue an object
+      </button>
 
       <div style={{ marginTop: 22, paddingTop: 16, borderTop: "1px solid var(--rule)" }}>
         <p className="muted small" style={{ margin: "0 0 10px" }}>

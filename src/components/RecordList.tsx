@@ -9,6 +9,7 @@ import { Cataloguer } from "./Cataloguer";
 import { WhoBadge } from "./WhoBadge";
 import { StorageNotice } from "./StorageNotice";
 import { TROUBLE_THRESHOLD_HOURS } from "../sync";
+import { goTo } from "../landing";
 
 interface Props {
   list: ArtefactRecord[];
@@ -113,6 +114,9 @@ export function RecordList({
             Only what you catalogued here. The full collection lives in the
             catalogue, where everyone can search it.
           </p>
+          <button type="button" className="btn btn-quiet section-link" onClick={() => goTo("explore")}>
+            Browse the whole collection
+          </button>
           {list.map((record) => (
             <button
               type="button"

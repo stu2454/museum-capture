@@ -1050,3 +1050,12 @@ body {
   color: var(--ink-soft);
   white-space: nowrap;
 }
+
+/* Crossing between the two halves of the app. Quiet on purpose: on a phone the
+   catalogue is not where a volunteer should end up by accident, and on a desk the
+   capture flow is rarely what someone came for. The link is there for the person
+   the device guessed wrong about, not an invitation to wander. */
+.section-link {
+  width: 100%;
+  margin-bottom: 4px;
+}

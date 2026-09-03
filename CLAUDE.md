@@ -17,6 +17,17 @@ It is now **two apps in one deployment**, served by one Cloudflare Worker:
 - **The explorer** (`/explore`) — for looking records up, and for administering users and
   removals. Requires an identified, authorised person.
 
+**A bare `/` decides which of the two to open** (`src/landing.ts`). A wide screen with a fine
+pointer gets the catalogue; anything else gets the capture flow. The museum does not want
+volunteers browsing records on a phone, and a laptop opening on the data-entry screen was
+sending every desk visit somewhere it wasn't wanted.
+
+That guess is a default, never a rule: screen size is decent evidence and poor proof, since an
+iPad with a keyboard looks like a desk and a small laptop window looks like a phone. Crossing
+between the halves deliberately is remembered per device and beats the guess from then on.
+Don't make it a rule — a volunteer stuck on the wrong half with no way across is worse than a
+guess that is occasionally wrong.
+
 They are kept apart on purpose: the capture flow stays free of search UI, and the explorer
 never risks someone accidentally editing a record.
 
@@ -210,6 +221,7 @@ src/export.ts              JSON export, for a device. The eHive export is worker
 src/storage.ts             iOS seven-day storage cap: detection and persistence request.
 src/sync.ts                Offline-tolerant client sync queue. Strips restricted fields.
 src/identity.ts            Who is signed in, who is cataloguing, and the registered roster.
+src/landing.ts             Which half of the app a bare "/" opens, and remembering a choice.
 src/avatars.ts             The badge palette. Names are stored; hex values live here only.
 src/App.tsx                Routes /explore to the explorer; runs the background sync loop.
 src/components/
