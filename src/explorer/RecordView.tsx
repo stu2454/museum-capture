@@ -65,7 +65,7 @@ export function RecordView({
 
   if (error) {
     return (
-      <div className="app">
+      <div className="app app-wide">
         <button type="button" className="btn btn-quiet" onClick={onBack}>
           Back
         </button>
@@ -78,7 +78,7 @@ export function RecordView({
 
   if (!data) {
     return (
-      <div className="app">
+      <div className="app app-wide">
         <p className="muted" style={{ paddingTop: 40 }}>Loading…</p>
       </div>
     );
@@ -114,7 +114,7 @@ export function RecordView({
       .sort((a, b) => a.order - b.order);
 
   return (
-    <div className="app">
+    <div className="app app-wide">
       <button type="button" className="btn btn-quiet" onClick={onBack} style={{ marginTop: 12 }}>
         Back to the collection
       </button>

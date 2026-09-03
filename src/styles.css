@@ -60,6 +60,43 @@ body {
    here. Installed to the Home Screen it was the masthead that disappeared behind
    them. The side insets matter in landscape; the bottom one keeps the sticky
    action bar clear of the home indicator. */
+/* The catalogue, on something bigger than a phone.
+   640px is right for the capture app: one hand, one question at a time, in a store
+   room. The catalogue is the opposite - it is read at a desk, a record has six
+   photographs and forty fields, and squeezing that into a third of a monitor helps
+   nobody. Only the two screens that display a collection widen; the forms stay
+   narrow, because a text input stretched across a monitor is harder to use, not
+   easier. */
+/* Both classes, so it wins over .app regardless of which is declared first. Equal
+   specificity plus source order is a silent way to lose a rule. */
+.app.app-wide {
+  max-width: 1080px;
+}
+
+@media (min-width: 900px) {
+  /* A proper two-column sheet rather than a wrapping flex row: labels in a fixed
+     column, values in a measure that stays readable however wide the window. */
+  .app-wide .sheet-line {
+    flex-wrap: nowrap;
+    gap: 20px;
+  }
+
+  .app-wide .sheet-line dt {
+    flex: 0 0 210px;
+    text-align: right;
+  }
+
+  .app-wide .sheet-line dd {
+    min-width: 0;
+    max-width: 68ch;
+  }
+
+  .app-wide .sheet,
+  .app-wide .card {
+    padding: 26px 28px;
+  }
+}
+
 .app {
   max-width: 640px;
   margin: 0 auto;
@@ -320,6 +357,14 @@ body {
   margin-top: 14px;
 }
 
+/* With six views of an object there is no reason to keep them thumbnail-sized on
+   a screen that has the room. */
+@media (min-width: 900px) {
+  .app-wide .photo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
 .photo {
   position: relative;
   aspect-ratio: 1;
@@ -453,6 +498,9 @@ body {
   flex: 1;
   min-width: 55%;
   font-weight: 500;
+  /* A reference field can hold a URL with no spaces in it, which has nothing to
+     break on and runs straight out of the card. Volunteers do paste them. */
+  overflow-wrap: anywhere;
 }
 
 .sheet-line dd.is-blank {

@@ -67,7 +67,7 @@ export function Explorer() {
 
   if (denied) {
     return (
-      <div className="app">
+      <div className="app app-wide">
         <header className="masthead">
           <p className="eyebrow">Dorrigo Museum</p>
           <h1>Collection</h1>
@@ -82,7 +82,7 @@ export function Explorer() {
 
   if (!me) {
     return (
-      <div className="app">
+      <div className="app app-wide">
         <p className="muted" style={{ paddingTop: 40 }}>Signing you in…</p>
       </div>
     );
@@ -101,7 +101,7 @@ export function Explorer() {
   }
 
   return (
-    <div className="app">
+    <div className="app app-wide">
       <header className="masthead">
         <p className="eyebrow">Dorrigo Museum</p>
         <h1>Collection</h1>
