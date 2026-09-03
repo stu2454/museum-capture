@@ -51,10 +51,17 @@ const EXPLICIT = {
 };
 
 /**
- * Held back deliberately. Both blazers carry accession numbers the museum is
- * still checking against the register, and a photograph filed against a number
- * that later turns out to be wrong is harder to find and fix than one that was
- * never filed at all.
+ * Loose files that must not be attached, for two different reasons.
+ *
+ * M1720b is the Dorrigo District Rural School uniform, which eHive numbers M1723
+ * — the same number as the honour roll. The museum is still checking that against
+ * the register, and a photograph filed under a number that later proves wrong is
+ * harder to find and fix than one never filed at all.
+ *
+ * M1720a is the rugby league blazer, whose number IS confirmed. It stays here
+ * because the M1720 folder now supplies eHive's own originals of the same object,
+ * and this loose file is one of those photographs by a different route. Attaching
+ * both would put the same view on the record twice, which no checksum would catch.
  */
 const HOLD = new Set(["M1720a", "M1720b"]);
 
