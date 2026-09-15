@@ -5,6 +5,10 @@ paper worksheet from the eHive Cataloguing Guidelines (July 2023).
 
 Works offline, on a phone, held in one hand.
 
+Where the project stands and what comes next: [PROJECT_STATUS.md](PROJECT_STATUS.md). What it is
+meant to do, and its development stages: [PROJECT_BRIEF.md](PROJECT_BRIEF.md). What changed and
+when: [DEVLOG.md](DEVLOG.md).
+
 ## Getting started in VS Code
 
 ```bash
@@ -60,10 +64,12 @@ it up later.
 
 ## eHive API access
 
-Read access, including private records, granted on goodwill by eHive in September 2026. Keys
-live in `.dev.vars` (gitignored) and are not yet used by anything — the reference copy is still
-loaded from a manually downloaded XML report. The authentication handshake is not documented
-correctly by eHive and is written up in CLAUDE.md; read that before touching it.
+Read access granted on goodwill by eHive in September 2026. The key is configured for public and
+private data, but in practice only the account's 35 public records come back, of 66 — the
+question is with eHive. Keys live in `.dev.vars` (gitignored) and are not yet used by anything:
+the reference copy is still loaded from a manually downloaded XML report. The authentication
+handshake is not documented correctly by eHive and is written up in AGENTS.md; read that before
+touching it.
 
 The API is read-only for object records. It cannot create or update them.
 
@@ -75,7 +81,7 @@ museum actually uses. It produces a **file you send**: eHive has no write API, a
 run by Vernon Systems staff from a spreadsheet emailed to them.
 
 The same screen imports eHive's existing records into the collection. See the eHive section of
-CLAUDE.md before changing any of it.
+AGENTS.md before changing any of it.
 
 ## Improving a photograph
 
@@ -109,19 +115,12 @@ renaming one means migrating data, so get them right early.
 
 ## Decisions the museum still needs to make
 
-Listed under `open_questions` in the schema:
+Seven questions are listed under `open_questions` in the schema, and in
+[PROJECT_BRIEF.md](PROJECT_BRIEF.md) with what each one holds up — registration number format,
+the dimensions unit, the line after "Unknown" on the acquisition tickboxes, who assigns numbers,
+whether volunteers touch the donor block, storage versus display, and pick list vocabularies.
 
-1. Registration numbers — the museum's 35 eHive records are all `M` plus a number, sometimes
-   with a letter suffix (`M654a`). Is that the rule? Accepted as free text for now, which is
-   safe but won't catch a typo.
-2. Dimensions — mm or cm as the house standard?
-3. The unlabelled line after the "Unknown" acquisition tickbox — elaboration, or "Other"?
-4. Do cataloguing volunteers ever touch the donor block?
-5. Storage and display — eHive has separate fields; our one question feeds only storage.
-6. Pick list terms — author vocabularies for the app to offer, or keep free text and tidy
-   duplicates in eHive after each import?
-
-The eHive mappings, once listed here, are now verified — see CLAUDE.md.
+The eHive mappings, once listed here, are now verified — see AGENTS.md.
 
 ## Storage
 

@@ -116,14 +116,14 @@ under one account is one lapsed billing away from zero copies.
 - **Photo metadata pull.** A record opened on a second device doesn't yet know
   which images exist elsewhere. `fromWire` deliberately leaves local photos alone
   rather than clobbering them.
-- **Adding a photograph to a record after it has left the device that made it.**
-  Sync is device-scoped, so imported records never reach a phone, and the explorer
-  is read-only. The most likely next gap somebody hits.
+
+Adding a photograph to a record after it has left the device that made it was listed
+here until 2026-09-03, when the explorer gained **Add photographs**.
 
 ## eHive
 
 Built and verified 2026-09-02 — mappings, export, reference copy, import, and the
-museum's existing photographs. The details live in CLAUDE.md's eHive section; the
+museum's existing photographs. The details live in AGENTS.md's eHive section; the
 one to carry in your head is that **the export reads the schema from D1, not the
 repo**, so `npm run db:seed` after any change to the YAML.
 
