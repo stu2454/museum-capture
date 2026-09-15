@@ -7,7 +7,8 @@ Last updated: 2026-09-15
 **Development is paused (2026-09-15) until real users have given feedback, with one exception.**
 The Collection page stopped showing records past the fiftieth and got slower with every
 photograph, so Stage 8 (a collection page that scales) was taken up as a priority the same day.
-It is built and tested locally, but not yet committed or deployed. Nothing else is planned until
+It was deployed on 2026-09-15, and the existing photographs were given thumbnails. The live site
+still needs checking by a person on a desk and on a phone. Nothing else is planned until
 feedback is in. The next major capability in mind is voice annotation; see "Future direction" in
 [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
@@ -24,16 +25,15 @@ round trip works for the museum's 35 public eHive records. The last development 
 Repository and deployment:
 
 - **Repository.** https://github.com/stu2454/museum-capture — branch `main`.
-- **Last commit.** 8e28f88, the same on `origin/main` (checked 2026-09-15).
+- **Last commit.** Stage 8 (ce1c4c6), followed by a documentation commit recording its
+  deployment. Not pushed: `origin/main` is at 9f6d7f3.
 - **Live site.** https://museum-capture.stu2038.workers.dev (Cloudflare Access; sign-in required).
-- **Last deployment.** 2026-09-03 04:05 UTC, version `0648d551`. Deployments aren't tagged with a
-  commit. The last app code change (db56401) matches the 03:30 UTC deployment. The 04:05
-  deployment followed 8e28f88, which changed no app code. The live site was not opened this
-  session.
-- **Work in progress.** Stage 8, built and tested locally, awaiting deployment. Stage 5,
+- **Last deployment.** 2026-09-15, version `c5c1bf6c`, from commit ce1c4c6. `npm run deploy` ran
+  straight after committing, on a clean working tree. Its bundle, `index-CCkcHLwM.js`, is the
+  build the browser test passed against. The live site has not yet been opened in a browser.
+- **Work in progress.** Stage 8, deployed; waiting for the live check on a desk and a phone. Stage 5,
   gathering user feedback, continues alongside.
-- **Uncommitted at handover.** Stage 8 (code, `scripts/make-thumbnails.mjs`, documentation) and
-  the notes on the voice trial. Two older notes:
+- **Uncommitted at handover.** None. Two older notes:
   - `docs/artefact-catalogue-for-volunteers.pptx` was edited in PowerPoint after generation and
     committed as it stood: 41 MB, six images, one of them a 33 MB EMF. Open decision 10 is still
     open.
@@ -54,7 +54,7 @@ is recorded.
 | 5 — Volunteer rollout | In progress: gathering user feedback | Development paused until feedback is in; deck committed at 41 MB |
 | 6 — Housekeeping before the catalogue grows | Proposed; on hold | Waits for feedback, like all development |
 | 7 — The whole eHive collection | Proposed; blocked on eHive | Waiting on eHive about private records |
-| 8 — A collection page that scales | Built and tested locally; not committed or deployed | Taken up as a priority 2026-09-15 |
+| 8 — A collection page that scales | Deployed 2026-09-15; live check outstanding | Thumbnails made for all existing photographs |
 
 ## The catalogue as the server holds it
 
@@ -89,7 +89,6 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 | Issue | User impact | Evidence / location | Next action |
 |---|---|---|---|
-| The live Collection page stops at 50 records and downloads every photograph at full size | Record 51 onwards can't be browsed (38 records today); roughly 15 MB per visit | Fixed in Stage 8, not yet deployed | Deploy, then run `scripts/make-thumbnails.mjs` |
 | The capture app's thumbnail upload hasn't been tried in a browser | If it fails, those photographs show full size in the list until the script is re-run | `src/sync.ts`; shares `src/thumbnail.ts` with the path that was tested | After deploying, catalogue one object with a photograph on a phone |
 | We hold 35 of eHive's 66 records; the 31 private ones are unreachable | The duplicate-number warning is blind to private records, and so are the pick-list checks | AGENTS.md, "Private records"; 312a036 | Waiting on eHive (Stage 7) |
 | M1723 is used for two objects in eHive, and one eHive record has no number | Risk of mis-filing; the uniform has no photograph | `HOLD` in `scripts/attach-ehive-images.mjs` | Museum checking the register; fix in eHive; then re-run the script |
@@ -104,7 +103,7 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 ## Latest validation
 
-Date: 2026-09-15, on the uncommitted Stage 8 working tree (last commit 9f6d7f3).
+Date: 2026-09-15, at commit ce1c4c6.
 
 | Check | Result | Scope and limitations |
 |---|---|---|
@@ -113,10 +112,10 @@ Date: 2026-09-15, on the uncommitted Stage 8 working tree (last commit 9f6d7f3).
 | Browser test, 44 checks | All passed | Headless Chromium against `wrangler dev` with a throwaway database of 129 test records and 15 photographs, at desk and phone widths. The test script lives in the session scratchpad, not the repository |
 | `scripts/make-thumbnails.mjs --local` | 12 of 12 made | Against the test copy: 824 KB originals became 61 KB at 400px |
 | The capture app's thumbnail upload | Not tried in a browser | Same code path as the one tested |
-| Deploy, and the script against the real collection | Not done | Waiting for approval |
-| `npx wrangler deployments list` | Latest 2026-09-03 04:05 UTC | Shows time, not commit |
+| `npm run deploy` | Deployed, version `c5c1bf6c` | From ce1c4c6 |
+| `scripts/make-thumbnails.mjs` on the real collection | 89 made, 2 already small, 0 failed | All 91 live photographs. One downloaded back from R2: 300×400, 49 KB |
 | D1 queries (read-only) | As in "The catalogue as the server holds it" | Live database, earlier today |
-| Live site in a browser | Not checked | — |
+| Live site in a browser | Not checked | Behind Cloudflare Access; needs a person on a desk and on a phone |
 
 The browser test covered:
 
@@ -145,20 +144,18 @@ Rerun the relevant checks after any later code change.
 
 ## Next recommended task
 
-**Deploy Stage 8 and give the existing photographs their thumbnails.** This needs the
-maintainer's go-ahead: it publishes to the live site and writes to R2.
+**Check Stage 8 on the live site.** It was deployed, and the existing photographs given
+thumbnails, on 2026-09-15. What's left needs a person signed in.
 
-1. Commit the Stage 8 work, then run `npm run deploy`.
-2. Run `node scripts/make-thumbnails.mjs`. It writes only under `thumbs/` in R2 and never
-   touches an original. About 91 photographs; a few minutes.
-3. On the live site, on a desk and on a phone, check:
+1. On a desk and on a phone, check:
    - the tools are at the top and the count is right
    - a record opens, and Back returns to the same place
    - photographs load quickly
-4. Catalogue one object with a photograph on a phone, and check its thumbnail arrives. This is
-   the one path not tried in a browser.
+2. Catalogue one object with a photograph on a phone, and check its thumbnail arrives. This is
+   the one path not tried in a browser. A photograph that misses out can be given one with
+   `node scripts/make-thumbnails.mjs <photo id>`.
 
-**Done when** all four are checked and recorded here.
+**Done when** both are checked and recorded here. That completes Stage 8.
 
 **Then: get real user feedback before any further development.**
 

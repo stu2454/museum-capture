@@ -243,7 +243,7 @@ this log summarises and cites them.
 ### Handover
 
 - Next: gather user feedback and write it up. No code work until then.
-- Git: local, uncommitted.
+- Git: committed with Stage 8 (ce1c4c6).
 
 ## 2026-09-15 — Stage 8: a collection page that scales
 
@@ -303,5 +303,11 @@ this log summarises and cites them.
 
 ### Handover
 
-- Next: commit, deploy and run the thumbnail script, with the maintainer's go-ahead.
-- Git: local, uncommitted.
+- **Deployed.** Committed as ce1c4c6 and deployed the same day with the maintainer's go-ahead,
+  as version `c5c1bf6c`.
+- **Thumbnails for the existing photographs.** `scripts/make-thumbnails.mjs` then ran against the
+  real collection: 89 thumbnails made, 2 photographs already small enough, none failed. One was
+  downloaded back from R2 to check: 300×400, 49 KB.
+- **Next.** Check the live site on a desk and a phone, and that a photograph catalogued on a
+  phone gets its thumbnail.
+- **Git.** Committed; not pushed.
