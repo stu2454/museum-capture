@@ -135,7 +135,7 @@ export function RecordView({
           {data.photos.map((photo) => (
             <div key={photo.id} className="photo" style={{ border: "1px solid var(--rule)" }}>
               <img
-                src={photoUrl(photo.id)}
+                src={photoUrl(photo.id, "thumb")}
                 alt={photo.caption || "Artefact photograph"}
                 loading="lazy"
                 style={{ cursor: "zoom-in" }}

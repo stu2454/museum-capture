@@ -20,6 +20,7 @@
 
 import yaml from "js-yaml";
 import { buildEhiveBundle, buildImportedRecords, type KnownTerms } from "./ehive";
+import { thumbKey } from "./api";
 
 export interface Env {
   DB: D1Database;
@@ -195,7 +196,7 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
 
     if (path === "/records" && request.method === "GET") return await listRecords(request, env, url);
     if (path.startsWith("/records/") && request.method === "GET") return await getRecord(env, path);
-    if (path.startsWith("/photo/") && request.method === "GET") return await getPhoto(env, path);
+    if (path.startsWith("/photo/") && request.method === "GET") return await getPhoto(env, path, url);
 
     if (path === "/users") {
       if (user.role !== "admin") return json({ error: "admins_only" }, 403);
@@ -220,14 +221,46 @@ export async function handleExplorer(request: Request, env: Env): Promise<Respon
 }
 
 /**
+ * Registration numbers in the order a person expects, not the order text sorts in.
+ *
+ * Sorted as plain text, M1227 comes before M654 ("1" is less than "6"), and a
+ * collection browsed by number looks shuffled. So each number is split into its
+ * leading letters, then the whole number after them, then the full text to break
+ * ties: M654, M654a, M1227, and 2026.007 before 2026.011.
+ *
+ * The museum uses two schemes, M-numbers and year-dot numbers, and each stays
+ * together. Year numbers come first, having no letters. Anything else still sorts,
+ * just less cleverly, and records with no number come last.
+ *
+ * The record id is the final tie-break, so the order never changes between
+ * requests. Paging depends on it: without it, two records that tie can swap places
+ * between one page and the next, and one shows twice while the other never shows.
+ *
+ * Plain SQLite, so it works in D1 without a stored sort key. Every page sorts the
+ * whole table, which costs nothing at a few thousand records.
+ */
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const NUMBER = "UPPER(TRIM(r.registration_number))";
+const IN_NUMBER_ORDER = `
+  r.registration_number IS NULL OR TRIM(r.registration_number) = '',
+  SUBSTR(${NUMBER}, 1, LENGTH(${NUMBER}) - LENGTH(LTRIM(${NUMBER}, '${LETTERS}'))),
+  CAST(LTRIM(${NUMBER}, '${LETTERS}') AS INTEGER),
+  ${NUMBER},
+  r.updated_at DESC,
+  r.id`;
+
+/**
  * Search and browse. Deliberately one endpoint: volunteers don't distinguish
  * between "browsing" and "searching", they just type something or don't.
+ *
+ * Paged: at most 100 records per request, 50 by default. The catalogue asks for
+ * more as they are wanted, and `total` says how many there are altogether.
  */
 async function listRecords(request: Request, env: Env, url: URL): Promise<Response> {
   const query = (url.searchParams.get("q") ?? "").trim();
   const status = url.searchParams.get("status") ?? "";
-  const limit = Math.min(Number(url.searchParams.get("limit") ?? 50), 100);
-  const offset = Math.max(Number(url.searchParams.get("offset") ?? 0), 0);
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 100);
+  const offset = Math.max(Number(url.searchParams.get("offset")) || 0, 0);
 
   const where: string[] = ["r.deleted_at IS NULL"];
   const binds: unknown[] = [];
@@ -256,7 +289,7 @@ async function listRecords(request: Request, env: Env, url: URL): Promise<Respon
              ORDER BY p.is_primary DESC, p.added_at LIMIT 1) AS primary_photo_id
     FROM records r
     WHERE ${where.join(" AND ")}
-    ORDER BY r.registration_number IS NULL, r.registration_number, r.updated_at DESC
+    ORDER BY ${IN_NUMBER_ORDER}
     LIMIT ?${binds.length + 1} OFFSET ?${binds.length + 2}`;
 
   const rows = await env.DB.prepare(sql).bind(...binds, limit, offset).all();
@@ -330,7 +363,7 @@ async function getRecord(env: Env, path: string): Promise<Response> {
   });
 }
 
-async function getPhoto(env: Env, path: string): Promise<Response> {
+async function getPhoto(env: Env, path: string, url: URL): Promise<Response> {
   const photoId = decodeURIComponent(path.split("/")[2] ?? "");
   const row = await env.DB.prepare(
     `SELECT r2_key, content_type FROM photos WHERE id = ?1 AND deleted_at IS NULL`
@@ -339,6 +372,28 @@ async function getPhoto(env: Env, path: string): Promise<Response> {
     .first<{ r2_key: string; content_type: string }>();
 
   if (!row) return json({ error: "not_found" }, 404);
+
+  // The collection list and photo grids ask for the small copy. A photograph
+  // without one - sent before thumbnails existed, or from a device still running an
+  // older version - gets its original instead, so a picture is never missing, only
+  // slower. That fallback is cached for five minutes, not a day, so the small copy
+  // is picked up soon after it is made.
+  if (url.searchParams.get("size") === "thumb") {
+    const thumbnail = await env.PHOTOS.get(thumbKey(photoId));
+    if (thumbnail) {
+      return new Response(thumbnail.body, {
+        headers: { "Content-Type": "image/jpeg", "Cache-Control": "private, max-age=86400" },
+      });
+    }
+    const original = await env.PHOTOS.get(row.r2_key);
+    if (!original) return json({ error: "image_missing" }, 404);
+    return new Response(original.body, {
+      headers: {
+        "Content-Type": row.content_type ?? "image/jpeg",
+        "Cache-Control": "private, max-age=300",
+      },
+    });
+  }
 
   const object = await env.PHOTOS.get(row.r2_key);
   if (!object) return json({ error: "image_missing" }, 404);

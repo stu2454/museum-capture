@@ -96,6 +96,9 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
 
   try {
     if (path === "/sync" && request.method === "POST") return await sync(request, env, volunteer);
+    if (path.startsWith("/photos/") && path.endsWith("/thumb") && request.method === "PUT") {
+      return await putThumbnail(request, env, path);
+    }
     if (path.startsWith("/photos/") && request.method === "PUT") return await putPhoto(request, env, path, volunteer);
     if (path.startsWith("/photos/") && request.method === "GET") return await getPhoto(env, path);
     if (path === "/health") return json({ ok: true, at: new Date().toISOString() });
@@ -330,6 +333,46 @@ async function putPhoto(request: Request, env: Env, path: string, volunteer: str
     .run();
 
   return json({ id: photoId, r2_key: key, deduplicated: false });
+}
+
+/**
+ * Where a photograph's thumbnail lives in R2. The explorer serves it from here, and
+ * scripts/make-thumbnails.mjs writes to the same place.
+ *
+ * Kept out of photos/ on purpose. That prefix holds the originals, one for each row
+ * in the photos table, and anyone reading the bucket should be able to treat
+ * everything under it as the evidence. A thumbnail is derived and can always be made
+ * again.
+ */
+export const thumbKey = (photoId: string) => `thumbs/${photoId}.jpg`;
+
+/** A thumbnail is 400px on its longest side. Anything this big is not one. */
+const MAX_THUMB_BYTES = 512 * 1024;
+
+/**
+ * A photograph's thumbnail, sent by the device straight after the photograph.
+ *
+ * Only accepted for a photograph the server already holds, so nothing can be stored
+ * against a photograph that doesn't exist. There is no database row for it: whether a
+ * thumbnail exists is simply whether the R2 object does, and the explorer shows the
+ * original when it doesn't.
+ */
+async function putThumbnail(request: Request, env: Env, path: string): Promise<Response> {
+  const photoId = decodeURIComponent(path.split("/")[2] ?? "");
+  const known = await env.DB.prepare(`SELECT 1 FROM photos WHERE id = ?1 AND deleted_at IS NULL`)
+    .bind(photoId)
+    .first();
+  if (!known) return json({ error: "Not found" }, 404);
+
+  const body = await request.arrayBuffer();
+  if (body.byteLength === 0 || body.byteLength > MAX_THUMB_BYTES) {
+    return json({ error: "Not a thumbnail" }, 400);
+  }
+
+  await env.PHOTOS.put(thumbKey(photoId), body, {
+    httpMetadata: { contentType: "image/jpeg" },
+  });
+  return json({ id: photoId, ok: true });
 }
 
 async function getPhoto(env: Env, path: string): Promise<Response> {

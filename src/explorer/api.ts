@@ -128,9 +128,10 @@ export interface RemovedRecord {
 export const api = {
   me: () => call<{ user: Me }>("/me").then((r) => r.user),
 
-  records: (query: string, offset = 0) =>
+  /** One page of the collection. The server sends at most 100 at a time. */
+  records: (query: string, offset = 0, limit = 50) =>
     call<{ records: RecordSummary[]; total: number }>(
-      `/records?q=${encodeURIComponent(query)}&offset=${offset}`
+      `/records?q=${encodeURIComponent(query)}&offset=${offset}&limit=${limit}`
     ),
 
   record: (id: string) => call<RecordDetail>(`/records/${encodeURIComponent(id)}`),
@@ -172,4 +173,9 @@ export const api = {
     call<{ ok: true }>("/users", { method: "DELETE", body: JSON.stringify({ email }) }),
 };
 
-export const photoUrl = (id: string) => `/api/photo/${encodeURIComponent(id)}`;
+/**
+ * A photograph. Pass "thumb" anywhere it is drawn small, for the 400px copy; the
+ * server sends the original instead when there isn't one yet.
+ */
+export const photoUrl = (id: string, size?: "thumb") =>
+  `/api/photo/${encodeURIComponent(id)}${size ? `?size=${size}` : ""}`;

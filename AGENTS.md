@@ -289,7 +289,8 @@ schema/worksheet.v2.yaml   THE SOURCE OF TRUTH. Change what's asked here, not in
 src/schema.ts              Loads and slices the schema. The only module that reads the YAML.
 src/types.ts               TS mirror of the schema. Keep in step with the YAML.
 src/db.ts                  IndexedDB: records + photo blobs.
-src/media.ts               Photo downscaling on intake, file download.
+src/media.ts               Photo downscaling on intake and thumbnails, file download.
+src/thumbnail.ts           Sends a photo's 400px thumbnail after the photo. Never fails an upload.
 src/export.ts              JSON export, for a device. The eHive export is worker/ehive.ts.
 src/storage.ts             iOS seven-day storage cap: detection and persistence request.
 src/sync.ts                Offline-tolerant client sync queue. Strips restricted fields.
@@ -310,7 +311,8 @@ src/components/
                            for shared devices; your own name and colour.
   WhoBadge.tsx             The corner badge, and the Avatar disc the picker reuses.
 src/explorer/
-  Explorer.tsx             Search and list. Admin tabs when the role allows.
+  Explorer.tsx             Search and a paged list, tools at the top. The address follows
+                           the screen, so Back works and a list keeps its place.
   RecordView.tsx           One record, its photographs, and admin removal.
   RemovePanel.tsx          Removal with a reason. Restore.
   UserAdmin.tsx            Add and remove users, set roles.
@@ -331,6 +333,8 @@ scripts/seed-schema.mjs    Turns the YAML into the seed SQL for db:seed.
 scripts/import-ehive-xml.mjs  Turns an eHive XML report into seeds/seed-ehive.sql.
 scripts/attach-ehive-images.mjs  One-off: matches eHive's photographs to records and
                            uploads them. macOS only (uses sips). Read its header before reuse.
+scripts/make-thumbnails.mjs  Thumbnails for photos already on the server. macOS only (sips).
+                           Safe to re-run: writes only under thumbs/ in R2. --local to test.
 docs/ehive-import-fields.tsv  Every field eHive's import workbook can carry, for reference.
 docs/artefact-catalogue-for-volunteers.pptx  Slides for a volunteer briefing. Rebuild with
                            `python3.11 scripts/build-volunteer-deck.py` rather than editing the
@@ -425,6 +429,13 @@ before changing anything here. In short:
   table is empty — a bootstrap, not a back door.
 - **Sync is scoped to the device.** A phone pulls back only what it captured. Every device
   used to receive every record, which slowly filled each phone with the whole collection.
+- **The collection list is paged**, 50 records a request and never more than 100, sorted in
+  number order (M654 before M1227) with the record id as the last tie-break so pages never
+  overlap. The client asks for more; nothing may assume one request returns everything.
+- **Photographs have thumbnails** at `thumbs/{photo_id}.jpg` in R2: 400px, made by the device
+  that sends the photograph, or by `scripts/make-thumbnails.mjs` for older ones. They are
+  derived, so there is no database row. `?size=thumb` serves one, falling back to the original
+  when it's missing. Anything drawing a photo small should ask for it.
 - **Batches are capped at 20 records** because D1's free plan allows 50 queries per
   invocation and each record costs two statements. The client pages through anything larger.
 - **The weekly cron writes a snapshot to R2** (01:00 Monday AEST) — CSV, JSON, revisions,

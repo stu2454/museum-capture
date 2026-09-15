@@ -23,23 +23,53 @@
 const MAX_EDGE = 2000;
 const QUALITY = 0.85;
 
-export async function prepareImage(file: File): Promise<Blob> {
-  const source = await decode(file);
-  if (!source) return file; // couldn't decode — keep the original rather than lose the photo
+/**
+ * The small copy shown wherever a photograph is drawn small: 64px in the
+ * collection list, about 200px in a record's photo grid. Both used to download the
+ * 2000px original - roughly 450 KB a picture, fifteen megabytes for one screen of
+ * the collection on museum wifi. 400px covers a 200px tile on a high-density
+ * screen.
+ */
+const THUMB_EDGE = 400;
+const THUMB_QUALITY = 0.8;
 
+export async function prepareImage(file: File): Promise<Blob> {
+  const source = await decode(file, MAX_EDGE);
+  if (!source) return file; // couldn't decode — keep the original rather than lose the photo
+  return (await toJpeg(source, QUALITY)) ?? file;
+}
+
+/**
+ * A thumbnail of a photograph that prepareImage has already prepared.
+ *
+ * Null when there is no point making one - the photograph is already small - or
+ * when it won't decode. Null is never a problem: the server shows the original
+ * wherever a thumbnail is missing.
+ */
+export async function makeThumbnail(photo: Blob): Promise<Blob | null> {
+  const source = await decode(photo, THUMB_EDGE);
+  if (!source) return null;
+  if (!source.resized) {
+    source.release();
+    return null;
+  }
+  return toJpeg(source, THUMB_QUALITY);
+}
+
+async function toJpeg(source: Decoded, quality: number): Promise<Blob | null> {
   const canvas = document.createElement("canvas");
   canvas.width = source.width;
   canvas.height = source.height;
   const context = canvas.getContext("2d");
   if (!context) {
     source.release();
-    return file;
+    return null;
   }
   context.drawImage(source.image, 0, 0, source.width, source.height);
   source.release();
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/jpeg", QUALITY)
+    canvas.toBlob(resolve, "image/jpeg", quality)
   );
 
   // Free the canvas immediately. iOS is aggressive about reclaiming tabs that
@@ -47,32 +77,40 @@ export async function prepareImage(file: File): Promise<Blob> {
   canvas.width = 0;
   canvas.height = 0;
 
-  return blob ?? file;
+  return blob;
 }
 
 interface Decoded {
   image: CanvasImageSource;
   width: number;
   height: number;
+  /** Smaller than the source, which is what a thumbnail needs to be worth making. */
+  resized: boolean;
   release: () => void;
 }
 
-function fit(width: number, height: number): { width: number; height: number } {
+function fit(width: number, height: number, maxEdge: number): { width: number; height: number } {
   const longest = Math.max(width, height);
-  if (longest <= MAX_EDGE) return { width, height };
-  const scale = MAX_EDGE / longest;
+  if (longest <= maxEdge) return { width, height };
+  const scale = maxEdge / longest;
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
 
-async function decode(file: File): Promise<Decoded | null> {
+async function decode(file: Blob, maxEdge: number): Promise<Decoded | null> {
   // Ask the browser to decode directly to the target size. This is the whole
   // performance fix: a 48MP photo never exists in memory at full resolution.
   try {
     const probe = await createImageBitmap(file, { imageOrientation: "from-image" });
-    const target = fit(probe.width, probe.height);
+    const target = fit(probe.width, probe.height, maxEdge);
 
     if (target.width === probe.width) {
-      return { image: probe, width: probe.width, height: probe.height, release: () => probe.close() };
+      return {
+        image: probe,
+        width: probe.width,
+        height: probe.height,
+        resized: false,
+        release: () => probe.close(),
+      };
     }
 
     const resized = await createImageBitmap(file, {
@@ -86,23 +124,25 @@ async function decode(file: File): Promise<Decoded | null> {
       image: resized,
       width: resized.width,
       height: resized.height,
+      resized: true,
       release: () => resized.close(),
     };
   } catch {
-    return decodeViaImgElement(file);
+    return decodeViaImgElement(file, maxEdge);
   }
 }
 
-function decodeViaImgElement(file: File): Promise<Decoded | null> {
+function decodeViaImgElement(file: Blob, maxEdge: number): Promise<Decoded | null> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => {
-      const target = fit(image.naturalWidth, image.naturalHeight);
+      const target = fit(image.naturalWidth, image.naturalHeight, maxEdge);
       resolve({
         image,
         width: target.width,
         height: target.height,
+        resized: target.width !== image.naturalWidth,
         release: () => URL.revokeObjectURL(url),
       });
     };

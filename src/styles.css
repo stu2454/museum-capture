@@ -1059,3 +1059,42 @@ body {
   width: 100%;
   margin-bottom: 4px;
 }
+
+/* The collection's header and tools. Above the list, not below it: at the bottom,
+   every object catalogued pushed them further out of reach. Who is signed in sits
+   opposite the title; everything wraps to stacked rows on a phone. */
+.masthead-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 20px;
+}
+
+.signed-in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.toolbar .btn {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 900px) {
+  .toolbar .btn {
+    flex: 0 0 auto;
+  }
+}
+
+.show-more {
+  margin-top: 6px;
+}

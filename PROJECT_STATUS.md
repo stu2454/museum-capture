@@ -4,6 +4,13 @@ Last updated: 2026-09-15
 
 ## Where we left off
 
+**Development is paused (2026-09-15) until real users have given feedback, with one exception.**
+The Collection page stopped showing records past the fiftieth and got slower with every
+photograph, so Stage 8 (a collection page that scales) was taken up as a priority the same day.
+It is built and tested locally, but not yet committed or deployed. Nothing else is planned until
+feedback is in. The next major capability in mind is voice annotation; see "Future direction" in
+[PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+
 The capture app and catalogue are built, deployed and in use behind Cloudflare Access. The eHive
 round trip works for the museum's 35 public eHive records. The last development session was
 2026-09-03 (Stage 4 complete, briefing slides generated). Since then:
@@ -23,8 +30,10 @@ Repository and deployment:
   commit. The last app code change (db56401) matches the 03:30 UTC deployment. The 04:05
   deployment followed 8e28f88, which changed no app code. The live site was not opened this
   session.
-- **Work in progress.** Stage 5: the volunteer briefing slides.
-- **Uncommitted at handover.** None. Two notes:
+- **Work in progress.** Stage 8, built and tested locally, awaiting deployment. Stage 5,
+  gathering user feedback, continues alongside.
+- **Uncommitted at handover.** Stage 8 (code, `scripts/make-thumbnails.mjs`, documentation) and
+  the notes on the voice trial. Two older notes:
   - `docs/artefact-catalogue-for-volunteers.pptx` was edited in PowerPoint after generation and
     committed as it stood: 41 MB, six images, one of them a 33 MB EMF. Open decision 10 is still
     open.
@@ -42,9 +51,10 @@ is recorded.
 | 2 — Sync, the catalogue and roles | Complete 2026-08-13 | Little validation recorded for 08-12 and 08-13 |
 | 3 — Sign-in for everyone, and attributed records | Complete 2026-09-02 | |
 | 4 — The eHive round trip (public records) | Complete 2026-09-03 | Covers 35 of 66 eHive records |
-| 5 — Volunteer rollout | In progress; scope proposed, not yet agreed | Slide images added; deck committed at 41 MB |
-| 6 — Housekeeping before the catalogue grows | Proposed | |
+| 5 — Volunteer rollout | In progress: gathering user feedback | Development paused until feedback is in; deck committed at 41 MB |
+| 6 — Housekeeping before the catalogue grows | Proposed; on hold | Waits for feedback, like all development |
 | 7 — The whole eHive collection | Proposed; blocked on eHive | Waiting on eHive about private records |
+| 8 — A collection page that scales | Built and tested locally; not committed or deployed | Taken up as a priority 2026-09-15 |
 
 ## The catalogue as the server holds it
 
@@ -79,6 +89,8 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 | Issue | User impact | Evidence / location | Next action |
 |---|---|---|---|
+| The live Collection page stops at 50 records and downloads every photograph at full size | Record 51 onwards can't be browsed (38 records today); roughly 15 MB per visit | Fixed in Stage 8, not yet deployed | Deploy, then run `scripts/make-thumbnails.mjs` |
+| The capture app's thumbnail upload hasn't been tried in a browser | If it fails, those photographs show full size in the list until the script is re-run | `src/sync.ts`; shares `src/thumbnail.ts` with the path that was tested | After deploying, catalogue one object with a photograph on a phone |
 | We hold 35 of eHive's 66 records; the 31 private ones are unreachable | The duplicate-number warning is blind to private records, and so are the pick-list checks | AGENTS.md, "Private records"; 312a036 | Waiting on eHive (Stage 7) |
 | M1723 is used for two objects in eHive, and one eHive record has no number | Risk of mis-filing; the uniform has no photograph | `HOLD` in `scripts/attach-ehive-images.mjs` | Museum checking the register; fix in eHive; then re-run the script |
 | Slides edited by hand after generation | Re-running the generator would lose the images; a 41 MB file is too big to email or commit comfortably | `git status`; brief open decision 10 | Decide generated or hand-edited; shrink the EMF; commit |
@@ -92,17 +104,31 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 ## Latest validation
 
-Date: 2026-09-15, at commit 8e28f88. The working tree differed only in the slide deck and these
-documents.
+Date: 2026-09-15, on the uncommitted Stage 8 working tree (last commit 9f6d7f3).
 
 | Check | Result | Scope and limitations |
 |---|---|---|
 | `npm run typecheck` | Passed | App and worker |
-| `npm run build` | Not run | Documentation-only change |
-| `git ls-remote origin` | `main` = 8e28f88 | Local and remote agree |
+| `npm run build` | Passed | |
+| Browser test, 44 checks | All passed | Headless Chromium against `wrangler dev` with a throwaway database of 129 test records and 15 photographs, at desk and phone widths. The test script lives in the session scratchpad, not the repository |
+| `scripts/make-thumbnails.mjs --local` | 12 of 12 made | Against the test copy: 824 KB originals became 61 KB at 400px |
+| The capture app's thumbnail upload | Not tried in a browser | Same code path as the one tested |
+| Deploy, and the script against the real collection | Not done | Waiting for approval |
 | `npx wrangler deployments list` | Latest 2026-09-03 04:05 UTC | Shows time, not commit |
-| D1 queries (read-only) | As in "The catalogue as the server holds it" | Live database |
+| D1 queries (read-only) | As in "The catalogue as the server holds it" | Live database, earlier today |
 | Live site in a browser | Not checked | — |
+
+The browser test covered:
+
+- paging, the count line and natural number order
+- keeping your place, the browser's Back and Forward buttons, and a record opened from a direct
+  link
+- the search surviving a reload, and a slow older answer being ignored
+- thumbnails, and the fallback to the original
+- a photograph added from the catalogue sending its thumbnail
+- the thumbnail upload refusing unknown photographs, oversized files and requests without a
+  sign-in
+- connection failures and recovery
 
 Rerun the relevant checks after any later code change.
 
@@ -119,21 +145,38 @@ Rerun the relevant checks after any later code change.
 
 ## Next recommended task
 
-**Finish the slide deck.**
+**Deploy Stage 8 and give the existing photographs their thumbnails.** This needs the
+maintainer's go-ahead: it publishes to the live site and writes to R2.
 
-1. Decide whether the deck stays generated or is edited by hand from now on (brief decision 10).
-   If generated, move the images into `scripts/build-volunteer-deck.py`.
-2. Replace the 33 MB EMF with a PNG or JPEG.
-3. Confirm no placeholder text remains.
+1. Commit the Stage 8 work, then run `npm run deploy`.
+2. Run `node scripts/make-thumbnails.mjs`. It writes only under `thumbs/` in R2 and never
+   touches an original. About 91 photographs; a few minutes.
+3. On the live site, on a desk and on a phone, check:
+   - the tools are at the top and the count is right
+   - a record opens, and Back returns to the same place
+   - photographs load quickly
+4. Catalogue one object with a photograph on a phone, and check its thumbnail arrives. This is
+   the one path not tried in a browser.
 
-It matters because re-running the generator today would throw away the images, and a 41 MB file
-is awkward to email to volunteers.
+**Done when** all four are checked and recorded here.
 
-**Done when** the deck has no placeholders, is small enough to email, and decision 10 is recorded
-in the brief.
+**Then: get real user feedback before any further development.**
 
-- **Status.** Recommended only.
-- **Also before Stage 5 goes further.** Agree the proposed scope of Stages 5–7 in the brief.
+1. Brief the volunteers and put the app in their hands for real cataloguing sessions. If the
+   slides are to be emailed, shrink the 33 MB EMF first; brief decision 10 is still open.
+2. Collect what works and what doesn't from volunteers and admins.
+3. Separately, trial dedicated voice recording apps with volunteers and see what they think,
+   before anything voice-related is built here (see "Future direction" in the brief). Keep
+   donor names out of the recordings.
+4. Write the feedback and the trial's findings up in the repository, for example in
+   `docs/user-feedback.md`, without people's names, so the next session can plan from it.
+
+It matters because the app works, and the next thing worth building should come from how it is
+actually used, not from guesses about it.
+
+**Done when** feedback from real sessions is written up and the next stage has been chosen from it.
+
+- **Status.** In progress, with the maintainer. No code work until it is done.
 
 ## Resume prompt
 

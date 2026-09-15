@@ -218,5 +218,90 @@ this log summarises and cites them.
 
 ### Handover
 
-- Committed, not pushed. The maintainer's PowerPoint edit to the slide deck was committed
-  separately, as it stood.
+- Committed and pushed (5cde6e1). The maintainer's PowerPoint edit to the slide deck was
+  committed separately, as it stood (9f6d7f3).
+
+## 2026-09-15 — Development paused for user feedback; voice annotation direction recorded
+
+### Change and reason
+
+- **The maintainer paused development.** The app is working well as it stands, and further
+  development waits until real users have given feedback. Stage 5 is now about gathering that
+  feedback; Stage 6 is on hold.
+- **Voice annotation recorded as the intended next major capability.** Volunteers would answer the
+  standard questions by talking about the artefact instead of typing, possibly in a tool developed
+  separately at first. Recorded as direction, not a stage, under "Future direction" in
+  PROJECT_BRIEF.md, with the questions to settle before building: offline use, donor names spoken
+  aloud, consent, accuracy, cost, and what reaches eHive.
+- **A voice trial comes first.** Before anything is designed or built, the maintainer will trial
+  dedicated voice recording apps with volunteers and see what they think.
+
+### Validation
+
+- Documentation only. No code changed.
+
+### Handover
+
+- Next: gather user feedback and write it up. No code work until then.
+- Git: local, uncommitted.
+
+## 2026-09-15 — Stage 8: a collection page that scales
+
+### Change and reason
+
+- **Why it was taken up despite the pause.** The Collection page was built for a few dozen
+  records:
+  - The server sent at most 50 records and the page never asked for more, so the list would have
+    stopped silently at record 51 (38 exist today) while claiming to show the whole collection.
+  - Every 64px thumbnail downloaded the 2000px original, about 15 MB per visit.
+  - The tools and sign-out sat below the list.
+  - Returning from a record lost your place.
+  - Numbers sorted as text, so M1227 came before M654.
+- **Tools at the top.** "Catalogue an object", the admin tools and sign-out now sit above the
+  search.
+- **Paged list.** 50 records at a time, with "Show the next 50" and a count reading "Showing 50
+  of 212 objects in the collection". Answers to an older search are ignored. A failure says
+  "Couldn't reach the collection" with Try again, instead of "No records yet".
+- **The address follows the screen.** `?record=`, `?view=` and `?q=` are in the address, so the
+  browser's Back button stays in the app and a record can be linked to. Your scroll position and
+  the number of records loaded are restored when you come back.
+- **Natural number order** in the list query: leading letters, then the number, then the text,
+  with the record id as the last tie-break so pages never overlap. No migration.
+- **Thumbnails.**
+  - A 400px JPEG is made in the browser at the moment a photograph is sent, on both upload paths
+    (`src/thumbnail.ts`). A failure never fails the upload.
+  - Stored at `thumbs/{photo_id}.jpg` in R2, with no database row.
+  - `/api/photo/{id}?size=thumb` serves it, and falls back to the original (cached for five
+    minutes) when there isn't one.
+  - `PUT /api/photos/{id}/thumb` accepts a thumbnail only for a photograph the server holds, up
+    to 512 KB.
+  - `scripts/make-thumbnails.mjs` makes them for photographs already on the server.
+- **Found and fixed on the way.** During the 300ms search debounce, the count line labelled the
+  old records with the new search's wording: "129 objects found" for a search that finds three.
+  It now says "Searching…" until the answer arrives. This bug predated Stage 8.
+- **The user manual** said "at the bottom of the catalogue" in three places; it now says top.
+
+### Validation
+
+- `npm run typecheck` and `npm run build` passed.
+- A 44-check browser test passed in headless Chromium against `wrangler dev`, with a throwaway
+  database (129 test records, 15 photographs) at desk and phone widths. It found the count-line
+  bug above; the rerun after the fix passed everything.
+- `scripts/make-thumbnails.mjs --local` made 12 of 12 thumbnails on the test copy, shrinking
+  824 KB to 61 KB. A thumbnail made by the browser during the upload test was 399×400.
+- Screenshots at desk and phone width were inspected.
+
+### Remaining limitations
+
+- Not deployed. Until the script runs, the 91 existing photographs have no thumbnails and show
+  their originals, as they do now.
+- The capture app's thumbnail upload hasn't been tried in a browser.
+- A record added or removed while someone is paging can shift one record across a page boundary.
+  Duplicates are dropped; a skipped record appears once the list reloads.
+- Options B–D (a search-first home page, a denser desk view, filters) are in the backlog, waiting
+  on user feedback.
+
+### Handover
+
+- Next: commit, deploy and run the thumbnail script, with the maintainer's go-ahead.
+- Git: local, uncommitted.

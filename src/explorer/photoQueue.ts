@@ -19,6 +19,7 @@
 
 import { newId, pending, photos, type PendingPhoto } from "../db";
 import { prepareImage } from "../media";
+import { sendThumbnail } from "../thumbnail";
 
 async function sha256(blob: Blob): Promise<string | null> {
   try {
@@ -98,6 +99,11 @@ export async function flushPhotos(): Promise<FlushResult> {
         await pending.put({ ...item, attempts: item.attempts + 1 });
         continue;
       }
+
+      // Before the blob goes, since the thumbnail is made from it. The server may
+      // already hold these bytes under another id, and says which.
+      const saved = (await response.json().catch(() => null)) as { id?: string } | null;
+      await sendThumbnail(saved?.id ?? item.id, blob);
 
       await pending.remove(item.id);
       await photos.remove(item.id);

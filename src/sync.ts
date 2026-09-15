@@ -11,6 +11,7 @@
  */
 
 import { records, photos } from "./db";
+import { sendThumbnail } from "./thumbnail";
 import { withoutRestricted } from "./schema";
 import type { ArtefactRecord } from "./types";
 
@@ -207,6 +208,9 @@ async function uploadPhotos(all: ArtefactRecord[]): Promise<number> {
         photo.uploadedAt = new Date().toISOString();
         await records.put(record);
         uploaded += 1;
+        // The server may already hold these bytes under another id, and says which.
+        const saved = (await response.json().catch(() => null)) as { id?: string } | null;
+        await sendThumbnail(saved?.id ?? photo.id, blob);
       }
     }
   }

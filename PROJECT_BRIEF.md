@@ -73,7 +73,8 @@ museum's eHive account cleanly through eHive's import spreadsheet.
 ## Out of scope for now
 
 - **Voice capture.** The structure is in place; the flow is not built. The intended design is in
-  AGENTS.md: one open question per group, not one per field.
+  AGENTS.md: one open question per group, not one per field. The maintainer's direction is under
+  "Future direction: voice annotation" below.
 - **Automatic sending to eHive.** eHive has no write API. The last step is a person.
 - **Donor details in the app.** Never without asking.
 - **Photo metadata pull between devices.** A record opened on a second device doesn't know which
@@ -189,14 +190,16 @@ PROJECT_STATUS.md.
 ### Stage 5 — Volunteer rollout *(proposed 2026-09-15)*
 
 - **Deliver.** The briefing slides finished, with real images in place of the five placeholders.
-  The user manual in step with the app. Volunteers added as users. A first real cataloguing
-  session.
+  The user manual in step with the app. Volunteers added as users. Real cataloguing sessions.
+  Feedback from volunteers and admins after real use, written up in the repository without
+  people's names.
 - **Validate.** No placeholder text left in the deck, and the file is a size that can be emailed.
   Screen names in the manual match the app. A volunteer other than the maintainer catalogues an
   object on their own device, and the record reaches the server attributed to them, with its
   photographs.
-- **Complete when.** The briefing has been held, and a session's records appear in
-  `npm run db:records` with `captured_by` and `synced_by` both set.
+- **Complete when.** The briefing has been held; a session's records appear in
+  `npm run db:records` with `captured_by` and `synced_by` both set; and the feedback is written
+  up and has been used to choose the next stage.
 
 ### Stage 6 — Housekeeping before the catalogue grows *(proposed 2026-09-15)*
 
@@ -220,15 +223,97 @@ PROJECT_STATUS.md.
   changes nothing.
 - **Depends on.** eHive explaining how to reach private records through the API.
 
+### Stage 8 — A collection page that scales *(added 2026-09-15, as a priority)*
+
+The Collection page was built for a few dozen records. The list stopped at 50 without saying
+so, every thumbnail downloaded the 2000px original, the tools sat below the list, and coming
+back from a record lost your place. This is Option A of the options discussed that day.
+
+- **Deliver:**
+  - Tools and sign-out at the top of the page.
+  - The list in pages of 50, with a "Show the next 50" button and a count that says how many
+    are showing.
+  - A 400px thumbnail for each photograph, made by the device that sends it, plus a script for
+    photographs already on the server.
+  - The address follows the screen, so the browser's Back button returns to the list and your
+    place in it.
+  - Registration numbers in natural order.
+- **Validate:**
+  - More than 50 records can all be reached, and the count is right at every step.
+  - M654 sorts before M1227, and records with no number come last.
+  - Returning from a record, by the app's button or the browser's, lands at the same place.
+  - The list and photo grids load thumbnails; the enlarged view loads the original.
+  - Nothing scrolls sideways at phone width.
+- **Complete when.** It is deployed, the thumbnail script has been run against the real
+  collection, and the live site has been checked on a desk and on a phone.
+
 ### Later backlog
 
-- Voice capture, designed as in AGENTS.md.
+- Voice annotation — see "Future direction: voice annotation" below.
+- Collection page, if user feedback asks for it:
+  - Option B: a search-first home page with recent records and a "needs attention" list.
+  - Option C: a denser one-line-per-record view on a desk, or a photo grid.
+  - Option D: filters by object type or location, which need tidy vocabularies first
+    (decision 7).
 - Photo metadata pull between devices.
 - Registration number validation, once decision 1 is answered.
 - Splitting storage and display, if decision 6 goes that way.
 - Filtering the eHive export to records changed since import, if decision 8 goes that way.
 
 A backlog item is a recommendation, not an instruction to start it.
+
+## Future direction: voice annotation
+
+This is direction from the maintainer, recorded 2026-09-15. It is not scheduled. Development is
+paused until real users have given feedback on the app as it stands, and that feedback comes
+first.
+
+**The idea.** A volunteer still works through the standard questions the app asks now, but can
+talk about the artefact instead of typing. What they say becomes the record's text, and they check
+it before accepting it. It would be a significant piece of work.
+
+**Likely shape:**
+
+- **Developed separately at first.** A prototype outside the working capture app can't disturb
+  the tool volunteers rely on. It can be tried with a few volunteers before anyone decides whether
+  it joins the capture app.
+- **Consistent with the design already in AGENTS.md.**
+  - One open question per capture group, not one per field.
+  - A model splits the spoken answer across that group's fields.
+  - The volunteer sees what was heard before accepting it.
+  - The recording and transcript are kept, never discarded.
+  - The schema already has `voice_recording` and `transcript` fields, and `FieldValue.origin` can
+    record `"spoken"`.
+
+**Questions to settle before building, not now:**
+
+- **Offline.** The store room has no reliable signal. Record on the device and transcribe later,
+  or require a connection?
+- **Donor details spoken aloud.** A volunteer telling an object's story will often name the person
+  who gave it. Recordings and transcripts would then hold restricted information that the app
+  currently never holds.
+- **Consent and retention** for recordings of volunteers' voices.
+- **Accuracy** with local names (places, makers, families), with older voices, and in a room where
+  others are talking.
+- **Running cost** of transcription and language-model services for a volunteer museum, and who
+  pays.
+- **What reaches eHive.** Only the checked text, or the audio too?
+- **Where it ends up.** A separate tool for good, or a mode inside the capture app once proven?
+
+**First step, before anything is built.** The maintainer will trial existing dedicated voice
+recording apps with volunteers and see what they think (planned 2026-09-15). What the trial shows
+about talking versus typing, and about how well those apps transcribe, feeds the questions above.
+Nothing voice-related is designed or built in this project until the trial has been written up.
+
+During the trial, the donor rule still applies. Many recording apps send audio to their own
+servers for transcription, so volunteers should talk about objects, not about the people who gave
+them, and it's worth checking where each app keeps its recordings.
+
+**What user feedback should tell us first:**
+
+- Whether typing is really where volunteers struggle.
+- Whether they would be comfortable talking to a phone in a shared store room.
+- Which questions they find hardest to answer in writing.
 
 ## Open decisions
 
@@ -275,3 +360,5 @@ A stage is complete when:
 | 2026-09-03 | Volunteers can photograph objects that are already catalogued | Imported records never reach a phone, so their photographs couldn't be improved | 53d8e8d |
 | 2026-09-03 | A bare `/` opens the catalogue on a desk and capture on a phone | The museum doesn't want desk users on the data-entry screen, or volunteers browsing on phones | db56401 |
 | 2026-09-15 | Work tracked in stages, with this brief, a status file and a development log | A method for tracking each development stage between sessions | This file |
+| 2026-09-15 | Development paused until real users have given feedback. Voice annotation recorded as the intended next major capability, possibly developed separately | The app is working well; what comes next should come from real use | "Future direction" above |
+| 2026-09-15 | Pause set aside for the Collection page (Stage 8) | The list stopped showing records past the fiftieth, and got slower with every photograph | Stage 8 |
