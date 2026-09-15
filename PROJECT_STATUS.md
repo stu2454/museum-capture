@@ -7,8 +7,8 @@ Last updated: 2026-09-15
 **Development is paused (2026-09-15) until real users have given feedback, with one exception.**
 The Collection page stopped showing records past the fiftieth and got slower with every
 photograph, so Stage 8 (a collection page that scales) was taken up as a priority the same day.
-It was deployed on 2026-09-15, and the existing photographs were given thumbnails. The live site
-still needs checking by a person on a desk and on a phone. Nothing else is planned until
+It was deployed on 2026-09-15, the existing photographs were given thumbnails, and it has been
+checked working on a desk and on a phone. Stage 8 is complete. Nothing else is planned until
 feedback is in. The next major capability in mind is voice annotation; see "Future direction" in
 [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
@@ -25,13 +25,14 @@ round trip works for the museum's 35 public eHive records. The last development 
 Repository and deployment:
 
 - **Repository.** https://github.com/stu2454/museum-capture — branch `main`.
-- **Last commit.** Stage 8 (ce1c4c6), followed by a documentation commit recording its
-  deployment. Not pushed: `origin/main` is at 9f6d7f3.
+- **Last commit.** The end-of-session documentation commit of 2026-09-15, pushed to `origin/main`
+  together with the Stage 8 commits (ce1c4c6, ea3d17b).
 - **Live site.** https://museum-capture.stu2038.workers.dev (Cloudflare Access; sign-in required).
 - **Last deployment.** 2026-09-15, version `c5c1bf6c`, from commit ce1c4c6. `npm run deploy` ran
   straight after committing, on a clean working tree. Its bundle, `index-CCkcHLwM.js`, is the
   build the browser test passed against. The live site has not yet been opened in a browser.
-- **Work in progress.** Stage 8, deployed; waiting for the live check on a desk and a phone. Stage 5,
+- **Work in progress.** Stage 5, gathering user feedback. An email asking the accessioning team to
+  suggest collection categories (no more than ten) was drafted on 2026-09-15. Stage 5,
   gathering user feedback, continues alongside.
 - **Uncommitted at handover.** None. Two older notes:
   - `docs/artefact-catalogue-for-volunteers.pptx` was edited in PowerPoint after generation and
@@ -54,7 +55,7 @@ is recorded.
 | 5 — Volunteer rollout | In progress: gathering user feedback | Development paused until feedback is in; deck committed at 41 MB |
 | 6 — Housekeeping before the catalogue grows | Proposed; on hold | Waits for feedback, like all development |
 | 7 — The whole eHive collection | Proposed; blocked on eHive | Waiting on eHive about private records |
-| 8 — A collection page that scales | Deployed 2026-09-15; live check outstanding | Thumbnails made for all existing photographs |
+| 8 — A collection page that scales | Complete 2026-09-15 | Live on desk and phone; photographs from a phone arrive with thumbnails |
 
 ## The catalogue as the server holds it
 
@@ -89,7 +90,7 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 | Issue | User impact | Evidence / location | Next action |
 |---|---|---|---|
-| The capture app's thumbnail upload hasn't been tried in a browser | If it fails, those photographs show full size in the list until the script is re-run | `src/sync.ts`; shares `src/thumbnail.ts` with the path that was tested | After deploying, catalogue one object with a photograph on a phone |
+| Photographs can stay on the phone after their record reaches the server, while the home screen says "All records backed up" | A record shows fewer photographs than were taken until the app is next opened; if the phone's storage were cleared first, they'd be lost | S123455 on 2026-09-15: photograph 1 sent at 03:54, photographs 2–4 at 04:14 when the app was reopened. `src/App.tsx:127` counts records only. `uploadPhotos` in `src/sync.ts` sends each thumbnail before the next photograph | Proposed fix, awaiting the go-ahead (see next task). All four photographs of S123455 did arrive; the maintainer confirmed them on the record |
 | We hold 35 of eHive's 66 records; the 31 private ones are unreachable | The duplicate-number warning is blind to private records, and so are the pick-list checks | AGENTS.md, "Private records"; 312a036 | Waiting on eHive (Stage 7) |
 | M1723 is used for two objects in eHive, and one eHive record has no number | Risk of mis-filing; the uniform has no photograph | `HOLD` in `scripts/attach-ehive-images.mjs` | Museum checking the register; fix in eHive; then re-run the script |
 | Slides edited by hand after generation | Re-running the generator would lose the images; a 41 MB file is too big to email or commit comfortably | `git status`; brief open decision 10 | Decide generated or hand-edited; shrink the EMF; commit |
@@ -115,7 +116,8 @@ Date: 2026-09-15, at commit ce1c4c6.
 | `npm run deploy` | Deployed, version `c5c1bf6c` | From ce1c4c6 |
 | `scripts/make-thumbnails.mjs` on the real collection | 89 made, 2 already small, 0 failed | All 91 live photographs. One downloaded back from R2: 300×400, 49 KB |
 | D1 queries (read-only) | As in "The catalogue as the server holds it" | Live database, earlier today |
-| Live site in a browser | Not checked | Behind Cloudflare Access; needs a person on a desk and on a phone |
+| Live site in a browser | Works on a desk and on a phone | Reported by the maintainer, 2026-09-15 |
+| Thumbnail from a phone upload | Works | All four photographs of S123455, catalogued on a phone, have 300×400 thumbnails in R2 |
 
 The browser test covered:
 
@@ -144,18 +146,19 @@ Rerun the relevant checks after any later code change.
 
 ## Next recommended task
 
-**Check Stage 8 on the live site.** It was deployed, and the existing photographs given
-thumbnails, on 2026-09-15. What's left needs a person signed in.
+**Decide whether to fix photographs lingering on the phone** (the first known issue). It is
+small and it protects volunteers' photographs, so it may be worth doing during the pause if the
+maintainer agrees. The proposed fix:
 
-1. On a desk and on a phone, check:
-   - the tools are at the top and the count is right
-   - a record opens, and Back returns to the same place
-   - photographs load quickly
-2. Catalogue one object with a photograph on a phone, and check its thumbnail arrives. This is
-   the one path not tried in a browser. A photograph that misses out can be given one with
-   `node scripts/make-thumbnails.mjs <photo id>`.
+- The home screen's backup line counts photographs still on the device, so it never says "All
+  records backed up" while any are waiting.
+- Every photograph is sent before any thumbnail, so the originals go first.
+- A sync starts when the app comes back to the front, not only on opening, when the connection
+  returns, and every five minutes.
 
-**Done when** both are checked and recorded here. That completes Stage 8.
+**Done when** a record catalogued on a phone with several photographs, and the phone locked
+straight afterwards, shows all of them once the app is reopened, and the backup line never
+claims otherwise in between.
 
 **Then: get real user feedback before any further development.**
 

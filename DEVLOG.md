@@ -311,3 +311,35 @@ this log summarises and cites them.
 - **Next.** Check the live site on a desk and a phone, and that a photograph catalogued on a
   phone gets its thumbnail.
 - **Git.** Committed; not pushed.
+
+## 2026-09-15 — Stage 8 complete; photographs lingering on a phone
+
+### Change and reason
+
+- **Stage 8 complete.** The maintainer confirmed the live Collection page works on a desk and on a
+  phone. All four photographs of test record S123455, catalogued on a phone, have 300×400
+  thumbnails in R2, so the capture app's thumbnail path works too.
+- **Found: photographs can stay on the phone after their record reaches the server.** The
+  maintainer took four photographs of S123455 and saw one in the collection.
+  - All four did arrive, but 20 minutes apart. The sync at 03:54:12 sent the record, and
+    photograph 1 followed at 03:54:17. Photographs 2–4 went at 04:14:49–04:15:05, before the next
+    sync at 04:16. So the same upload run was frozen and later resumed, most likely because the
+    phone was locked or the app put away. The photo ids show all four were taken within about 22
+    seconds.
+  - Two things in the app made it worse. The home screen's backup line counts records, not
+    photographs, so it said everything was backed up. And each upload now makes and sends a
+    thumbnail before the next photograph, which lengthens the time the app must stay open.
+  - Recorded as a known issue with a proposed fix; nothing changed yet.
+- **Collection categories.** Drafted an email asking the accessioning team to suggest up to ten.
+  Recorded as open decision 11.
+
+### Validation
+
+- Read-only queries of D1 (photos, sync log, sync errors) and R2 (the four thumbnails).
+
+### Handover
+
+- The maintainer confirmed all four photographs now show on the record.
+- Session ended here. Next: the maintainer decides on the lingering-photographs fix, and the
+  accessioning team's category suggestions come back.
+- Git: committed and pushed at the end of the session.
