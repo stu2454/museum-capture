@@ -4,11 +4,11 @@ Last updated: 2026-09-23
 
 ## Where we left off
 
-**Photo-backup fix implemented locally (2026-09-23), awaiting deployment.** The maintainer
+**Photo-backup fix deployed (2026-09-23), awaiting signed-in phone verification.** The maintainer
 authorised this exception to the development pause. The home screen counts pending photographs,
 originals upload before thumbnails, and returning to the foreground triggers sync. Backup
 acknowledgements preserve concurrent edits; failed uploads remain pending. Typecheck, build and
-local Chromium regression checks passed. A real phone lock/reopen check remains after deployment.
+local Chromium regression checks passed. The live URL reaches Cloudflare Access; a signed-in real phone lock/reopen check remains.
 
 Stage 8 was deployed and confirmed on desktop and phone on 2026-09-15. Other development stays
 paused until real user feedback is in. The next major capability in mind is voice annotation;
@@ -26,12 +26,13 @@ round trip works for the museum's 35 public eHive records. Earlier work complete
 Repository and deployment:
 
 - **Repository.** https://github.com/stu2454/museum-capture — branch `main`.
-- **Latest work.** Photo-backup fix and documentation, 2026-09-23; local commit, not pushed or
-  deployed. The previous pushed commit is 9dd0fc8 (2026-09-15).
+- **Latest work.** Photo-backup fix db977e2 pushed to `origin/main` and deployed 2026-09-23.
+  This deployment handover is committed and pushed separately.
 - **Live site.** https://museum-capture.stu2038.workers.dev (Cloudflare Access; sign-in required).
-- **Last deployment.** 2026-09-15, version `c5c1bf6c`, from commit ce1c4c6. `npm run deploy` ran
-  straight after committing, on a clean working tree. Its bundle, `index-CCkcHLwM.js`, is the
-  build the browser test passed against. The maintainer confirmed that deployment on desktop and phone.
+- **Last deployment.** 2026-09-23, version `cc49d219-add4-477e-b0a4-d6fa2eea1509`, from
+  db977e2 on a clean working tree. `npm run deploy` rebuilt and uploaded
+  `index-DEfnztaq.js`. The live browser reached Cloudflare Access sign-in; signed-in app
+  behaviour and a physical phone lock/reopen check remain unverified.
 - **Work in progress.** Stage 5, gathering user feedback. An email asking the accessioning team to
   suggest collection categories (no more than ten) was drafted on 2026-09-15. Stage 5,
   gathering user feedback, continues alongside.
@@ -91,7 +92,7 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 | Issue | User impact | Evidence / location | Next action |
 |---|---|---|---|
-| Photographs can stay on the phone after their record reaches the server, while the home screen says "All records backed up" | A record shows fewer photographs than were taken until the app is next opened; if the phone's storage were cleared first, they'd be lost | S123455 on 2026-09-15: photograph 1 sent at 03:54, photographs 2–4 at 04:14 when the app was reopened. `src/App.tsx:127` counts records only. `uploadPhotos` in `src/sync.ts` sends each thumbnail before the next photograph | Fixed locally 2026-09-23; awaiting deployment and a real phone lock/reopen check. All four photographs of S123455 did arrive |
+| Photographs can stay on the phone after their record reaches the server, while the home screen says "All records backed up" | A record shows fewer photographs than were taken until the app is next opened; if the phone's storage were cleared first, they'd be lost | S123455 on 2026-09-15: photograph 1 sent at 03:54, photographs 2–4 at 04:14 when the app was reopened. `src/App.tsx:127` counts records only. `uploadPhotos` in `src/sync.ts` sends each thumbnail before the next photograph | Deployed 2026-09-23; awaiting a signed-in real phone lock/reopen check. All four photographs of S123455 did arrive |
 | We hold 35 of eHive's 66 records; the 31 private ones are unreachable | The duplicate-number warning is blind to private records, and so are the pick-list checks | AGENTS.md, "Private records"; 312a036 | Waiting on eHive (Stage 7) |
 | M1723 is used for two objects in eHive, and one eHive record has no number | Risk of mis-filing; the uniform has no photograph | `HOLD` in `scripts/attach-ehive-images.mjs` | Museum checking the register; fix in eHive; then re-run the script |
 | Slides edited by hand after generation | Re-running the generator would lose the images; a 41 MB file is too big to email or commit comfortably | `git status`; brief open decision 10 | Decide generated or hand-edited; shrink the EMF; commit |
@@ -105,7 +106,7 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 ## Latest validation
 
-2026-09-23 photo-backup fix (local; no live data touched):
+2026-09-23 photo-backup fix (local tests and production deployment; no collection records changed):
 
 - `npm run typecheck`, `npm run build`, and `git diff --check` passed.
 - Chromium with real IndexedDB and mocked API responses passed partial upload failure/retry,
@@ -113,7 +114,9 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
   stale capture-form saves preserving acknowledgements, and foreground listener/cleanup checks.
 - Pending-photo-only backup message checked at 390px and 1280px; screenshots inspected.
 - Harness: `/private/tmp/test-photo-backup.cjs` (session scratch file, not in the repository).
-- Not yet checked on a physical phone or deployed. Phone suspension cannot be reproduced by
+- `npm run deploy` passed, version `cc49d219-add4-477e-b0a4-d6fa2eea1509`. Live Chromium
+  reached the Cloudflare Access sign-in page (HTTP 200); no authenticated browser session was
+  available. Not yet checked on a physical phone. Phone suspension cannot be reproduced by
   the foreground-event simulation alone. Interrupted thumbnail work may leave the server using
   the original image as its fallback; originals remain backed up.
 
@@ -161,8 +164,8 @@ Rerun the relevant checks after any later code change.
 
 ## Next recommended task
 
-**Deploy the photo-backup fix with the maintainer's approval**, then catalogue several photos
-on a phone, lock it immediately, reopen the app and confirm all photographs reach the record.
+**Verify the deployed photo-backup fix on a signed-in phone:** catalogue several photos,
+lock it immediately, reopen the app and confirm all photographs reach the record.
 The backup message must show pending photographs until they are acknowledged by the server.
 The implementation and local browser checks are complete; the physical-phone acceptance check
 is still outstanding.

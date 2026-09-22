@@ -370,3 +370,16 @@ Handover: implementation committed locally with these notes; not pushed or deplo
 requires the maintainer's approval, followed by the physical phone lock/reopen check. Chromium
 foreground-event simulation does not establish iOS suspension behaviour. Interrupted thumbnails
 may need the existing thumbnail script later; the server falls back to the original.
+
+
+## 2026-09-23 — Photo-backup fix deployed
+
+With the maintainer's explicit deployment approval, pushed db977e2 to `origin/main` and ran
+`npm run deploy` from a clean working tree. The production build passed and Cloudflare reported
+version `cc49d219-add4-477e-b0a4-d6fa2eea1509`; the uploaded application bundle is
+`index-DEfnztaq.js`. No database migration or collection-data change was needed.
+
+A live Chromium visit reached Cloudflare Access sign-in (HTTP 200). This confirms the sign-in
+route responds, not that the authenticated app works. No authenticated browser session was
+available. The maintainer's physical phone lock/reopen acceptance check remains outstanding.
+Deployment notes committed and pushed with this handover.
