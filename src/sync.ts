@@ -81,7 +81,14 @@ async function sha256(blob: Blob): Promise<string | null> {
   }
 }
 
-export async function syncNow(): Promise<SyncOutcome> {
+let activeSync: Promise<SyncOutcome> | null = null;
+
+export function syncNow(): Promise<SyncOutcome> {
+  if (!activeSync) activeSync = performSync().finally(() => { activeSync = null; });
+  return activeSync;
+}
+
+async function performSync(): Promise<SyncOutcome> {
   const outcome: SyncOutcome = {
     pushed: 0,
     pulled: 0,
@@ -96,11 +103,10 @@ export async function syncNow(): Promise<SyncOutcome> {
     return outcome;
   }
 
-  const since = localStorage.getItem(SINCE_KEY) ?? undefined;
-  const all = await records.all();
-  const pending = all.filter((r) => !r.syncedAt || r.updatedAt > r.syncedAt);
-
   try {
+    const since = localStorage.getItem(SINCE_KEY) ?? undefined;
+    const all = await records.all();
+    const pending = all.filter((r) => !r.syncedAt || r.updatedAt > r.syncedAt);
     // Page through, because the server caps a batch at 20 records.
     for (let i = 0; i < Math.max(pending.length, 1); i += BATCH) {
       const slice = pending.slice(i, i + BATCH);
@@ -129,8 +135,8 @@ export async function syncNow(): Promise<SyncOutcome> {
       }
 
       for (const id of result.applied as string[]) {
-        const record = await records.get(id);
-        if (record) await records.put({ ...record, syncedAt: result.server_time });
+        const sent = slice.find((record) => record.id === id);
+        if (sent) await records.markSynced(id, sent.updatedAt, result.server_time);
       }
       outcome.pushed += (result.applied as string[]).length;
       outcome.superseded.push(...(result.superseded as string[]));
@@ -165,7 +171,7 @@ export async function syncNow(): Promise<SyncOutcome> {
       if (slice.length === 0) break;
     }
 
-    outcome.photosUploaded = await uploadPhotos(all);
+    outcome.photosUploaded = await uploadPhotos(await records.all());
   } catch (error) {
     // A single failure is not worth showing anyone — no signal in a store room is
     // normal and the records are safe locally. But a fault that persists for
@@ -187,11 +193,13 @@ export async function syncNow(): Promise<SyncOutcome> {
 
 async function uploadPhotos(all: ArtefactRecord[]): Promise<number> {
   let uploaded = 0;
+  const thumbnails: { id: string; photoId: string }[] = [];
   for (const record of all) {
     for (const photo of record.photos) {
       if (photo.uploadedAt) continue;
       const blob = await photos.get(photo.id);
-      if (!blob) continue;
+      if (!blob) throw new Error("A pending photograph is missing from this device");
+      const checksum = await sha256(blob);
 
       const response = await fetch(`/api/photos/${photo.id}`, {
         method: "PUT",
@@ -199,20 +207,25 @@ async function uploadPhotos(all: ArtefactRecord[]): Promise<number> {
           "Content-Type": "image/jpeg",
           "X-Record-Id": record.id,
           "X-Primary": photo.primary ? "1" : "0",
-          ...((await sha256(blob)) ? { "X-Sha256": (await sha256(blob)) as string } : {}),
+          ...(checksum ? { "X-Sha256": checksum } : {}),
         },
         body: blob,
       });
 
-      if (response.ok) {
-        photo.uploadedAt = new Date().toISOString();
-        await records.put(record);
-        uploaded += 1;
-        // The server may already hold these bytes under another id, and says which.
-        const saved = (await response.json().catch(() => null)) as { id?: string } | null;
-        await sendThumbnail(saved?.id ?? photo.id, blob);
-      }
+      if (!response.ok) throw new Error(`Photo upload failed: ${response.status}`);
+      // A sign-in redirect can return HTML with status 200. Only acknowledge
+      // the photograph after the API confirms which id it stored.
+      const saved = await response.json() as { id?: string };
+      if (!saved.id) throw new Error("Photo upload was not acknowledged");
+      await records.markPhotoUploaded(record.id, photo.id);
+      uploaded += 1;
+      thumbnails.push({ id: saved.id, photoId: photo.id });
     }
+  }
+  // Originals are the backup. Thumbnails are optional and must wait their turn.
+  for (const thumbnail of thumbnails) {
+    const blob = await photos.get(thumbnail.photoId);
+    if (blob) await sendThumbnail(thumbnail.id, blob);
   }
   return uploaded;
 }
@@ -272,17 +285,22 @@ function fromWire(wire: WireRecord, syncedAt: string, local?: ArtefactRecord): A
 }
 
 /**
- * Sync when the app opens and whenever the connection returns. Not on every
+ * Sync when the app opens, returns to the foreground, or regains its connection. Not on every
  * keystroke: batching is cheaper on D1's write allowance and kinder to a phone
  * hunting for signal in a tin-roofed store room.
  */
 export function startAutoSync(onResult?: (outcome: SyncOutcome) => void) {
   const run = () => void syncNow().then((outcome) => onResult?.(outcome));
   run();
+  const onVisible = () => {
+    if (document.visibilityState === "visible") run();
+  };
   window.addEventListener("online", run);
+  document.addEventListener("visibilitychange", onVisible);
   const timer = setInterval(run, 5 * 60 * 1000);
   return () => {
     window.removeEventListener("online", run);
+    document.removeEventListener("visibilitychange", onVisible);
     clearInterval(timer);
   };
 }

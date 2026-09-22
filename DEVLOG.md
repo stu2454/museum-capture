@@ -343,3 +343,30 @@ this log summarises and cites them.
 - Session ended here. Next: the maintainer decides on the lingering-photographs fix, and the
   accessioning team's category suggestions come back.
 - Git: committed and pushed at the end of the session.
+
+
+## 2026-09-23 — Photo-backup status and upload recovery
+
+The maintainer authorised the proposed fix during the feedback pause.
+
+- The home screen counts pending photographs separately from record changes and asks the
+  volunteer to keep the app open while either is waiting. Only confirmed originals count as
+  backed up; thumbnails are optional.
+- All queued originals upload before thumbnails. Failed HTTP responses, missing blobs and
+  responses without a saved photo id remain pending and enter existing sync-failure tracking.
+- Returning to the foreground triggers sync. Simultaneous triggers share one active run.
+- Backup metadata updates use IndexedDB transactions against the current record, preserving
+  edits made during uploads. Later capture-form saves retain photo acknowledgements. A record
+  acknowledgement only marks the version actually sent, without changing its edit timestamp.
+- Re-read records after record sync so server removals are respected by photo uploads.
+
+Validation: typecheck and production build passed. Chromium using real IndexedDB and mocked API
+responses passed failure/retry, upload ordering, concurrent sync, concurrent edit, stale form,
+metadata and visibility-event checks. The pending-photo-only message passed at phone (390px)
+and desktop (1280px) widths; both screenshots inspected. Test harness is in the session scratch
+file `/private/tmp/test-photo-backup.cjs`. No production data was changed.
+
+Handover: implementation committed locally with these notes; not pushed or deployed. Deployment
+requires the maintainer's approval, followed by the physical phone lock/reopen check. Chromium
+foreground-event simulation does not establish iOS suspension behaviour. Interrupted thumbnails
+may need the existing thumbnail script later; the server falls back to the original.

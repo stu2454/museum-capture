@@ -59,7 +59,7 @@ export default function App() {
     void loadIdentity().then(setIdentity);
   }, []);
 
-  // Sync runs in the background: on load, when the connection returns, and every
+  // Sync runs in the background: on load, on returning to the foreground, when the connection returns, and every
   // few minutes. It is never a precondition for cataloguing — IndexedDB stays the
   // working copy and the app is fully usable with no signal.
   useEffect(
@@ -145,6 +145,7 @@ export default function App() {
         }))
       }
       unsynced={unsynced}
+      pendingPhotos={list.reduce((count, record) => count + record.photos.filter((photo) => !photo.uploadedAt).length, 0)}
       onHelp={() => setShowHelp(true)}
       failingSince={sync?.failingSince}
       onOpen={setOpenId}

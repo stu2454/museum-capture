@@ -18,6 +18,7 @@ interface Props {
   onProfile: (person: Person) => void;
   onHelp: () => void;
   unsynced?: number;
+  pendingPhotos?: number;
   failingSince?: string;
   onOpen: (id: string) => void;
   onStart: () => void;
@@ -34,6 +35,7 @@ export function RecordList({
   onCataloguer,
   onProfile,
   unsynced = 0,
+  pendingPhotos = 0,
   failingSince,
   onHelp,
   onOpen,
@@ -84,9 +86,12 @@ export function RecordList({
           network message. */}
       {list.length > 0 && (
         <p className="eyebrow" style={{ margin: "0 0 14px" }}>
-          {unsynced > 0
-            ? `${unsynced} ${unsynced === 1 ? "record" : "records"} not yet backed up`
-            : "All records backed up"}
+          {unsynced > 0 || pendingPhotos > 0
+            ? [
+                unsynced > 0 ? `${unsynced} ${unsynced === 1 ? "record" : "records"}` : null,
+                pendingPhotos > 0 ? `${pendingPhotos} ${pendingPhotos === 1 ? "photograph" : "photographs"}` : null,
+              ].filter(Boolean).join(" and ") + " not yet backed up. Keep the app open to finish backing up."
+            : "All records and photographs backed up"}
         </p>
       )}
 

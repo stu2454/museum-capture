@@ -52,14 +52,58 @@ function tx<T>(store: string, mode: IDBTransactionMode, run: (s: IDBObjectStore)
   );
 }
 
+/** Update backup metadata without overwriting edits made during a network request. */
+function updateRecord(id: string, change: (record: ArtefactRecord) => ArtefactRecord): Promise<void> {
+  return open().then((db) => new Promise((resolve, reject) => {
+    const transaction = db.transaction(RECORDS, "readwrite");
+    const store = transaction.objectStore(RECORDS);
+    const request = store.get(id);
+    request.onsuccess = () => {
+      if (request.result) store.put(change(request.result));
+    };
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  }));
+}
+
 export const records = {
   all: () =>
     tx<ArtefactRecord[]>(RECORDS, "readonly", (s) => s.getAll()).then((rows) =>
       rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     ),
   get: (id: string) => tx<ArtefactRecord | undefined>(RECORDS, "readonly", (s) => s.get(id)),
-  put: (record: ArtefactRecord) =>
-    tx<IDBValidKey>(RECORDS, "readwrite", (s) => s.put({ ...record, updatedAt: new Date().toISOString() })),
+  put: (record: ArtefactRecord) => open().then((db) => new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(RECORDS, "readwrite");
+    const store = transaction.objectStore(RECORDS);
+    const request = store.get(record.id);
+    request.onsuccess = () => {
+      const saved = request.result as ArtefactRecord | undefined;
+      // The capture screen may still hold the copy from before a background
+      // upload. Keep acknowledgements when saving the volunteer's next edit.
+      store.put({
+        ...record,
+        syncedAt: saved?.syncedAt ?? record.syncedAt,
+        photos: record.photos.map((photo) => ({
+          ...photo,
+          uploadedAt: saved?.photos.find((old) => old.id === photo.id)?.uploadedAt ?? photo.uploadedAt,
+        })),
+        updatedAt: new Date().toISOString(),
+      });
+    };
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  })),
+  markSynced: (id: string, sentAt: string, serverTime: string) =>
+    updateRecord(id, (record) => record.updatedAt === sentAt
+      ? { ...record, syncedAt: serverTime } : record),
+  markPhotoUploaded: (id: string, photoId: string) =>
+    updateRecord(id, (record) => ({
+      ...record,
+      photos: record.photos.map((photo) => photo.id === photoId
+        ? { ...photo, uploadedAt: new Date().toISOString() } : photo),
+    })),
   remove: (id: string) => tx<undefined>(RECORDS, "readwrite", (s) => s.delete(id)),
 };
 

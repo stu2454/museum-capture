@@ -129,7 +129,13 @@ no signal. Photos are downscaled to 2000px on the way in, EXIF rotation is appli
 ends up sideways, and iPhone HEIC files are converted to JPEG.
 
 They then **sync in the background** to Cloudflare — D1 for records, R2 for photographs — and a
-snapshot is written to R2 every Monday. Two things still matter:
+snapshot is written to R2 every Monday. Sync runs on opening, when the app returns to the
+foreground, when the connection returns, and every five minutes. Originals upload before
+thumbnails. The home screen counts both records and photographs still waiting for backup;
+keep the app open until it says “All records and photographs backed up”. A locked phone may
+pause uploads; reopen the app to resume them.
+
+Two things still matter:
 
 - **Anything captured between syncs lives only on the device.** A device that has never signed
   in never syncs at all.

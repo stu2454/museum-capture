@@ -1,5 +1,5 @@
 /**
- * Sending a photograph's thumbnail, straight after the photograph itself.
+ * Sending a photograph's thumbnail after its original has reached the server.
  *
  * Both upload paths call this: the capture app's sync and the catalogue's photo
  * queue. The thumbnail is made from the copy already held on the device at the

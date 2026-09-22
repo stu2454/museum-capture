@@ -1,20 +1,21 @@
 # Museum Artefact Capture — current status
 
-Last updated: 2026-09-15
+Last updated: 2026-09-23
 
 ## Where we left off
 
-**Development is paused (2026-09-15) until real users have given feedback, with one exception.**
-The Collection page stopped showing records past the fiftieth and got slower with every
-photograph, so Stage 8 (a collection page that scales) was taken up as a priority the same day.
-It was deployed on 2026-09-15, the existing photographs were given thumbnails, and it has been
-checked working on a desk and on a phone. Stage 8 is complete. Nothing else is planned until
-feedback is in. The next major capability in mind is voice annotation; see "Future direction" in
-[PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+**Photo-backup fix implemented locally (2026-09-23), awaiting deployment.** The maintainer
+authorised this exception to the development pause. The home screen counts pending photographs,
+originals upload before thumbnails, and returning to the foreground triggers sync. Backup
+acknowledgements preserve concurrent edits; failed uploads remain pending. Typecheck, build and
+local Chromium regression checks passed. A real phone lock/reopen check remains after deployment.
+
+Stage 8 was deployed and confirmed on desktop and phone on 2026-09-15. Other development stays
+paused until real user feedback is in. The next major capability in mind is voice annotation;
+see "Future direction" in [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
 The capture app and catalogue are built, deployed and in use behind Cloudflare Access. The eHive
-round trip works for the museum's 35 public eHive records. The last development session was
-2026-09-03 (Stage 4 complete, briefing slides generated). Since then:
+round trip works for the museum's 35 public eHive records. Earlier work completed Stage 4 and generated briefing slides on 2026-09-03. Since then:
 
 - The slides were edited in PowerPoint; those edits were committed as they stood on 2026-09-15.
 - One record was synced on 2026-09-09.
@@ -25,12 +26,12 @@ round trip works for the museum's 35 public eHive records. The last development 
 Repository and deployment:
 
 - **Repository.** https://github.com/stu2454/museum-capture — branch `main`.
-- **Last commit.** The end-of-session documentation commit of 2026-09-15, pushed to `origin/main`
-  together with the Stage 8 commits (ce1c4c6, ea3d17b).
+- **Latest work.** Photo-backup fix and documentation, 2026-09-23; local commit, not pushed or
+  deployed. The previous pushed commit is 9dd0fc8 (2026-09-15).
 - **Live site.** https://museum-capture.stu2038.workers.dev (Cloudflare Access; sign-in required).
 - **Last deployment.** 2026-09-15, version `c5c1bf6c`, from commit ce1c4c6. `npm run deploy` ran
   straight after committing, on a clean working tree. Its bundle, `index-CCkcHLwM.js`, is the
-  build the browser test passed against. The live site has not yet been opened in a browser.
+  build the browser test passed against. The maintainer confirmed that deployment on desktop and phone.
 - **Work in progress.** Stage 5, gathering user feedback. An email asking the accessioning team to
   suggest collection categories (no more than ten) was drafted on 2026-09-15. Stage 5,
   gathering user feedback, continues alongside.
@@ -90,7 +91,7 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 
 | Issue | User impact | Evidence / location | Next action |
 |---|---|---|---|
-| Photographs can stay on the phone after their record reaches the server, while the home screen says "All records backed up" | A record shows fewer photographs than were taken until the app is next opened; if the phone's storage were cleared first, they'd be lost | S123455 on 2026-09-15: photograph 1 sent at 03:54, photographs 2–4 at 04:14 when the app was reopened. `src/App.tsx:127` counts records only. `uploadPhotos` in `src/sync.ts` sends each thumbnail before the next photograph | Proposed fix, awaiting the go-ahead (see next task). All four photographs of S123455 did arrive; the maintainer confirmed them on the record |
+| Photographs can stay on the phone after their record reaches the server, while the home screen says "All records backed up" | A record shows fewer photographs than were taken until the app is next opened; if the phone's storage were cleared first, they'd be lost | S123455 on 2026-09-15: photograph 1 sent at 03:54, photographs 2–4 at 04:14 when the app was reopened. `src/App.tsx:127` counts records only. `uploadPhotos` in `src/sync.ts` sends each thumbnail before the next photograph | Fixed locally 2026-09-23; awaiting deployment and a real phone lock/reopen check. All four photographs of S123455 did arrive |
 | We hold 35 of eHive's 66 records; the 31 private ones are unreachable | The duplicate-number warning is blind to private records, and so are the pick-list checks | AGENTS.md, "Private records"; 312a036 | Waiting on eHive (Stage 7) |
 | M1723 is used for two objects in eHive, and one eHive record has no number | Risk of mis-filing; the uniform has no photograph | `HOLD` in `scripts/attach-ehive-images.mjs` | Museum checking the register; fix in eHive; then re-run the script |
 | Slides edited by hand after generation | Re-running the generator would lose the images; a 41 MB file is too big to email or commit comfortably | `git status`; brief open decision 10 | Decide generated or hand-edited; shrink the EMF; commit |
@@ -103,6 +104,20 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 | No automated tests | Regressions are caught only by typecheck and by hand | `package.json` | Accepted for now |
 
 ## Latest validation
+
+2026-09-23 photo-backup fix (local; no live data touched):
+
+- `npm run typecheck`, `npm run build`, and `git diff --check` passed.
+- Chromium with real IndexedDB and mocked API responses passed partial upload failure/retry,
+  originals-before-thumbnails ordering, overlapping sync coalescing, edits during upload,
+  stale capture-form saves preserving acknowledgements, and foreground listener/cleanup checks.
+- Pending-photo-only backup message checked at 390px and 1280px; screenshots inspected.
+- Harness: `/private/tmp/test-photo-backup.cjs` (session scratch file, not in the repository).
+- Not yet checked on a physical phone or deployed. Phone suspension cannot be reproduced by
+  the foreground-event simulation alone. Interrupted thumbnail work may leave the server using
+  the original image as its fallback; originals remain backed up.
+
+### Previous deployed validation
 
 Date: 2026-09-15, at commit ce1c4c6.
 
@@ -146,19 +161,11 @@ Rerun the relevant checks after any later code change.
 
 ## Next recommended task
 
-**Decide whether to fix photographs lingering on the phone** (the first known issue). It is
-small and it protects volunteers' photographs, so it may be worth doing during the pause if the
-maintainer agrees. The proposed fix:
-
-- The home screen's backup line counts photographs still on the device, so it never says "All
-  records backed up" while any are waiting.
-- Every photograph is sent before any thumbnail, so the originals go first.
-- A sync starts when the app comes back to the front, not only on opening, when the connection
-  returns, and every five minutes.
-
-**Done when** a record catalogued on a phone with several photographs, and the phone locked
-straight afterwards, shows all of them once the app is reopened, and the backup line never
-claims otherwise in between.
+**Deploy the photo-backup fix with the maintainer's approval**, then catalogue several photos
+on a phone, lock it immediately, reopen the app and confirm all photographs reach the record.
+The backup message must show pending photographs until they are acknowledged by the server.
+The implementation and local browser checks are complete; the physical-phone acceptance check
+is still outstanding.
 
 **Then: get real user feedback before any further development.**
 
