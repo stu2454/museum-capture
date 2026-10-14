@@ -5,9 +5,8 @@ Last updated: 2026-10-14
 ## Where we left off
 
 **Stage 9, the `/contribute` trial, is built and tested locally (2026-10-14); not deployed.** The
-maintainer set the development pause aside for it. Branch `contribute-trial`, committed locally
-in a cloud session that could not push to GitHub; handed over as a patch for the maintainer to
-apply in VS Code. To go live: apply the patch, `npm run db:migrate` (0010), optionally set the
+maintainer set the development pause aside for it. Branch `contribute-trial`, pushed to
+`origin/contribute-trial` (not merged to `main`). To go live: merge it, `npm run db:migrate` (0010), optionally set the
 `ANTHROPIC_API_KEY` secret, `npm run deploy`, then check the live site signed in. See Stage 9 in
 [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
@@ -67,7 +66,7 @@ is recorded.
 | 6 — Housekeeping before the catalogue grows | Proposed; on hold | Waits for feedback, like all development |
 | 7 — The whole eHive collection | Proposed; blocked on eHive | Waiting on eHive about private records |
 | 8 — A collection page that scales | Complete 2026-09-15 | Live on desk and phone; photographs from a phone arrive with thumbnails |
-| 9 — "What do you know about this?" contribution trial | In progress: built, tested locally, not deployed | 2026-10-14; branch `contribute-trial` |
+| 9 — "What do you know about this?" contribution trial | In progress: built, tested locally, not deployed | 2026-10-14; branch `contribute-trial`, pushed |
 
 ## The catalogue as the server holds it
 
@@ -197,7 +196,7 @@ Rerun the relevant checks after any later code change.
 
 ## Next recommended task
 
-**Stage 9 to the live site, then the trial.** Apply the patch, migrate, set the key if wanted,
+**Stage 9 to the live site, then the trial.** Merge `contribute-trial`, migrate, set the key if wanted,
 deploy, and check signed in on a desk and on the museum iPad: one typed answer, one recording,
 the computer's description, the review page. Then sit two or three volunteers in front of it
 for ten objects each and write up what happened (Stage 5 feedback). Watch for: do people talk

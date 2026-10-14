@@ -407,5 +407,7 @@ description made once per object. Recorded as Stage 9 in the brief.
 
 Validation: see PROJECT_STATUS.md, 2026-10-14. Local only.
 
-Handover: committed on branch `contribute-trial`; this session could not push to GitHub, so the
-work went to the maintainer as a patch. Not deployed; migration 0010 not applied remotely.
+Handover: committed on branch `contribute-trial` (f1dd091). GitHub first refused the push, so the
+work also went to the maintainer as a patch; once the Claude GitHub app was installed the branch
+was pushed to `origin/contribute-trial`. Not merged, not deployed; migration 0010 not applied
+remotely.
