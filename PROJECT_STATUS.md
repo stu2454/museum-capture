@@ -4,11 +4,12 @@ Last updated: 2026-10-14
 
 ## Where we left off
 
-**Stage 9, the `/contribute` trial, is built and tested locally (2026-10-14); not deployed.** The
-maintainer set the development pause aside for it. Branch `contribute-trial`, pushed to
-`origin/contribute-trial` (not merged to `main`). To go live: merge it, `npm run db:migrate` (0010), optionally set the
-`ANTHROPIC_API_KEY` secret, `npm run deploy`, then check the live site signed in. See Stage 9 in
-[PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+**Stage 9, the `/contribute` trial, merged into `main` and deployed (2026-10-14).**
+Commit b0a9ea0; production migration `0010_contributions.sql` applied successfully.
+Deployment version `d6bd972b-4707-4a8c-846b-aa4b1f17ee7e`. Typecheck and build passed.
+No `ANTHROPIC_API_KEY` secret is configured; the AI panel is hidden. A live HTTP check of
+`/contribute` reached Cloudflare Access sign-in (200). Signed-in desktop and phone checks
+remain outstanding; Stage 9 remains in progress.
 
 Earlier:
 
@@ -34,13 +35,10 @@ round trip works for the museum's 35 public eHive records. Earlier work complete
 Repository and deployment:
 
 - **Repository.** https://github.com/stu2454/museum-capture — branch `main`.
-- **Latest work.** Photo-backup fix db977e2 pushed to `origin/main` and deployed 2026-09-23.
-  This deployment handover is committed and pushed separately.
+- **Latest work.** Contribution trial b0a9ea0 merged into `main` on 2026-10-14.
 - **Live site.** https://museum-capture.stu2038.workers.dev (Cloudflare Access; sign-in required).
-- **Last deployment.** 2026-09-23, version `cc49d219-add4-477e-b0a4-d6fa2eea1509`, from
-  db977e2 on a clean working tree. `npm run deploy` rebuilt and uploaded
-  `index-DEfnztaq.js`. The live browser reached Cloudflare Access sign-in; signed-in app
-  behaviour and a physical phone lock/reopen check remain unverified.
+- **Last deployment.** 2026-10-14, version `d6bd972b-4707-4a8c-846b-aa4b1f17ee7e`, from
+  b0a9ea0. Migration 0010 applied. Signed-in contribution behaviour remains unverified.
 - **Work in progress.** Stage 5, gathering user feedback. An email asking the accessioning team to
   suggest collection categories (no more than ten) was drafted on 2026-09-15. Stage 5,
   gathering user feedback, continues alongside.
@@ -66,7 +64,7 @@ is recorded.
 | 6 — Housekeeping before the catalogue grows | Proposed; on hold | Waits for feedback, like all development |
 | 7 — The whole eHive collection | Proposed; blocked on eHive | Waiting on eHive about private records |
 | 8 — A collection page that scales | Complete 2026-09-15 | Live on desk and phone; photographs from a phone arrive with thumbnails |
-| 9 — "What do you know about this?" contribution trial | In progress: built, tested locally, not deployed | 2026-10-14; branch `contribute-trial`, pushed |
+| 9 — "What do you know about this?" contribution trial | In progress: deployed, awaiting signed-in checks | 2026-10-14; merged into `main`; migration 0010 applied |
 
 ## The catalogue as the server holds it
 

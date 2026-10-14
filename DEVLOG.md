@@ -411,3 +411,17 @@ Handover: committed on branch `contribute-trial` (f1dd091). GitHub first refused
 work also went to the maintainer as a patch; once the Claude GitHub app was installed the branch
 was pushed to `origin/contribute-trial`. Not merged, not deployed; migration 0010 not applied
 remotely.
+
+
+## 2026-10-14 — Contribution trial deployed
+
+At the maintainer's request, fast-forwarded `main` to `origin/contribute-trial` (b0a9ea0),
+applied production migration 0010 (six SQL commands), and deployed version
+`d6bd972b-4707-4a8c-846b-aa4b1f17ee7e`. Typecheck and production build passed.
+Wrangler initially failed because its native workerd binary was missing; `npm rebuild workerd`
+repaired the existing dependency. No source or lockfile change was needed.
+
+Secret names were checked: none configured. The optional Anthropic secret was left unset,
+so the AI panel stays hidden. A live HTTP request to `/contribute` reached Cloudflare Access
+sign-in (200). No authenticated session was available; signed-in desktop/phone verification
+and the earlier physical-phone photo-backup check remain outstanding.
