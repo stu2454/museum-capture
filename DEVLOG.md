@@ -411,3 +411,16 @@ Handover: committed on branch `contribute-trial` (f1dd091). GitHub first refused
 work also went to the maintainer as a patch; once the Claude GitHub app was installed the branch
 was pushed to `origin/contribute-trial`. Not merged, not deployed; migration 0010 not applied
 remotely.
+
+
+## 2026-10-14 — `npm run dev:local`
+
+The maintainer wanted to see /contribute on his own computer. Locally every /api call is refused
+(no Access header), and `npm run dev` has no Worker. Added `scripts/dev-signed-in.mjs`: builds,
+applies migrations to the local D1, runs `wrangler dev`, and forwards 127.0.0.1:8788 to it with
+the email header added. The Worker's sign-in code is unchanged.
+
+Validation: in the cloud session, the forwarder signed in as the seeded admin, the Worker port
+without it still refused, and headless Chromium opened /contribute (two objects) and /explore
+through it. Not yet run on the maintainer's Mac.
+
