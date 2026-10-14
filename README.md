@@ -19,6 +19,23 @@ npm run dev
 
 Open http://localhost:5173.
 
+### The whole app, with its server, signed in as you
+
+`npm run dev` serves the screens only; anything that needs the server (the collection,
+`/contribute`, sync) answers "you don't have access", because locally there is no Cloudflare
+Access to sign you in. For that:
+
+```bash
+npm run dev:local -- you@example.org
+```
+
+Then open http://localhost:8788/contribute (or `/explore`, or `/`). It builds the app, brings the
+**local** database up to date, runs the real Worker, and stands in for Access by adding your
+email to each request. The live database is never touched. On an empty local database the first
+email becomes admin; catalogue an object or two at `/` (choose photos from the library) to have
+something to look at. Put `ANTHROPIC_API_KEY=...` in `.dev.vars` to try the computer's
+description. Listens on this computer only.
+
 ### Testing on a phone or iPad
 
 ```bash

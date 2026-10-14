@@ -425,3 +425,16 @@ Secret names were checked: none configured. The optional Anthropic secret was le
 so the AI panel stays hidden. A live HTTP request to `/contribute` reached Cloudflare Access
 sign-in (200). No authenticated session was available; signed-in desktop/phone verification
 and the earlier physical-phone photo-backup check remain outstanding.
+
+
+## 2026-10-14 — `npm run dev:local`
+
+The maintainer wanted to see /contribute on his own computer. Locally every /api call is refused
+(no Access header), and `npm run dev` has no Worker. Added `scripts/dev-signed-in.mjs`: builds,
+applies migrations to the local D1, runs `wrangler dev`, and forwards 127.0.0.1:8788 to it with
+the email header added. The Worker's sign-in code is unchanged.
+
+Validation: in the cloud session, the forwarder signed in as the seeded admin, the Worker port
+without it still refused, and headless Chromium opened /contribute (two objects) and /explore
+through it. Not yet run on the maintainer's Mac.
+

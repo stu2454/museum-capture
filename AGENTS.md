@@ -263,6 +263,7 @@ Vite + React + TypeScript, PWA, on Cloudflare Workers. Rationale, so you can arg
 npm install
 npm run dev              # http://localhost:5173
 npm run dev:https        # for device testing — Home Screen and the SW need HTTPS
+npm run dev:local -- you@example.org  # Worker + local D1/R2, signed in as you (stands in for Access)
 npm run build            # tsc -b && vite build -> dist/
 npm run typecheck        # app AND worker; both must pass
 npm run deploy           # build, then wrangler deploy
@@ -338,6 +339,8 @@ migrations/                D1 schema, in order. Each file's header explains why 
 seeds/                     Data, not schema. Kept OUT of migrations/ because wrangler treats
                            everything in there as a migration and ordered a seed before the
                            migration that created its table.
+scripts/dev-signed-in.mjs  `npm run dev:local`: the real Worker locally, with a 127.0.0.1-only
+                           forwarder adding the Access email header. Never run it on a server.
 scripts/seed-schema.mjs    Turns the YAML into the seed SQL for db:seed.
 scripts/import-ehive-xml.mjs  Turns an eHive XML report into seeds/seed-ehive.sql.
 scripts/attach-ehive-images.mjs  One-off: matches eHive's photographs to records and
