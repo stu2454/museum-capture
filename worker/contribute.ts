@@ -319,23 +319,38 @@ async function review(env: Env, url: URL): Promise<Response> {
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 100);
   const offset = Math.max(Number(url.searchParams.get("offset")) || 0, 0);
 
-  const rows = await env.DB.prepare(
-    `SELECT c.id, c.record_id, c.question, c.question_text, c.body,
+  // The newest machine transcript of each recording, if there is one (migration
+  // 0011, made by transcribe/transcribe.py). If that migration hasn't been applied
+  // yet, the page still works, just without transcripts.
+  const base = `SELECT c.id, c.record_id, c.question, c.question_text, c.body,
             c.audio_r2_key IS NOT NULL AS has_audio, c.audio_seconds, c.ai_seen,
             c.contributed_by, c.speaking_for, c.created_at,
             r.registration_number, r.object_name,
             u.display_name AS contributor_name,
-            s.display_name AS speaking_for_name
-     FROM contributions c
+            s.display_name AS speaking_for_name`;
+  const from = `FROM contributions c
      JOIN records r ON r.id = c.record_id
      LEFT JOIN users u ON u.email = c.contributed_by
-     LEFT JOIN users s ON s.email = c.speaking_for
-     WHERE c.deleted_at IS NULL
+     LEFT JOIN users s ON s.email = c.speaking_for`;
+  const rest = `WHERE c.deleted_at IS NULL
      ORDER BY c.created_at DESC, c.id
-     LIMIT ?1 OFFSET ?2`
-  )
-    .bind(limit, offset)
-    .all();
+     LIMIT ?1 OFFSET ?2`;
+
+  let rows: D1Result;
+  try {
+    rows = await env.DB.prepare(
+      `${base}, t.text AS transcript_text, t.words_json AS transcript_words,
+              t.notes_json AS transcript_notes, t.engine AS transcript_engine
+       ${from}
+       LEFT JOIN transcripts t ON t.id = (
+         SELECT id FROM transcripts WHERE contribution_id = c.id ORDER BY created_at DESC, id DESC LIMIT 1)
+       ${rest}`
+    )
+      .bind(limit, offset)
+      .all();
+  } catch {
+    rows = await env.DB.prepare(`${base} ${from} ${rest}`).bind(limit, offset).all();
+  }
 
   const counted = await env.DB.prepare(
     `SELECT COUNT(*) AS n, COUNT(DISTINCT record_id) AS objects, COUNT(DISTINCT contributed_by) AS people

@@ -1,0 +1,40 @@
+# Local words the speech engine is likely to mishear.
+#
+# One per line. Places, local makers and brands, district features. When the
+# transcript contains a word that sounds like one of these but isn't spelled like
+# it ("Doriga"), it is shown as the listed word with what was actually heard kept
+# beside it. Nothing is changed silently, and the recording is always the truth.
+#
+# Keep it to words that are distinctive. A word that is also ordinary English or a
+# common first name (Megan, Leigh, Cascade) would "correct" real words, so it is
+# left out unless it is written with a capital in the transcript — the script only
+# considers capitalised words — and even then add it only if it keeps coming up.
+#
+# Add family and shop names as they recur in recordings. This file is in the repo,
+# so only add names that are already public (on signs, in histories, on Trove).
+
+Dorrigo
+Dorrigo Plateau
+Bellingen
+Bellinger
+Thora
+Bostobrick
+Hernani
+Ebor
+Brooklana
+Lowanna
+Ulong
+Tyringham
+Kalang
+Darkwood
+Gleniffer
+Dangar Falls
+Hickory Street
+Coffs Harbour
+Urunga
+Nambucca
+Guy Fawkes
+Point Lookout
+Armidale
+Grafton
+Alfa Laval

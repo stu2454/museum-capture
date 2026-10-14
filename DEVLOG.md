@@ -438,3 +438,26 @@ Validation: in the cloud session, the forwarder signed in as the seeded admin, t
 without it still refused, and headless Chromium opened /contribute (two objects) and /explore
 through it. Not yet run on the maintainer's Mac.
 
+
+## 2026-10-14 — Transcribing recorded contributions
+
+The maintainer recorded three answers about a household object (Scotty, Sts1234) and asked how
+to use them. Compared Parakeet TDT 0.6B v3 and Whisper small.en offline (sherpa-onnx, models from
+its GitHub releases). Both misheard "Dorrigo"; the maintainer identified "What is it?" as his
+wife speaking in the background, which Parakeet kept (in his answer) and Whisper dropped. A
+speaker-separation model could not split it; a loudness rule could, imperfectly. He chose to
+build on Parakeet with a word list and a quieter-stretch flag.
+
+- `migrations/0011_transcripts.sql`: append-only `transcripts`, restricted like contributions.
+- `transcribe/transcribe.py`: fetches untranscribed recordings with wrangler (`--remote` or
+  `--local`), converts with ffmpeg or the Mac's afconvert, transcribes offline, applies
+  `transcribe/vocabulary.txt` to capitalised non-dictionary words (heard word kept), flags
+  stretches ≥14 dB below the speaker's usual level for ≥0.25 s, inserts one row per recording.
+  `--setup` installs sherpa-onnx and downloads the model; `--file` prints one transcript.
+- Review page: the newest transcript under each recording, every word a button that plays from
+  that moment, corrections and quieter stretches marked. The query falls back if 0011 is absent.
+
+Validation: see PROJECT_STATUS.md, 2026-10-14 transcription. Local only.
+
+Left: migration 0011 and a deploy on the live site; `--setup` and a `--remote` run on the Mac;
+retuning the flag on real museum recordings.

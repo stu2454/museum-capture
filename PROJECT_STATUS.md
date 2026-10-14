@@ -4,6 +4,13 @@ Last updated: 2026-10-14
 
 ## Where we left off
 
+**Transcription added to Stage 9 (2026-10-14), not yet on the live site.** `transcribe/transcribe.py`
+runs on the maintainer's Mac: Parakeet offline, the Dorrigo word list, a quieter-stretch flag,
+transcripts appended to a new `transcripts` table (migration 0011) and shown on the review page
+with tap-to-hear words. To use it live: `npm run db:migrate`, `npm run deploy`,
+`python3 transcribe/transcribe.py --setup`, then `--remote` whenever recordings come in. The
+review page works with or without migration 0011.
+
 **Stage 9, the `/contribute` trial, merged into `main` and deployed (2026-10-14).**
 Commit b0a9ea0; production migration `0010_contributions.sql` applied successfully.
 Deployment version `d6bd972b-4707-4a8c-846b-aa4b1f17ee7e`. Typecheck and build passed.
@@ -110,14 +117,30 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 | `docs/user-manual.html` says six open questions; there are seven | Minor inaccuracy for readers of the manual | Line 1488 | Fix with Stage 5's manual check |
 | Photo metadata doesn't pull between devices | A record opened on a second device doesn't show photographs taken elsewhere | AGENTS.md, "Deliberately not built" | Backlog |
 | Contributions are not in the weekly snapshot | If D1 lost them, only its 7-day point-in-time recovery would bring them back | Deliberate: they may name living people (Stage 9). `worker/index.ts` `writeExport` | Decide on a separate, admin-only backup before the trial grows |
+| The quieter-stretch flag is calibrated on three short clips | False alarms when a speaker trails off (one in three clips); a quiet second voice at the same distance would be missed | 2026-10-14 calibration; thresholds at the top of `transcribe/transcribe.py` | Retune on real museum recordings |
+| Transcripts depend on the maintainer's computer | If nobody runs the script, recordings stay untranscribed; a single point of failure the maintainer wants to avoid | `transcribe/` | Revisit once the trial shows transcripts are worth keeping |
 | The computer description's request has not been run against the real API | The first live call might be refused if the request shape is wrong; the page would say "couldn't be made" and nothing else breaks | 2026-10-14: a dummy key reached the API and got 401, so endpoint and headers are right; the body was never validated | Check the first description after setting the key |
-| Recordings are not transcribed | Admins must listen to each one | Stage 9 decision, pending the voice trial | Later, with the transcription choice |
 | "You've answered" counts follow the signed-in account, not "Answering as" | On a shared iPad, everyone's answers count as the signed-in person's on screen | `getObject` in `worker/contribute.ts`; deliberate, so nobody can read another's answers by choosing their name | Accept for the trial |
 | No automated tests | Regressions are caught only by typecheck and by hand | `package.json` | Accepted for now |
 
 ## Latest validation
 
-2026-10-14 Stage 9, `/contribute` (local only; nothing deployed, no live data touched):
+2026-10-14 transcription (local only; live database untouched):
+
+- The maintainer's three real recordings (Scotty, Sts1234, iPad, 6–15 s) run through Parakeet
+  TDT 0.6B v3 and Whisper small.en. Both misheard "Dorrigo"; Whisper dropped a background
+  speaker's "What is it?", Parakeet kept it. Speaker separation (pyannote 3.0 + 3D-Speaker) could
+  not split a sub-second interjection.
+- `transcribe.py --file` on all three: "Doriga" shown as Dorrigo with the heard word kept; the
+  background line flagged (22 dB below usual); one false alarm on the speaker trailing off.
+- `--local` against local D1/R2 with the three recordings loaded: five transcripts stored (two
+  are earlier test beeps, stored empty); a second run found nothing to do.
+- Review page in headless Chromium at 1280px and 390px: three transcripts, quieter words and the
+  correction marked, tapping a word moved the player to 0.15 s before it, no sideways scroll.
+  Playback itself can't run in this Chromium (no AAC); not tried on a real Mac or iPad.
+- `npm run typecheck` and `npm run build` passed.
+
+Earlier, 2026-10-14 Stage 9, `/contribute` (local only; nothing deployed, no live data touched):
 
 - `npm run typecheck` and `npm run build` passed.
 - All ten migrations applied to a local D1. Local `wrangler dev` with three seeded users

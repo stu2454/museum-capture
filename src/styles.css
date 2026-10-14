@@ -1358,3 +1358,65 @@ body {
   margin: 0;
   white-space: pre-wrap;
 }
+
+/* Machine transcripts on the review page. Every word plays the recording from that
+   moment; quieter stretches and word-list corrections are marked, not hidden. */
+.transcript {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--board);
+  border-radius: var(--radius);
+}
+
+.transcript-label {
+  margin: 0 0 6px;
+  font-family: var(--data);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+.transcript-text {
+  margin: 0;
+  line-height: 1.9;
+}
+
+.transcript-word {
+  padding: 2px 1px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.transcript-word:hover,
+.transcript-word:focus-visible {
+  background: var(--paper);
+}
+
+.transcript-word.is-quieter {
+  color: var(--ink-soft);
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+
+.transcript-word.is-corrected {
+  text-decoration: underline;
+  text-decoration-color: var(--tag-deep);
+  text-underline-offset: 4px;
+}
+
+.transcript-heard {
+  margin-left: 3px;
+  font-size: 0.72rem;
+  color: var(--tag-deep);
+}
+
+.transcript-note {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}

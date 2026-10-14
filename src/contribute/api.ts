@@ -71,6 +71,21 @@ export interface ReviewItem {
   created_at: string;
   registration_number: string | null;
   object_name: string | null;
+  /** The newest machine transcript, if one has been made (transcribe/transcribe.py). */
+  transcript_text?: string | null;
+  transcript_words?: string | null;
+  transcript_notes?: string | null;
+  transcript_engine?: string | null;
+}
+
+/** One word of a transcript: its text, when it starts, and what the script noticed. */
+export interface TranscriptWord {
+  w: string;
+  t: number;
+  /** What the engine actually heard, when the word list replaced it. */
+  heard?: string;
+  /** In a noticeably quieter stretch: possibly another voice. */
+  quieter?: boolean;
 }
 
 export interface Person {

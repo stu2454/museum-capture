@@ -30,3 +30,6 @@ catalogue-*.json
 # Working files from the eHive image conversion. Regenerate with
 # scripts/attach-ehive-images.mjs; the masters live outside this repo.
 .ehive-jpeg/
+
+# Speech model for transcribe/transcribe.py (~500 MB). Downloaded by --setup.
+transcribe/models/

@@ -10,8 +10,8 @@
  * page offers a download or an export.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { audioUrl, contributeApi, type ReviewItem } from "./api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { audioUrl, contributeApi, type ReviewItem, type TranscriptWord } from "./api";
 import { AI_CHECK, QUESTIONS } from "./questions";
 
 const PAGE = 50;
@@ -88,14 +88,7 @@ export function Review({ onBack, onOpenObject }: Props) {
 
           {item.body && <p className="review-body">{item.body}</p>}
 
-          {item.has_audio ? (
-            <div style={{ margin: "8px 0" }}>
-              <audio controls preload="none" src={audioUrl(item.id)} className="recorder-audio" />
-              {item.audio_seconds ? (
-                <span className="small muted"> {Math.round(item.audio_seconds)} seconds, not yet transcribed</span>
-              ) : null}
-            </div>
-          ) : null}
+          {item.has_audio ? <Recording item={item} /> : null}
 
           <p className="small muted" style={{ margin: "8px 0 0" }}>
             {item.speaking_for
@@ -121,6 +114,91 @@ export function Review({ onBack, onOpenObject }: Props) {
       )}
     </div>
   );
+}
+
+/**
+ * A recording, and its machine transcript when there is one.
+ *
+ * Every word is a button: tap it to hear that moment, because the recording is the
+ * evidence and the transcript only a reading of it. Words the word list changed show
+ * what was actually heard; words in a quieter stretch are marked, since that may be
+ * someone else in the room. Neither is a finding until a person has listened.
+ */
+function Recording({ item }: { item: ReviewItem }) {
+  const player = useRef<HTMLAudioElement>(null);
+  const words = parse<TranscriptWord[]>(item.transcript_words) ?? [];
+  const notes = parse<{
+    corrections?: { t: number; heard: string; as: string }[];
+    quieter?: { start: number; end: number; words: string }[];
+  }>(item.transcript_notes);
+
+  const playFrom = (seconds: number) => {
+    const audio = player.current;
+    if (!audio) return;
+    // Word times run slightly early, so start just before; better a syllable too much.
+    audio.currentTime = Math.max(0, seconds - 0.15);
+    // A browser may refuse to start playback (no codec, autoplay rules); the player
+    // is still at the right spot for the reviewer to press play.
+    audio.play().catch(() => undefined);
+  };
+
+  return (
+    <div style={{ margin: "8px 0" }}>
+      <audio ref={player} controls preload="metadata" src={audioUrl(item.id)} className="recorder-audio" />
+      {words.length === 0 ? (
+        <span className="small muted">
+          {" "}
+          {item.audio_seconds ? `${Math.round(item.audio_seconds)} seconds, ` : ""}
+          {item.transcript_engine ? "no speech recognised — listen to check" : "not yet transcribed"}
+        </span>
+      ) : (
+        <div className="transcript">
+          <p className="transcript-label">Machine transcript · not checked · tap a word to hear it</p>
+          <p className="transcript-text">
+            {words.map((word, i) => (
+              <span key={i}>
+                <button
+                  type="button"
+                  className={["transcript-word", word.quieter ? "is-quieter" : "", word.heard ? "is-corrected" : ""]
+                    .filter(Boolean)
+                    .join(" ")}
+                  title={word.heard ? `Heard as "${word.heard}"` : `Play from ${clock(word.t)}`}
+                  onClick={() => playFrom(word.t)}
+                >
+                  {word.w}
+                </button>
+                {word.heard && <span className="transcript-heard">heard “{word.heard}”</span>}{" "}
+              </span>
+            ))}
+          </p>
+          {notes?.quieter?.map((q, i) => (
+            <p key={i} className="transcript-note">
+              <button type="button" className="transcript-word" onClick={() => playFrom(q.start)}>
+                {clock(q.start)}
+              </button>{" "}
+              Quieter here (“{q.words}”) — possibly another voice. Listen before relying on it or crediting it to
+              anyone.
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function parse<T>(json: string | null | undefined): T | null {
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return null;
+  }
+}
+
+function clock(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 function questionWording(key: string): string {

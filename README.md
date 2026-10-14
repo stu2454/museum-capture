@@ -104,6 +104,28 @@ Without the key, everything works except the computer's description, which isn't
 Each description is made once per object and stored, so cost grows with the number of objects
 looked at, not the number of visits.
 
+### Transcribing the recordings
+
+Recordings are transcribed on your own computer, so they never go to another company. Once:
+
+```bash
+npm run db:migrate                              # adds the transcripts table (0011)
+python3 transcribe/transcribe.py --setup        # installs the speech engine, downloads ~500 MB
+```
+
+Then, whenever new recordings have come in:
+
+```bash
+python3 transcribe/transcribe.py --remote       # the live site (or --local for npm run dev:local)
+```
+
+It transcribes each new recording with Parakeet, corrects local names from
+`transcribe/vocabulary.txt` ("Doriga" shows as **Dorrigo**, with "Doriga" beside it), and marks
+stretches noticeably quieter than the speaker — often someone else in the room. Transcripts
+appear under each recording on the review page; tap any word to hear that moment. Add local
+names to the word list as they come up. Recordings made in Chrome (.webm) need ffmpeg
+(`brew install ffmpeg`); iPhone and iPad recordings work with the Mac's built-in tools.
+
 ## eHive API access
 
 Read access granted on goodwill by eHive in September 2026. The key is configured for public and

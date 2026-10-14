@@ -339,6 +339,10 @@ migrations/                D1 schema, in order. Each file's header explains why 
 seeds/                     Data, not schema. Kept OUT of migrations/ because wrangler treats
                            everything in there as a migration and ordered a seed before the
                            migration that created its table.
+transcribe/                Transcripts of recorded contributions, made on the maintainer's computer.
+  transcribe.py            Fetch new recordings via wrangler, Parakeet offline, word list,
+                           quieter-stretch flag, append to `transcripts`. Docstring explains all.
+  vocabulary.txt           Local names the engine mishears. Public names only: it's in the repo.
 scripts/dev-signed-in.mjs  `npm run dev:local`: the real Worker locally, with a 127.0.0.1-only
                            forwarder adding the Access email header. Never run it on a server.
 scripts/seed-schema.mjs    Turns the YAML into the seed SQL for db:seed.
@@ -475,6 +479,20 @@ Read the header of `worker/contribute.ts` and `migrations/0010_contributions.sql
   `ai_descriptions`, append-only; a remake is admin-only. The key is a Worker secret,
   `ANTHROPIC_API_KEY`, and the feature hides itself without it. Log only the status code of a
   failed call, never the response body.
+
+## Transcripts
+
+Read the docstring of `transcribe/transcribe.py` and the header of `migrations/0011_transcripts.sql`.
+
+- **Made off Cloudflare, on purpose.** Parakeet runs offline on the maintainer's computer;
+  recordings may name living people and are not sent to any transcription service. Don't move
+  this to a hosted API without asking.
+- **A transcript is a reading, the recording is the evidence.** Append-only; `raw_text` keeps
+  what the engine heard verbatim. Word-list corrections keep the heard word beside the listed
+  one, and only touch capitalised, non-dictionary words.
+- **"Quieter" is a prompt to listen, never an attribution.** It caught a background speaker on
+  the first real recordings and also flagged the speaker trailing off. Nothing downstream may
+  credit a quieter word to the contributor, or to anyone else, without a person listening.
 
 ## The eHive round trip
 
