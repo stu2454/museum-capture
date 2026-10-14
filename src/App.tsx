@@ -6,6 +6,7 @@ import { toBundle } from "./export";
 import { downloadFile } from "./media";
 import { schema } from "./schema";
 import { Explorer } from "./explorer/Explorer";
+import { Contribute } from "./contribute/Contribute";
 import { startAutoSync, type SyncOutcome } from "./sync";
 import { Help } from "./components/Help";
 import { loadIdentity, type Identity, type Person } from "./identity";
@@ -28,6 +29,12 @@ export default function App() {
   // explorer never risks someone accidentally editing a record.
   if (window.location.pathname.startsWith("/explore")) {
     return <Explorer />;
+  }
+
+  // The contribution trial: volunteers adding what they know about objects that
+  // are already photographed. Reached by link only; "/" never guesses its way here.
+  if (window.location.pathname.startsWith("/contribute")) {
+    return <Contribute />;
   }
 
   // A bare "/" on something that looks like a desk opens the catalogue instead.

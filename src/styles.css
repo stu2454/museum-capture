@@ -1098,3 +1098,263 @@ body {
 .show-more {
   margin-top: 6px;
 }
+
+/* --------------------------------------------- contribute ("what do you know?") */
+/* The /contribute trial. Same materials as the rest: paper cards on grey board.
+   Photographs are as big as the screen allows, because the whole page depends on
+   someone recognising the object. */
+
+.back-link {
+  margin-top: 16px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.object-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 600px) {
+  .object-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .object-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.object-tile {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-height: 96px;
+  padding: 12px;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-family: var(--body);
+  font-size: 1rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.object-tile img,
+.object-tile .photo-none {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--board);
+}
+
+.object-tile-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.object-tile-text strong {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.object-tile-count {
+  font-size: 0.82rem;
+  color: var(--sage);
+}
+
+.contribute-photo {
+  margin: 8px 0 10px;
+}
+
+.contribute-photo img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.contribute-photo figcaption {
+  margin-top: 6px;
+}
+
+.contribute-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.contribute-thumbs button {
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.contribute-thumbs button.is-current {
+  border-color: var(--tag-deep);
+}
+
+.contribute-thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.speaker-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0 0 14px;
+}
+
+.answer-question {
+  font-size: 1.3rem;
+}
+
+.answer-saved {
+  margin: 0 0 12px;
+  color: var(--sage);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.answer-or {
+  margin: 8px 0;
+  text-align: center;
+  font-family: var(--data);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+.recorder-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.recorder-mic {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--alert);
+}
+
+.recorder.is-recording {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--alert);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.recorder-dot {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--alert);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .recorder-dot {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.recorder-time {
+  flex: 1;
+  font-weight: 600;
+}
+
+.recorder-stop {
+  background: var(--alert);
+  border-color: var(--alert);
+}
+
+.recorder-audio {
+  width: 100%;
+  max-width: 480px;
+}
+
+.machine {
+  border-left: 3px solid var(--tag-deep);
+}
+
+.machine-body h3 {
+  margin: 16px 0 4px;
+  font-size: 0.95rem;
+}
+
+.machine-body ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.machine-lead {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+
+.review-object {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.review-object strong {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.1rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.review-question {
+  margin: 10px 0 4px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.review-body {
+  margin: 0;
+  white-space: pre-wrap;
+}

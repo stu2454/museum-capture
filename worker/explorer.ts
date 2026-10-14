@@ -29,7 +29,7 @@ export interface Env {
 
 export type Role = "admin" | "volunteer" | "viewer";
 
-interface User {
+export interface User {
   email: string;
   display_name: string | null;
   role: Role;
@@ -66,7 +66,7 @@ const ACCESS_EMAIL_HEADER = "Cf-Access-Authenticated-User-Email";
  * Returns null when the person should be refused — the caller turns that into a
  * 403 with a message telling them who to ask, rather than a bare rejection.
  */
-async function requireUser(request: Request, env: Env): Promise<User | null> {
+export async function requireUser(request: Request, env: Env): Promise<User | null> {
   const raw = request.headers.get(ACCESS_EMAIL_HEADER);
   if (!raw) return null;
   const email = raw.trim().toLowerCase();

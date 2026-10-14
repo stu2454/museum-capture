@@ -247,6 +247,48 @@ back from a record lost your place. This is Option A of the options discussed th
 - **Complete when.** It is deployed, the thumbnail script has been run against the real
   collection, and the live site has been checked on a desk and on a phone.
 
+### Stage 9 — "What do you know about this?" contribution trial *(added 2026-10-14)*
+
+Only two people do the accessioning, and much of what an object means is in other volunteers'
+heads. This stage lets any volunteer pick an object that has already been photographed and add
+what they know — typed or spoken — with a computer's description of the photographs revealed
+afterwards for them to correct. It is a trial with two or three volunteers, separate from the
+capture flow, and it never edits a record.
+
+Decided by the maintainer on 2026-10-14, when asked:
+
+- **Placement.** A `/contribute` page in this deployment, reusing Access sign-in and the users
+  table, so it works on the museum iPad and from home.
+- **Donor names.** Allowed. "Where did it come from?" is the question most likely to produce
+  them, and they are often the most valuable answer. Every contribution is therefore treated as
+  restricted: a volunteer reads back only their own, admins read all, and nothing goes into an
+  export, the weekly snapshot or browser storage. This is the answer to the AGENTS.md "never
+  without asking" rule for this page only; it changes nothing in the capture flow.
+- **Voice.** Typing, with an optional recording. Audio is kept in R2 as an artefact and not
+  transcribed yet, so the transcription choice is left to the voice trial in "Future direction".
+- **Computer description.** The Anthropic API, called from the Worker with an
+  `ANTHROPIC_API_KEY` secret, once per object and stored. Without the key the panel is simply
+  not offered.
+
+- **Deliver:**
+  - A list of photographed objects, fewest answers first, with search.
+  - One screen per object: large photographs, three open questions, each answerable by typing
+    or recording. Saving clears the box only once the server confirms.
+  - The computer's description behind a button, after the questions, labelled as an unchecked
+    guess, with a fourth box for corrections.
+  - Every answer records whether the description had been shown (`ai_seen`), who was signed in,
+    and who the screen said was answering.
+  - An admin page listing every answer with its audio and its before/after flag.
+- **Validate:**
+  - Unknown people get nothing; viewers can read but not answer; only admins see the review page
+    and other people's answers or recordings.
+  - An answer that fails to send stays on screen.
+  - Leaving an object with unsaved words asks first.
+  - `ai_seen` is 0 for answers saved before the reveal and 1 after, including on a later visit.
+  - Nothing scrolls sideways at phone width.
+- **Complete when.** It is deployed with the migration applied, two or three volunteers have
+  used it in real sessions, and what they did is written up as Stage 5 feedback.
+
 ### Later backlog
 
 - Voice annotation — see "Future direction: voice annotation" below.
@@ -363,3 +405,4 @@ A stage is complete when:
 | 2026-09-15 | Work tracked in stages, with this brief, a status file and a development log | A method for tracking each development stage between sessions | This file |
 | 2026-09-15 | Development paused until real users have given feedback. Voice annotation recorded as the intended next major capability, possibly developed separately | The app is working well; what comes next should come from real use | "Future direction" above |
 | 2026-09-15 | Pause set aside for the Collection page (Stage 8) | The list stopped showing records past the fiftieth, and got slower with every photograph | Stage 8 |
+| 2026-10-14 | Stage 9: a `/contribute` trial where any volunteer adds what they know about photographed objects, typed or recorded, with an AI description revealed afterwards. Pause set aside for it. Donor names allowed in contributions, which are admin-only and never exported | Two people do all the accessioning; the knowledge is spread across many more | Stage 9 |

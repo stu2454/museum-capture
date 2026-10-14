@@ -12,8 +12,9 @@
 
 import { handleApi, type Env as ApiEnv } from "./api";
 import { handleExplorer } from "./explorer";
+import { handleContribute, type Env as ContributeEnv } from "./contribute";
 
-export interface Env extends ApiEnv {
+export interface Env extends ApiEnv, ContributeEnv {
   ASSETS: Fetcher;
 }
 
@@ -40,6 +41,12 @@ export default {
     // Sync endpoints used by the capture app on volunteers' phones.
     if (url.pathname.startsWith("/api/sync") || url.pathname.startsWith("/api/photos")) {
       return handleApi(request, env);
+    }
+
+    // The contribution trial: volunteers adding what they know about objects
+    // already photographed. Restricted data; see worker/contribute.ts.
+    if (url.pathname.startsWith("/api/contribute/")) {
+      return handleContribute(request, env);
     }
 
     // Everything else under /api is the explorer, which requires an identified

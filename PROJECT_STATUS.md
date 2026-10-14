@@ -1,8 +1,17 @@
 # Museum Artefact Capture — current status
 
-Last updated: 2026-09-23
+Last updated: 2026-10-14
 
 ## Where we left off
+
+**Stage 9, the `/contribute` trial, is built and tested locally (2026-10-14); not deployed.** The
+maintainer set the development pause aside for it. Branch `contribute-trial`, committed locally
+in a cloud session that could not push to GitHub; handed over as a patch for the maintainer to
+apply in VS Code. To go live: apply the patch, `npm run db:migrate` (0010), optionally set the
+`ANTHROPIC_API_KEY` secret, `npm run deploy`, then check the live site signed in. See Stage 9 in
+[PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+
+Earlier:
 
 **Photo-backup fix deployed (2026-09-23), awaiting signed-in phone verification.** The maintainer
 authorised this exception to the development pause. The home screen counts pending photographs,
@@ -58,6 +67,7 @@ is recorded.
 | 6 — Housekeeping before the catalogue grows | Proposed; on hold | Waits for feedback, like all development |
 | 7 — The whole eHive collection | Proposed; blocked on eHive | Waiting on eHive about private records |
 | 8 — A collection page that scales | Complete 2026-09-15 | Live on desk and phone; photographs from a phone arrive with thumbnails |
+| 9 — "What do you know about this?" contribution trial | In progress: built, tested locally, not deployed | 2026-10-14; branch `contribute-trial` |
 
 ## The catalogue as the server holds it
 
@@ -102,11 +112,34 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 | The export sends every record, including the 35 unchanged imports | Vernon Systems re-imports records nobody changed | Brief open decision 8 | Ask the museum before the next export |
 | `docs/user-manual.html` says six open questions; there are seven | Minor inaccuracy for readers of the manual | Line 1488 | Fix with Stage 5's manual check |
 | Photo metadata doesn't pull between devices | A record opened on a second device doesn't show photographs taken elsewhere | AGENTS.md, "Deliberately not built" | Backlog |
+| Contributions are not in the weekly snapshot | If D1 lost them, only its 7-day point-in-time recovery would bring them back | Deliberate: they may name living people (Stage 9). `worker/index.ts` `writeExport` | Decide on a separate, admin-only backup before the trial grows |
+| The computer description's request has not been run against the real API | The first live call might be refused if the request shape is wrong; the page would say "couldn't be made" and nothing else breaks | 2026-10-14: a dummy key reached the API and got 401, so endpoint and headers are right; the body was never validated | Check the first description after setting the key |
+| Recordings are not transcribed | Admins must listen to each one | Stage 9 decision, pending the voice trial | Later, with the transcription choice |
+| "You've answered" counts follow the signed-in account, not "Answering as" | On a shared iPad, everyone's answers count as the signed-in person's on screen | `getObject` in `worker/contribute.ts`; deliberate, so nobody can read another's answers by choosing their name | Accept for the trial |
 | No automated tests | Regressions are caught only by typecheck and by hand | `package.json` | Accepted for now |
 
 ## Latest validation
 
-2026-09-23 photo-backup fix (local tests and production deployment; no collection records changed):
+2026-10-14 Stage 9, `/contribute` (local only; nothing deployed, no live data touched):
+
+- `npm run typecheck` and `npm run build` passed.
+- All ten migrations applied to a local D1. Local `wrangler dev` with three seeded users
+  (admin, volunteer, viewer), three records and three photographs.
+- API by curl: unknown person refused; viewer can't answer; empty answer and unknown question
+  refused; a volunteer sees only their own answers; review admin-only; recordings to their
+  contributor and admins only; description unavailable without a key; remake admin-only; a
+  dummy key reached the API (401) and the page got a plain message; the explorer still works.
+- Headless Chromium (fake microphone) at 390px and 1280px, 27 checks, 26 passed. The one
+  failure was the test reading upper-cased label text; the stored `ai_seen` values were checked
+  directly in D1 (0 before the reveal, 1 after) and the labels inspected in a screenshot.
+  Covered: list order and filtering, saving typed and recorded answers, the reveal, the
+  correction box, the unsaved-answer guard, the description re-shown on return, the admin
+  review with audio and shared-device attribution, the speaker picker, the viewer's
+  read-only view, no sideways scroll on a phone.
+- Not tried: a real iPhone or iPad (recording format, microphone permission), a real API call,
+  the live site.
+
+Earlier, 2026-09-23 photo-backup fix (local tests and production deployment; no collection records changed):
 
 - `npm run typecheck`, `npm run build`, and `git diff --check` passed.
 - Chromium with real IndexedDB and mocked API responses passed partial upload failure/retry,
@@ -163,6 +196,15 @@ Rerun the relevant checks after any later code change.
 - **Tests.** No automated tests. See "Validate the result" in AGENTS.md.
 
 ## Next recommended task
+
+**Stage 9 to the live site, then the trial.** Apply the patch, migrate, set the key if wanted,
+deploy, and check signed in on a desk and on the museum iPad: one typed answer, one recording,
+the computer's description, the review page. Then sit two or three volunteers in front of it
+for ten objects each and write up what happened (Stage 5 feedback). Watch for: do people talk
+or type, does the description help or get agreed with, and is the knowledge really spread
+beyond the two accessioners.
+
+**Before Stage 9, unchanged:**
 
 **Verify the deployed photo-backup fix on a signed-in phone:** catalogue several photos,
 lock it immediately, reopen the app and confirm all photographs reach the record.

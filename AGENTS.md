@@ -320,11 +320,20 @@ src/explorer/
   EhiveExport.tsx          Prepare the eHive file; import eHive's records. Admins only.
   AddPhotos.tsx            Photograph an object already catalogued. Volunteers and admins.
   photoQueue.ts            Holds those photographs in IndexedDB until they can be sent.
+src/contribute/            The /contribute trial: volunteers add what they know about objects.
+  Contribute.tsx           Object list, "who is answering", and the address.
+  ObjectScreen.tsx         Photographs, questions, then the computer's description.
+  AnswerBox.tsx            One question: type and/or record, save, keep on failure.
+  Recorder.tsx             Tap-to-start microphone recording, in memory only.
+  Review.tsx               Every answer, for admins.
+  questions.ts             The wording. Saved with each answer, so rewording is safe.
+  api.ts                   Data access, and the per-device "description seen" list.
 worker/
   index.ts                 Entry. Routes /api/*, serves assets, runs the weekly export cron.
   api.ts                   Sync and photo endpoints, for devices.
   explorer.ts              Explorer, user admin, eHive export and import. Read its header.
   ehive.ts                 Builds the eHive import file; maps eHive's records back to ours.
+  contribute.ts            The /contribute trial: answers, recordings, computer descriptions.
 migrations/                D1 schema, in order. Each file's header explains why it exists.
 seeds/                     Data, not schema. Kept OUT of migrations/ because wrangler treats
                            everything in there as a migration and ordered a seed before the
@@ -443,6 +452,26 @@ before changing anything here. In short:
   recovery is only 7 days on the free plan, so this is what actually makes the catalogue
   durable. Still get a copy off Cloudflare periodically; two copies on one platform under
   one account is one lapsed billing away from zero copies.
+
+## Contributions (the /contribute trial)
+
+Read the header of `worker/contribute.ts` and `migrations/0010_contributions.sql`. The rules:
+
+- **A contribution never edits a record.** It is evidence beside one, for a person to act on.
+- **Contributions are restricted.** They may name donors and other living people — the
+  maintainer allowed that on 2026-10-14. A volunteer reads back only their own; admins read
+  all; nothing goes into the eHive export, the weekly snapshot, or browser storage. Don't add
+  any of those without asking.
+- **`ai_seen` must stay honest.** Answers are asked for before the computer's description is
+  shown, and each records whether it had been. Agreement with a guess is not knowledge, and the
+  reviewer can only tell them apart through this flag. The device remembers which objects'
+  descriptions it has shown (ids only) so a later visit still records 1.
+- **Two identities again**, as in rule 10: `contributed_by` from the Access header,
+  `speaking_for` from the screen's "Answering as" choice. Never merge them.
+- **The computer description costs money.** Made once per object and stored in
+  `ai_descriptions`, append-only; a remake is admin-only. The key is a Worker secret,
+  `ANTHROPIC_API_KEY`, and the feature hides itself without it. Log only the status code of a
+  failed call, never the response body.
 
 ## The eHive round trip
 

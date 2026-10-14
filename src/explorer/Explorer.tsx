@@ -289,6 +289,15 @@ export function Explorer() {
         <button type="button" className="btn btn-quiet" onClick={() => goTo("capture")}>
           Catalogue an object
         </button>
+        <button
+          type="button"
+          className="btn btn-quiet"
+          onClick={() => {
+            window.location.href = "/contribute";
+          }}
+        >
+          Tell us what you know
+        </button>
         {me.role === "admin" && (
           <>
             <button type="button" className="btn btn-quiet" onClick={() => open({ name: "users" })}>

@@ -62,6 +62,31 @@ The app is one deployment with two front doors, both behind Cloudflare Access:
 Everything saves as you go, and it all works offline. You can close the app mid-record and pick
 it up later.
 
+## "What do you know about this?" (`/contribute`)
+
+A trial, added October 2026. Any volunteer opens **/contribute** (or *Tell us what you know* in
+the collection), picks an object that has been photographed, and answers three questions by
+typing or by tapping *Tell us out loud instead*. Afterwards they can see what a computer makes of
+the photographs, and say what it got wrong. Nothing they say changes a record.
+
+Admins read every answer, and listen to recordings, under *Read everyone's answers*. Each
+answer says whether it was given before or after the computer's description was shown.
+
+Answers may name donors and other people, so they are visible to admins only and are left out of
+every export, including the weekly snapshot.
+
+To switch it on:
+
+```bash
+npm run db:migrate                          # adds the contributions tables (0010)
+npx wrangler secret put ANTHROPIC_API_KEY   # optional: the computer's description
+npm run deploy
+```
+
+Without the key, everything works except the computer's description, which isn't offered.
+Each description is made once per object and stored, so cost grows with the number of objects
+looked at, not the number of visits.
+
 ## eHive API access
 
 Read access granted on goodwill by eHive in September 2026. The key is configured for public and

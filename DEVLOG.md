@@ -383,3 +383,29 @@ A live Chromium visit reached Cloudflare Access sign-in (HTTP 200). This confirm
 route responds, not that the authenticated app works. No authenticated browser session was
 available. The maintainer's physical phone lock/reopen acceptance check remains outstanding.
 Deployment notes committed and pushed with this handover.
+
+
+## 2026-10-14 — Stage 9: the /contribute trial
+
+The maintainer asked for a way to spread the knowledge work beyond the two people who do the
+accessioning, and set the feedback pause aside for it. Decisions asked and answered first:
+placement in this deployment; donor names allowed, with contributions admin-only and never
+exported; typing plus optional recording, no transcription yet; the Anthropic API for a
+description made once per object. Recorded as Stage 9 in the brief.
+
+- `migrations/0010_contributions.sql`: `contributions` (append-only, soft delete, `ai_seen`,
+  `contributed_by` from Access and `speaking_for` from the screen) and `ai_descriptions`
+  (append-only, one row per generation).
+- `worker/contribute.ts`, routed at `/api/contribute/*`: object list (photographed objects,
+  fewest answers first), one object, save an answer (multipart, audio to R2 first), recordings,
+  admin review, computer description via a forced tool call that keeps uncertainty separate and
+  forbids invented provenance. `requireUser` now exported from `worker/explorer.ts`.
+- `src/contribute/`: list, object screen (questions before the description), answer box with
+  tap-to-start recording, admin review. Linked from the collection's toolbar as *Tell us what
+  you know*. Nothing contribution-related goes into browser storage except the ids of objects
+  whose description this device has shown.
+
+Validation: see PROJECT_STATUS.md, 2026-10-14. Local only.
+
+Handover: committed on branch `contribute-trial`; this session could not push to GitHub, so the
+work went to the maintainer as a patch. Not deployed; migration 0010 not applied remotely.
