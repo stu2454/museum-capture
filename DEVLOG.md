@@ -502,3 +502,9 @@ reviewers, rather than giving them admin.
 
 Validation: documentation only; read against `worker/api.ts`, `worker/explorer.ts`,
 `migrations/0003_users_and_access.sql` and the schema's `status` field.
+
+Later the same day the maintainer confirmed: only flagged reviewers approve, admins included;
+no approving your own record; only Confirmed records go to eHive (answering decision 8);
+confirming fills the "Catalogued by" sign-off. Because those fields map to eHive's `cataloguer`,
+the brief fills them with the capturer's name and the confirmation date, and says so for him to
+check. He chose to build Stage 11 before Stage 10. Brief, status and decision 8 updated.

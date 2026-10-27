@@ -381,17 +381,26 @@ Decided by the maintainer on 2026-10-27, when asked:
 - **Volunteers can be flagged as reviewers.** An admin turns the flag on or off for a person;
   it sits beside their role and doesn't change it.
 
-Proposed, for the maintainer to confirm before building:
+Confirmed by the maintainer on 2026-10-27:
 
 - **Only flagged people approve, admins included.** An admin who should approve flags
-  themselves. The list of reviewers is then exactly the people with the flag, which is easier
-  to explain to a committee than "reviewers plus every admin". Viewers cannot be flagged.
+  themselves. The list of reviewers is then exactly the people with the flag. Viewers cannot
+  be flagged.
 - **Nobody approves a record they captured.** Checked against both `captured_by` and
   `synced_by`, since on a shared device the first is only a claim (AGENTS.md rule 10). With two
   accessioners, each reviews the other's work.
+- **Only Confirmed records go to eHive.** This also answers open decision 8: the imported
+  records are Exported already, so they are no longer resent.
+- **Confirming fills the paper form's "Catalogued by" sign-off.** The fields map to eHive's
+  `cataloguer` and `catalogued_date`, which credit whoever did the cataloguing, so they are
+  filled with the display name of the person who captured the record and the date it was
+  confirmed. The reviewer is recorded in `record_reviews`, not in "Catalogued by". *(This
+  reading is Claude's, put to the maintainer on 2026-10-27; change it if he meant the reviewer.)*
+
+Proposed and not yet answered, kept as the default because it is what sync does already:
+
 - **A changed record goes back for review.** If a confirmed record is edited later, it returns
-  to Awaiting review, and the reviewer sees what changed since it was confirmed. This is what
-  the current last-write-wins sync would do anyway; the stage makes it deliberate and visible.
+  to Awaiting review, and the reviewer sees what changed since it was confirmed.
 
 How it is meant to work:
 
@@ -417,6 +426,12 @@ How it is meant to work:
   - Sync: device-sent statuses limited to Draft and Awaiting review; a confirmed record that
     changes returns to Awaiting review.
   - The volunteer's record list shows Confirmed, and a returned record's note.
+  - Confirming writes `catalogued_by_name` (the capturer's display name) and
+    `catalogued_by_date` (the day of confirming) into the record, as a new revision.
+  - eHive export: only Confirmed records; the screen says how many are waiting for review and
+    so were left out. After the file has gone to Vernon Systems, an admin marks that export as
+    sent: its records become Exported, and their "Entered to ehive" tickbox is set. Editing an
+    Exported record sends it back for review like any other.
   - Help, the user manual and the volunteer slides updated.
 - **Validate:**
   - A volunteer without the flag gets 403 on confirm and return, and sees no buttons.
@@ -428,14 +443,14 @@ How it is meant to work:
     revisions are in the history.
   - A returned record's note appears on the volunteer's phone after sync.
   - Turning the flag off takes effect on that person's next request.
+  - A confirmed record's review sheet shows "Catalogued by" with the capturer's name and the
+    confirmation date; the eHive file carries them in `cataloguer` and `catalogued_date`.
+  - The eHive export holds only Confirmed records, never Draft, Awaiting review or Exported;
+    marking it sent turns exactly those records to Exported.
   - Nothing scrolls sideways at phone width; buttons are at least 52px.
 - **Complete when.** It is deployed with the migration applied, at least one reviewer is
   flagged on the live site, and a record has been captured by one person and confirmed by
   another, checked signed in on a desk and on a phone.
-
-Still open, and not decided by this stage: whether the eHive export should send only Confirmed
-records (it sends every record today, whatever its status), and whether confirming should fill
-the paper form's "Catalogued by" sign-off fields, which are restricted and outside the flow.
 
 ### Later backlog
 
@@ -448,7 +463,6 @@ the paper form's "Catalogued by" sign-off fields, which are restricted and outsi
 - Photo metadata pull between devices.
 - Registration number validation, once decision 1 is answered.
 - Splitting storage and display, if decision 6 goes that way.
-- Filtering the eHive export to records changed since import, if decision 8 goes that way.
 
 A backlog item is a recommendation, not an instruction to start it.
 
@@ -519,7 +533,7 @@ museum answers one, record the answer in the schema and here.
 | 5 | Do cataloguing volunteers ever touch the donor block | Privacy, and whether a committee entry screen is needed | Any donor-entry work | Volunteers never see it; not captured in the app |
 | 6 | Storage and display: split the one question | eHive has separate `storage_details` and `display_details` | Changing that mapping | One question feeds `storage_details` only |
 | 7 | Pick-list vocabularies: author term lists, or tidy in eHive | New spellings create duplicate eHive terms | Offering term lists in the app | **Answered 2026-10-26/27:** the museum authors lists for object type, materials and location (room); volunteers add, admins review; object types in eHive's plural style. See Stage 10. Place made and maker stay free text |
-| 8 | Should the eHive export send every record, or only those changed since import | Each export currently resends the 35 imported records | The next file sent to Vernon Systems | Exports every record |
+| 8 | Should the eHive export send every record, or only those changed since import | Each export currently resends the 35 imported records | The next file sent to Vernon Systems | **Answered 2026-10-27:** only Confirmed records are exported; imported records are Exported already and not resent. See Stage 11 |
 | 9 | Who takes a copy of the snapshot off Cloudflare, and how often | Two copies under one account can be lost together | Relying on the snapshot as the backup | README recommends monthly; nobody assigned in any document |
 | 10 | Is the slide deck generated by script, or edited by hand from now on | The deck was edited in PowerPoint after generation; re-running the script would lose those edits | The next change to the deck | Undecided; the script is documented as the source |
 | 11 | Collection categories: which ones, no more than ten, one main category per object | Browsing stays manageable as the collection grows; object type is too fine (29 types across 38 records) | Any category browsing on the Collection page (Option D) | Accessioning team asked for suggestions, 2026-09-15. Starting six, from the museum's own eHive keywords: agriculture, timber and surveying; sport; tourism and hotels; wars; schools; music, crafts, household objects and factories |
@@ -557,3 +571,4 @@ A stage is complete when:
 | 2026-10-14 | Recordings transcribed now, not after the voice trial: Parakeet run offline on the maintainer's computer, with a local word list and a quieter-stretch flag. Transcripts admin-only, append-only, shown on the review page | The first real recordings showed both engines mishear "Dorrigo", and Whisper silently drop a second speaker; the maintainer chose to build on Parakeet | Stage 9; `transcribe/` |
 | 2026-10-27 | Stage 10: pick lists for object type, materials (several per object) and location by room, with room and detail as two fields. Lists held in D1 and owned by the museum; volunteers add terms, admins review; object types follow eHive's plural style | Asked for by the museum at the volunteer session on 2026-10-26; answers open decision 7 | Stage 10 |
 | 2026-10-27 | Stage 11: approving records becomes its own permission. Admins flag individual volunteers as reviewers; only reviewers confirm records; devices can no longer set Confirmed themselves | Nothing in the app could confirm a record, the server trusted any status a device sent, and the maintainer does not want volunteers given admin access in order to approve | Stage 11 |
+| 2026-10-27 | Stage 11 settled: only flagged reviewers approve, admins included; nobody approves their own record; only Confirmed records go to eHive (answers decision 8); confirming fills the "Catalogued by" sign-off | Maintainer's answers to the stage's proposals | Stage 11 |

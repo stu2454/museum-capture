@@ -5,7 +5,7 @@ Last updated: 2026-10-27
 ## Where we left off
 
 **Stage 11 proposed (2026-10-27): reviewers.** Approving becomes its own permission, a
-flag an admin sets per volunteer. Written up in the brief; three details await confirmation.
+flag an admin sets per volunteer. Decisions settled the same evening; to be built before Stage 10.
 
 **Stage 10 proposed (2026-10-27): pick lists.** The museum asked at the 2026-10-26 volunteer
 session for lists to choose object type, materials and location (room) from, with a way to add
@@ -83,7 +83,7 @@ is recorded.
 | 8 — A collection page that scales | Complete 2026-09-15 | Live on desk and phone; photographs from a phone arrive with thumbnails |
 | 9 — "What do you know about this?" contribution trial | In progress: deployed, awaiting signed-in checks | 2026-10-14; merged into `main`; migration 0010 applied |
 | 10 — Pick lists for object type, materials and location | Proposed 2026-10-27 | Design decided; awaiting the team's object types and rooms; deploy after the training fortnight |
-| 11 — Reviewers, and approving records | Proposed 2026-10-27 | Three proposals in the brief await the maintainer's confirmation; doesn't wait on the museum's lists |
+| 11 — Reviewers, and approving records | Proposed 2026-10-27; ready to build, first | Decisions settled; build before Stage 10, which waits on the museum's lists |
 
 ## The catalogue as the server holds it
 
