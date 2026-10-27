@@ -461,3 +461,28 @@ Validation: see PROJECT_STATUS.md, 2026-10-14 transcription. Local only.
 
 Left: migration 0011 and a deploy on the live site; `--setup` and a `--remote` run on the Mac;
 retuning the flag on real museum recordings.
+
+
+## 2026-10-27 — Stage 10 proposed: pick lists
+
+At the volunteer session on 2026-10-26 the museum asked for lists to choose object type,
+materials (several per object) and location (by room) from, each with a way to add a term.
+Checked against the code first: `materials` is already `repeatable` and stored as an array;
+the `ehive_terms` view holds the museum's 27 object types (all plural nouns) and 11 locations,
+three of them one room written differently with the position mixed in; `location_date` and
+`record_revisions` already keep location history, so no movement table is needed.
+
+The maintainer decided: object types in eHive's plural style, with the lists owned by the
+museum and held in D1 so they outlast eHive; room and detail as two fields (`location` keeps
+its id as the room, new `location_detail`); volunteers add terms, admins review.
+
+- `PROJECT_BRIEF.md`: Stage 10 with design, deliverables and acceptance checks; decision 7
+  answered; requirement change recorded.
+- `schema/worksheet.v2.yaml`: open question on pick lists marked answered. No field changes yet.
+- `PROJECT_STATUS.md`: Stage 10 row; a known issue that photographs carry no sensitivity,
+  found while the Charters–Farmer Bible was used as the training object.
+
+Validation: documentation only. The YAML still parses (checked); no build needed.
+
+Left: the team's object types and rooms; then build locally, and deploy only after the first
+fortnight of training has been observed.

@@ -289,6 +289,82 @@ Decided by the maintainer on 2026-10-14, when asked:
 - **Complete when.** It is deployed with the migration applied, two or three volunteers have
   used it in real sessions, and what they did is written up as Stage 5 feedback.
 
+### Stage 10 — Pick lists for object type, materials and location *(proposed 2026-10-27)*
+
+At the volunteer session on 2026-10-26 the museum asked for ready-made lists to choose from,
+each with a way to add something new: object type ("What is it?"), materials ("Describe it",
+several per object) and location ("Where does it live?", by room). This answers open decision 7:
+the museum authors its own term lists. Choosing is quicker than typing and keeps terms
+consistent; the reference copy shows what free text produces — one room appears as "Main, East
+Wall, Mid Section", "Main, western wall" and "Main south west wall".
+
+Decided by the maintainer on 2026-10-27, when asked:
+
+- **Object types follow eHive's plural style** ("Jugs", "Cups and Saucers"), matching the
+  museum's 27 existing eHive terms, so exports don't create near-duplicate terms there. The
+  lists belong to the museum, not to eHive: they live in our database and stay usable if eHive
+  is no longer used. The accessioning team is supplying the starting list.
+- **Room and detail are two fields.** The existing `location` field keeps its id and its eHive
+  mapping and becomes the room, chosen from the list. A new `app_added` field,
+  `location_detail`, holds the case, wall or shelf as free text. The eHive export joins them as
+  "Room, detail", matching how the museum's existing records read.
+- **Any volunteer can add a term; an admin reviews it.** A new term works on the record at once
+  and is marked provisional until an admin accepts it or merges it into an existing one.
+
+How it is meant to work, so the checks below have something to check against:
+
+- **Lists live in D1, not in the YAML.** A `vocab_terms` table: vocabulary, label, status
+  (`accepted`, `provisional`, `merged`), the term it was merged into, synonyms, who added it and
+  when. The YAML still decides which fields use a list, through two new keys on a field,
+  `vocabulary` and `allow_new`; no new field type. Putting the terms in the YAML would mean a
+  redeploy and a reseed for every new room.
+- **Records keep the words, not term ids.** A value stays `"Timber"`, so a record means
+  something without the table, existing records and exports are unchanged, and a merge never
+  rewrites a record: it is recorded in the list and applied when exporting.
+  `FieldValue.origin` gains `"picked"`, so a record shows whether a value was chosen or added.
+- **Lists work offline.** Each device caches the lists in IndexedDB and refreshes them on sync.
+  A term added offline is queued like a record. The server treats terms that differ only in case
+  or spacing as one; true synonyms ("Wood", "Timber") wait for an admin.
+- **Nothing a volunteer chose or typed disappears.** A value already on a record but not in the
+  list still shows, marked as not in the list. Existing location values, which mix room and
+  position, are left exactly as they are for a person to sort out.
+- **Location becomes `sensitivity: internal`**, and so does `location_detail`. Nothing filters
+  on `internal` yet; this marks both for the publication boundary to come. They still go to
+  eHive, where location is not public either.
+
+- **Deliver:**
+  - Migration: `vocab_terms`. A seed with the team's object types, the starting materials
+    (timber, metal, paper, cloth, glass, ceramic, plus what the team adds) and the rooms.
+  - Schema: `vocabulary` and `allow_new` on `object_type`, `materials` and `location`;
+    `location` relabelled as the room; `location_detail` added; both location fields
+    `internal`. Open question 7 marked as answered.
+  - One reusable control: large tappable chips, one or several, with "Not sure" where several
+    are allowed, a search box when a list is long, and "+ Add" that searches before it adds.
+  - `GET` the lists for any signed-in person; `POST` a provisional term for volunteers and admins.
+  - A Lists page in the explorer, admins only: each list with how many records use each term,
+    provisional terms first; accept, merge into another, add a synonym, hide. No delete.
+  - eHive export: merges applied, materials joined into `medium_description`, room and detail
+    joined into `location`. The pick-list report keeps flagging terms eHive doesn't know.
+  - Help, the user manual and the volunteer slides updated for the three screens.
+- **Validate:**
+  - In airplane mode: pick two materials and a room, add a new material, close and reopen. All
+    are on the record; the new term reaches the server as provisional after reconnecting.
+  - Adding "timber " when "Timber" exists offers "Timber" instead of a second term.
+  - A record captured before this stage opens with its old values intact and shown.
+  - An admin merges "Wood" into "Timber": no record changes in `record_revisions`, and the next
+    export says "Timber".
+  - A volunteer gets 403 on accept and merge; a viewer cannot add a term.
+  - Chips are at least 52px tall and nothing scrolls sideways at phone width.
+  - `npm run db:seed` then `npm run db:check` show the new field count.
+- **Complete when.** It is deployed with the migration and seed applied, checked signed in on
+  the museum iPad and on a desk, and the accessioning team has catalogued real objects with it.
+  Not to be deployed until the first fortnight of training (from 2026-10-26) has been observed,
+  so the screens change once.
+
+Not in this stage: collection categories (decision 11), page order and transcription for
+many-page objects such as the Charters–Farmer Bible, and restricted photographs (see
+`PROJECT_STATUS.md`, known issues).
+
 ### Later backlog
 
 - Voice annotation — see "Future direction: voice annotation" below.
@@ -296,7 +372,7 @@ Decided by the maintainer on 2026-10-14, when asked:
   - Option B: a search-first home page with recent records and a "needs attention" list.
   - Option C: a denser one-line-per-record view on a desk, or a photo grid.
   - Option D: filters by object type or location, which need tidy vocabularies first
-    (decision 7).
+    (decision 7; Stage 10 provides them).
 - Photo metadata pull between devices.
 - Registration number validation, once decision 1 is answered.
 - Splitting storage and display, if decision 6 goes that way.
@@ -370,7 +446,7 @@ museum answers one, record the answer in the schema and here.
 | 4 | Who assigns registration numbers: the app or a person beforehand | Decides whether the app generates numbers | Any number generation | A person; the volunteer types the number from the tag |
 | 5 | Do cataloguing volunteers ever touch the donor block | Privacy, and whether a committee entry screen is needed | Any donor-entry work | Volunteers never see it; not captured in the app |
 | 6 | Storage and display: split the one question | eHive has separate `storage_details` and `display_details` | Changing that mapping | One question feeds `storage_details` only |
-| 7 | Pick-list vocabularies: author term lists, or tidy in eHive | New spellings create duplicate eHive terms | Offering term lists in the app | Free text; export flags unknown terms |
+| 7 | Pick-list vocabularies: author term lists, or tidy in eHive | New spellings create duplicate eHive terms | Offering term lists in the app | **Answered 2026-10-26/27:** the museum authors lists for object type, materials and location (room); volunteers add, admins review; object types in eHive's plural style. See Stage 10. Place made and maker stay free text |
 | 8 | Should the eHive export send every record, or only those changed since import | Each export currently resends the 35 imported records | The next file sent to Vernon Systems | Exports every record |
 | 9 | Who takes a copy of the snapshot off Cloudflare, and how often | Two copies under one account can be lost together | Relying on the snapshot as the backup | README recommends monthly; nobody assigned in any document |
 | 10 | Is the slide deck generated by script, or edited by hand from now on | The deck was edited in PowerPoint after generation; re-running the script would lose those edits | The next change to the deck | Undecided; the script is documented as the source |
@@ -407,3 +483,4 @@ A stage is complete when:
 | 2026-09-15 | Pause set aside for the Collection page (Stage 8) | The list stopped showing records past the fiftieth, and got slower with every photograph | Stage 8 |
 | 2026-10-14 | Stage 9: a `/contribute` trial where any volunteer adds what they know about photographed objects, typed or recorded, with an AI description revealed afterwards. Pause set aside for it. Donor names allowed in contributions, which are admin-only and never exported | Two people do all the accessioning; the knowledge is spread across many more | Stage 9 |
 | 2026-10-14 | Recordings transcribed now, not after the voice trial: Parakeet run offline on the maintainer's computer, with a local word list and a quieter-stretch flag. Transcripts admin-only, append-only, shown on the review page | The first real recordings showed both engines mishear "Dorrigo", and Whisper silently drop a second speaker; the maintainer chose to build on Parakeet | Stage 9; `transcribe/` |
+| 2026-10-27 | Stage 10: pick lists for object type, materials (several per object) and location by room, with room and detail as two fields. Lists held in D1 and owned by the museum; volunteers add terms, admins review; object types follow eHive's plural style | Asked for by the museum at the volunteer session on 2026-10-26; answers open decision 7 | Stage 10 |

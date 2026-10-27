@@ -1392,7 +1392,10 @@ open_questions:
   and accept that display requirements sit under storage?'
 - 'Pick list terms: object_type, place_made, maker and location are pick lists in
   eHive. Should the museum author term lists for the app to offer, or keep free text
-  and tidy the duplicates in eHive after each import?'
+  and tidy the duplicates in eHive after each import? ANSWERED 2026-10-26/27: the museum
+  authors lists for object_type, materials and location (as the room, with a separate
+  detail field); volunteers may add terms, admins review them; object types follow eHive''s
+  plural style. Place made and maker stay free text for now. See PROJECT_BRIEF.md Stage 10.'
 
 # ---------------------------------------------------------------- eHive export
 #
