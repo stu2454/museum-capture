@@ -4,6 +4,9 @@ Last updated: 2026-10-27
 
 ## Where we left off
 
+**Stage 11 proposed (2026-10-27): reviewers.** Approving becomes its own permission, a
+flag an admin sets per volunteer. Written up in the brief; three details await confirmation.
+
 **Stage 10 proposed (2026-10-27): pick lists.** The museum asked at the 2026-10-26 volunteer
 session for lists to choose object type, materials and location (room) from, with a way to add
 terms. The maintainer settled the three design questions the next day; the stage is written up
@@ -80,6 +83,7 @@ is recorded.
 | 8 — A collection page that scales | Complete 2026-09-15 | Live on desk and phone; photographs from a phone arrive with thumbnails |
 | 9 — "What do you know about this?" contribution trial | In progress: deployed, awaiting signed-in checks | 2026-10-14; merged into `main`; migration 0010 applied |
 | 10 — Pick lists for object type, materials and location | Proposed 2026-10-27 | Design decided; awaiting the team's object types and rooms; deploy after the training fortnight |
+| 11 — Reviewers, and approving records | Proposed 2026-10-27 | Three proposals in the brief await the maintainer's confirmation; doesn't wait on the museum's lists |
 
 ## The catalogue as the server holds it
 
@@ -116,6 +120,7 @@ The full rules are in [AGENTS.md](AGENTS.md). The ones most likely to matter nex
 |---|---|---|---|
 | Photographs can stay on the phone after their record reaches the server, while the home screen says "All records backed up" | A record shows fewer photographs than were taken until the app is next opened; if the phone's storage were cleared first, they'd be lost | S123455 on 2026-09-15: photograph 1 sent at 03:54, photographs 2–4 at 04:14 when the app was reopened. `src/App.tsx:127` counts records only. `uploadPhotos` in `src/sync.ts` sends each thumbnail before the next photograph | Deployed 2026-09-23; awaiting a signed-in real phone lock/reopen check. All four photographs of S123455 did arrive |
 | Photographs have no sensitivity: every photograph on a record goes into the weekly snapshot and the eHive image set | A photograph of a document naming living people (the Charters–Farmer family history sheet, 2026-10-26) would travel with the object's pictures | `photos` in `migrations/0001_initial.sql` has no sensitivity or restricted flag; restricted fields are filtered, photographs are not | Training: keep family papers and donor documents with the deed of gift, not on the record. Later: a restricted attachment, decided with the publication boundary |
+| Nobody can confirm a record, and the server accepts any status a device sends | Every record stays Awaiting review; the eHive export sends records whatever their status | No confirm action in `src/` or `worker/`; `ON CONFLICT … status = excluded.status` in `worker/api.ts` | Stage 11 |
 | We hold 35 of eHive's 66 records; the 31 private ones are unreachable | The duplicate-number warning is blind to private records, and so are the pick-list checks | AGENTS.md, "Private records"; 312a036 | Waiting on eHive (Stage 7) |
 | M1723 is used for two objects in eHive, and one eHive record has no number | Risk of mis-filing; the uniform has no photograph | `HOLD` in `scripts/attach-ehive-images.mjs` | Museum checking the register; fix in eHive; then re-run the script |
 | Slides edited by hand after generation | Re-running the generator would lose the images; a 41 MB file is too big to email or commit comfortably | `git status`; brief open decision 10 | Decide generated or hand-edited; shrink the EMF; commit |

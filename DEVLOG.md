@@ -486,3 +486,19 @@ Validation: documentation only. The YAML still parses (checked); no build needed
 
 Left: the team's object types and rooms; then build locally, and deploy only after the first
 fortnight of training has been observed.
+
+## 2026-10-27 — Stage 11 proposed: reviewers
+
+The maintainer asked who can review and approve records. Checked the code: a finished capture
+becomes Awaiting review (`src/components/CaptureFlow.tsx`), but nothing in the app or the
+Worker sets Confirmed, and the sync upsert in `worker/api.ts` stores whatever status a device
+sends. He decided approving should be its own permission, with volunteers flaggable as
+reviewers, rather than giving them admin.
+
+- `PROJECT_BRIEF.md`: Stage 11, with the decisions, three proposals for him to confirm (only
+  flagged people approve, admins included; no approving your own record; an edited confirmed
+  record returns to review), deliverables and acceptance checks.
+- `PROJECT_STATUS.md`: Stage 11 row; known issue that no record can be confirmed.
+
+Validation: documentation only; read against `worker/api.ts`, `worker/explorer.ts`,
+`migrations/0003_users_and_access.sql` and the schema's `status` field.

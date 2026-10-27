@@ -365,6 +365,78 @@ Not in this stage: collection categories (decision 11), page order and transcrip
 many-page objects such as the Charters–Farmer Bible, and restricted photographs (see
 `PROJECT_STATUS.md`, known issues).
 
+### Stage 11 — Reviewers, and approving records *(proposed 2026-10-27)*
+
+Records already carry a status — Draft, Awaiting review, Confirmed, Exported to eHive — and a
+finished capture becomes Awaiting review (`CaptureFlow.tsx`). But nothing in the app can confirm
+a record: there is no approve action anywhere, and the server accepts whatever status a device
+sends, so approval is neither possible nor protected. A volunteer's first pass should not be
+authoritative (the schema's note on `status`), and the design notebook makes human review the
+only path to a verified record.
+
+Decided by the maintainer on 2026-10-27, when asked:
+
+- **Approving is its own permission, not part of admin.** Regular volunteers must not get admin
+  access to be able to approve.
+- **Volunteers can be flagged as reviewers.** An admin turns the flag on or off for a person;
+  it sits beside their role and doesn't change it.
+
+Proposed, for the maintainer to confirm before building:
+
+- **Only flagged people approve, admins included.** An admin who should approve flags
+  themselves. The list of reviewers is then exactly the people with the flag, which is easier
+  to explain to a committee than "reviewers plus every admin". Viewers cannot be flagged.
+- **Nobody approves a record they captured.** Checked against both `captured_by` and
+  `synced_by`, since on a shared device the first is only a claim (AGENTS.md rule 10). With two
+  accessioners, each reviews the other's work.
+- **A changed record goes back for review.** If a confirmed record is edited later, it returns
+  to Awaiting review, and the reviewer sees what changed since it was confirmed. This is what
+  the current last-write-wins sync would do anyway; the stage makes it deliberate and visible.
+
+How it is meant to work:
+
+- **`users` gains `can_review`** (0 or 1, default 0). Migration only adds a column; no existing
+  row changes meaning.
+- **Statuses become partly server-owned.** A device may send Draft or Awaiting review, and
+  nothing else; the sync endpoint refuses to let a device set Confirmed or Exported. Confirming
+  happens only through an explorer endpoint that checks the flag and the self-approval rule.
+- **Every review is recorded and never edited.** A `record_reviews` table, append-only: record,
+  revision reviewed, action (`confirm` or `return`), an optional note, the reviewer's email
+  from the Access header (never from the request body), and when. Confirming also appends a
+  revision, so the history shows who confirmed which version.
+- **Send back with a note.** A reviewer can return a record to Draft with a short note. The
+  note shows on the record in the explorer and, after the next sync, on the volunteer's own
+  record list, so they know what to fix.
+
+- **Deliver:**
+  - Migration: `can_review` on `users`; the `record_reviews` table.
+  - User administration: a "Can approve records" switch per person, admins only, logged in
+    `access_log`.
+  - An "Awaiting review" list in the explorer for reviewers, oldest first.
+  - On a record, for reviewers: Confirm, and Send back with a note. Neither shown to anyone else.
+  - Sync: device-sent statuses limited to Draft and Awaiting review; a confirmed record that
+    changes returns to Awaiting review.
+  - The volunteer's record list shows Confirmed, and a returned record's note.
+  - Help, the user manual and the volunteer slides updated.
+- **Validate:**
+  - A volunteer without the flag gets 403 on confirm and return, and sees no buttons.
+  - A flagged volunteer cannot confirm a record they captured or synced; they can confirm
+    someone else's, and `record_reviews` holds their Access email.
+  - A device that sends status Confirmed through sync is refused that status; the record keeps
+    its server status.
+  - Confirm a record, edit it on the phone, sync: it is Awaiting review again, and both
+    revisions are in the history.
+  - A returned record's note appears on the volunteer's phone after sync.
+  - Turning the flag off takes effect on that person's next request.
+  - Nothing scrolls sideways at phone width; buttons are at least 52px.
+- **Complete when.** It is deployed with the migration applied, at least one reviewer is
+  flagged on the live site, and a record has been captured by one person and confirmed by
+  another, checked signed in on a desk and on a phone.
+
+Still open, and not decided by this stage: whether the eHive export should send only Confirmed
+records (it sends every record today, whatever its status), and whether confirming should fill
+the paper form's "Catalogued by" sign-off fields, which are restricted and outside the flow.
+
 ### Later backlog
 
 - Voice annotation — see "Future direction: voice annotation" below.
@@ -484,3 +556,4 @@ A stage is complete when:
 | 2026-10-14 | Stage 9: a `/contribute` trial where any volunteer adds what they know about photographed objects, typed or recorded, with an AI description revealed afterwards. Pause set aside for it. Donor names allowed in contributions, which are admin-only and never exported | Two people do all the accessioning; the knowledge is spread across many more | Stage 9 |
 | 2026-10-14 | Recordings transcribed now, not after the voice trial: Parakeet run offline on the maintainer's computer, with a local word list and a quieter-stretch flag. Transcripts admin-only, append-only, shown on the review page | The first real recordings showed both engines mishear "Dorrigo", and Whisper silently drop a second speaker; the maintainer chose to build on Parakeet | Stage 9; `transcribe/` |
 | 2026-10-27 | Stage 10: pick lists for object type, materials (several per object) and location by room, with room and detail as two fields. Lists held in D1 and owned by the museum; volunteers add terms, admins review; object types follow eHive's plural style | Asked for by the museum at the volunteer session on 2026-10-26; answers open decision 7 | Stage 10 |
+| 2026-10-27 | Stage 11: approving records becomes its own permission. Admins flag individual volunteers as reviewers; only reviewers confirm records; devices can no longer set Confirmed themselves | Nothing in the app could confirm a record, the server trusted any status a device sent, and the maintainer does not want volunteers given admin access in order to approve | Stage 11 |
